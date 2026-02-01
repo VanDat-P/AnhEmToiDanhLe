@@ -1,0 +1,48 @@
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    margin: 0;
+
+    background-size: cover;
+    min-height: 100%;
+
+
+    font-family: Arial, sans-serif;
+    text-align: center;
+
+    background-image: url("https://c4.wallpaperflare.com/wallpaper/277/354/502/feelsbadman-pepe-meme-memes-wallpaper-preview.jpg");
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+}
+
+
+h2 {
+    margin-bottom: 20px;
+    font-size: 70px;
+    border: 2px;
+    color: rgb(122, 33, 33);
+}
+
+#image {
+    display: block;
+    margin: 0 auto 15px auto;
+    background-color: blue;
+}
+
+#submit {
+    padding: 8px 16px;
+    border-radius: 30px;
+    background-color: rgb(52, 184, 58);
+    font-size: 20px;
+
+}
+
+#result {
+    margin-top: 20px;
+    font-weight: bold;
+}
