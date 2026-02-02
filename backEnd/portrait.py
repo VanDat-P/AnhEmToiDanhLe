@@ -7,16 +7,16 @@ import uuid
 app = Flask(__name__)
 CORS(app)
 
-model = YOLO("portrait.pt")
+model = YOLO("MaTruongThanh.pt")
 
 REQUIRED = {
-    0: "hair",
-    1: "ear",
-    2: "eyebrow",
-    3: "eye",
-    4: "nose",
-    5: "mouth",
-    6: "face"
+
+    0: "ear",
+    1: "eyebrow",
+    2: "eye",
+    3: "nose",
+    4: "mouth",
+  
 }
 
 UPLOAD_FOLDER = "uploads"
