@@ -120,14 +120,16 @@ input[type="file"]:hover {
 }
 
 #back {
-    border: 5px;
+    border: none;
     border-radius: 20px;
-    background-color: rgb(23, 224, 23);
-    height: 30px;
-    width: 200px;
+    background-color: rgb(15, 179, 15);
+    width: 370px;
+    padding: 12px 0;
     color: white;
+    font-size: 20px;
+    cursor: pointer;
 }
 
-#back :hover {
-    background-color: rgb(24, 128, 24)
+#back:hover {
+    background-color: rgb(24, 128, 24);
 }

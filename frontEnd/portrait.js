@@ -61,12 +61,28 @@ document.getElementById("submit").onclick = () => {
         .then(res => res.json())
         .then(data => {
             let commentText = "";
+            let commentImg = "";
+            if (data.score >= 9) {
+                commentText = "🌟 Rất tốt!";
+                commentImg = "C:\Users\dev\AnhEmToiDanhLe\frontEnd\ảnhMeMe\perfectMeMe.jpg"
+            }
+            else if (data.score >= 7) {
+                commentText = "👍 Tốt nhưng còn thiếu chút";
+                commentImg = "C:\Users\dev\AnhEmToiDanhLe\frontEnd\ảnhMeMe\itsAlright.jpg"
 
-            if (data.score >= 9) commentText = "🌟 Rất tốt!";
-            else if (data.score >= 7) commentText = "👍 Tốt nhưng còn thiếu chút";
-            else if (data.score >= 5) commentText = "🙂 Ổn, nên cải thiện thêm";
-            else commentText = "😅 Cần cố gắng nhiều hơn";
 
+            } else if (data.score >= 5) {
+                commentText = "🙂 Ổn, nên cải thiện thêm";
+                commentImg = "C:\Users\dev\AnhEmToiDanhLe\frontEnd\ảnhMeMe\pray.jpg"
+
+
+            } else {
+                commentText = "😅 Cần cố gắng nhiều hơn";
+                commentImg = "C:\Users\dev\AnhEmToiDanhLe\frontEnd\ảnhMeMe\blackCry.jpg"
+
+
+
+            }
             result.innerHTML = `
                 <p><b>🎯 Score:</b> ${data.score}</p>
                 <p>❌ Missing: ${(data.missing || []).join(", ")}</p>
