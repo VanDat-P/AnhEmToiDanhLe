@@ -1,5 +1,12 @@
 let artType = "portrait";
 
+document.getElementById("btn-portrait").onclick = () => {
+    chooseType("portrait");
+};
+
+document.getElementById("btn-scenery").onclick = () => {
+    chooseType("scenery");
+};
 
 document.getElementById("back").onclick = () => {
     // reset loại tranh
@@ -49,11 +56,12 @@ document.getElementById("submit").onclick = () => {
     const formData = new FormData();
     formData.append("image", imageFile);
 
-    const url =
-        artType === "portrait"
-            ? "http://127.0.0.1:5000/predict"
-            : "http://127.0.0.1:5000/predict_scenery";
-
+    let url ="http://127.0.0.1:5000/predict"
+        
+    if (artType === "scenery") {
+            url ="http://127.0.0.1:5000/predict_scenery";
+    }
+    
     fetch(url, {
         method: "POST",
         body: formData
@@ -64,22 +72,21 @@ document.getElementById("submit").onclick = () => {
             let commentImg = "";
             if (data.score >= 9) {
                 commentText = "🌟 Rất tốt!";
-                commentImg = "C:\Users\dev\AnhEmToiDanhLe\frontEnd\ảnhMeMe\perfectMeMe.jpg"
+            
             }
             else if (data.score >= 7) {
                 commentText = "👍 Tốt nhưng còn thiếu chút";
-                commentImg = "C:\Users\dev\AnhEmToiDanhLe\frontEnd\ảnhMeMe\itsAlright.jpg"
+               
 
 
             } else if (data.score >= 5) {
                 commentText = "🙂 Ổn, nên cải thiện thêm";
-                commentImg = "C:\Users\dev\AnhEmToiDanhLe\frontEnd\ảnhMeMe\pray.jpg"
+               
 
 
             } else {
                 commentText = "😅 Cần cố gắng nhiều hơn";
-                commentImg = "C:\Users\dev\AnhEmToiDanhLe\frontEnd\ảnhMeMe\blackCry.jpg"
-
+               
 
 
             }
@@ -92,4 +99,4 @@ document.getElementById("submit").onclick = () => {
         .catch(() => {
             result.innerText = "❌ Lỗi gọi API";
         });
-};
+}; 

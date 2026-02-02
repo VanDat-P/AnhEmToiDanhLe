@@ -93,14 +93,10 @@ def predict():
     })
 
 
-if __name__ == "__main__":
-    app.run(debug=False)   
-
-
 
 
 # phong canh cua binh kun va lac kun
-scenery_model = YOLO("scenery.pt")
+scenery_model = YOLO("landscape.pt")
 
 SCENERY_REQUIRED = {
     0: "house",
@@ -152,3 +148,8 @@ def predict_scenery():
         "missing": missing,
         "position_errors": []
     })
+
+
+if __name__ == "__main__":
+    app.run(debug=False)   
+

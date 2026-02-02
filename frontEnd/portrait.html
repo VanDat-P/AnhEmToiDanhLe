@@ -18,10 +18,10 @@
         </div>
 
         <div class="content" style="display:flex; gap:20px; justify-content:center;">
-            <button class="btn-primary" onclick="chooseType('portrait')">
+            <button class="btn-primary" id="btn-portrait" >
                 🧑 chân dung
             </button>
-            <button class="btn-primary" onclick="chooseType('scenery')">
+            <button class="btn-primary" id="btn-scenery">
                 🌄 phong cảnh
             </button>
         </div>
@@ -44,7 +44,7 @@
                 <input id="image" type="file" accept="image/*">
             </div>
 
-            <button id="submit" class="btn-primary">
+            <button id="submit" type="button" class="btn-primary">
                 Bắt đầu chấm điểm nhé!
             </button>
             <button id="back" class="btn-secondary" style="margin-top:10px;">
