@@ -3,39 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chấm Điểm Tranh Chân Dung</title>
+    <title>AI Chấm Điểm Tranh</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
- 
-  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
     <link rel="stylesheet" href="portrait.css">
 </head>
 <body>
 
-    <div class="main-card">
+    <!-- CARD CHỌN LOẠI -->
+    <div class="main-card" id="select-type-card">
+        <div class="header">
+            <div class="icon-wrapper">🖼️</div>
+            <h2>Bạn muốn chấm loại tranh nào?</h2>
+            <p class="subtitle">Hãy chọn một loại để bắt đầu</p>
+        </div>
+
+        <div class="content" style="display:flex; gap:20px; justify-content:center;">
+            <button class="btn-primary" onclick="chooseType('portrait')">
+                🧑 Tranh chân dung
+            </button>
+            <button class="btn-primary" onclick="chooseType('scenery')">
+                🌄 Tranh phong cảnh
+            </button>
+        </div>
+    </div>
+
+    <!-- CARD CHẤM ĐIỂM (GIAO DIỆN CŨ) -->
+    <div class="main-card" id="grading-card" style="display:none;">
         <div class="header">
             <div class="icon-wrapper">🎨</div>
-            <h2>Chấm điểm chân dung</h2>
+            <h2 id="title">Chấm điểm tranh</h2>
             <p class="subtitle">Hệ thống chấm điểm tranh vẽ bằng AI</p>
         </div>
 
         <div class="content">
             <div class="upload-box">
-                <label for="image" class="upload-label">
+                <label for="image">
                     <span>Hãy chọn bức tranh của bạn</span>
-                    <small>(hỗ trợ JPG, PNG)</small>
+                    <small>(JPG, PNG)</small>
                 </label>
                 <input id="image" type="file" accept="image/*">
             </div>
 
-            <button id="submit" type="button" class="btn-primary">
-                 Bắt đầu chấm điểm nhé!
+            <button id="submit" class="btn-primary">
+                Bắt đầu chấm điểm nhé!
             </button>
+            <button id="back" class="btn-secondary" style="margin-top:10px;">
+                    🔙 Chọn lại loại tranh
+            </button>
+
             <img id="preview" style="max-width:300px; display:none; margin-top:10px;">
 
             <div id="result" class="result-container">
                 <span class="placeholder-text">Kết quả của bạn sẽ là gì đây nào?...</span>
-                <p id="comment"> </p>
-
+                <p id="comment"></p>
             </div>
         </div>
     </div>

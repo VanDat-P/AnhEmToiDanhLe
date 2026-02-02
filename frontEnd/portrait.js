@@ -1,9 +1,42 @@
+let artType = "portrait";
+
+
+document.getElementById("back").onclick = () => {
+    // reset loại tranh
+    artType = "portrait";
+
+    // hiện card chọn loại
+    document.getElementById("select-type-card").style.display = "block";
+    document.getElementById("grading-card").style.display = "none";
+
+    // reset input & kết quả
+    document.getElementById("image").value = "";
+    document.getElementById("preview").style.display = "none";
+
+    document.getElementById("result").innerHTML = `
+        <span class="placeholder-text">
+            Kết quả của bạn sẽ là gì đây nào?...
+        </span>
+    `;
+};
+
+function chooseType(type) {
+    artType = type;
+
+    document.getElementById("select-type-card").style.display = "none";
+    document.getElementById("grading-card").style.display = "block";
+
+    document.getElementById("title").innerText =
+        type === "portrait"
+            ? "Chấm điểm tranh chân dung"
+            : "Chấm điểm tranh phong cảnh";
+}
+
 document.getElementById("submit").onclick = () => {
     const imageFile = document.getElementById("image").files[0];
     const result = document.getElementById("result");
     const preview = document.getElementById("preview");
     const commentEl = document.getElementById("comment");
-
 
     if (!imageFile) {
         alert("Chưa chọn ảnh");
@@ -16,37 +49,31 @@ document.getElementById("submit").onclick = () => {
     const formData = new FormData();
     formData.append("image", imageFile);
 
-    fetch("http://127.0.0.1:5000/predict", {
+    const url =
+        artType === "portrait"
+            ? "http://127.0.0.1:5000/predict"
+            : "http://127.0.0.1:5000/predict_scenery";
+
+    fetch(url, {
         method: "POST",
         body: formData
     })
         .then(res => res.json())
         .then(data => {
-
             let commentText = "";
-            // let imgSrc = "";
 
-            if (data.score >= 9) {
-                commentText = "quite good";
-
-            } else if (data.score >= 7) {
-                commentText = "good but not enough";
-            } else if (data.score >= 5) {
-                commentText = "🙂 Not bad! Try to improve the facial structure.";
-            } else {
-                commentText = "what a silly guy ?";
-            }
-            commentEl.innerText = commentText;
-
+            if (data.score >= 9) commentText = "🌟 Rất tốt!";
+            else if (data.score >= 7) commentText = "👍 Tốt nhưng còn thiếu chút";
+            else if (data.score >= 5) commentText = "🙂 Ổn, nên cải thiện thêm";
+            else commentText = "😅 Cần cố gắng nhiều hơn";
 
             result.innerHTML = `
-            <p><b>🎯 Score:</b> ${data.score}</p>
-            <p>❌ Missing: ${data.missing.join(", ")}</p>
-            <p><b> ${commentText}</b></p>
-        `;
+                <p><b>🎯 Score:</b> ${data.score}</p>
+                <p>❌ Missing: ${(data.missing || []).join(", ")}</p>
+                <p><b>${commentText}</b></p>
+            `;
         })
-        .catch(err => {
-            console.error(err);
+        .catch(() => {
             result.innerText = "❌ Lỗi gọi API";
         });
 };

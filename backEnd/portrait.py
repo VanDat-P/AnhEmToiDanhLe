@@ -95,3 +95,60 @@ def predict():
 
 if __name__ == "__main__":
     app.run(debug=False)   
+
+
+
+
+# phong canh cua binh kun va lac kun
+scenery_model = YOLO("scenery.pt")
+
+SCENERY_REQUIRED = {
+    0: "house",
+    1: "tree",
+    2: "sun",
+}
+@app.route("/predict_scenery", methods=["POST"])
+def predict_scenery():
+    if "image" not in request.files:
+        return jsonify({"error": "Không có ảnh"}), 400
+
+    image_file = request.files["image"]
+
+    filename = f"{uuid.uuid4().hex}.jpg"
+    img_path = os.path.join(UPLOAD_FOLDER, filename)
+    image_file.save(img_path)
+
+    results = scenery_model(img_path, verbose=False)[0]
+
+    if results.boxes is None or len(results.boxes) == 0:
+        os.remove(img_path)
+        return jsonify({
+            "score": 0,
+            "detected": [],
+            "missing": list(SCENERY_REQUIRED.values()),
+            "position_errors": ["Tranh phong cảnh quá trống"]
+        })
+
+    detected_classes = [int(c) for c in results.boxes.cls.cpu().numpy()]
+    detected = []
+
+    for cid in detected_classes:
+        name = SCENERY_REQUIRED.get(cid)
+        if name and name not in detected:
+            detected.append(name)
+
+    missing = [v for v in SCENERY_REQUIRED.values() if v not in detected]
+
+    score = 0
+    if "house" in detected: score += 4
+    if "tree" in detected: score += 4
+    if "sun" in detected or len(detected) >= 3: score += 2
+
+    os.remove(img_path)
+
+    return jsonify({
+        "score": score,
+        "detected": detected,
+        "missing": missing,
+        "position_errors": []
+    })
