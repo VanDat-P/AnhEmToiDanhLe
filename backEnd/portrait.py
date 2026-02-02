@@ -7,10 +7,8 @@ import uuid
 app = Flask(__name__)
 CORS(app)
 
-# Load model
 model = YOLO("MaTruongThanh.pt")
 
-# Các bộ phận bắt buộc
 REQUIRED = {
     0: "eyebrow",
     1: "eye",
@@ -61,11 +59,10 @@ def predict():
 
     results = model(img_path, verbose=False)[0]
 
-    # Không detect được gì
     if results.boxes is None or len(results.boxes) == 0:
         os.remove(img_path)
         return jsonify({
-            "score": 3,
+            "score": 0,
             "detected": [],
             "missing": list(REQUIRED.values()),
             "position_errors": ["Không detect được bộ phận nào"]
@@ -83,23 +80,8 @@ def predict():
     missing = [name for name in REQUIRED.values() if name not in boxes]
     position_errors = check_position(boxes)
 
-    # =======================
-    # 🎯 TÍNH ĐIỂM (NHẸ TAY)
-    # =======================
-    score = 10
-
-    # Thiếu bộ phận: -1 điểm
-    score -= len(missing) * 1
-
-    # Sai vị trí: -1 điểm
-    score -= len(position_errors) * 1
-
-    # Thưởng nếu đầy đủ và đúng vị trí
-    if len(missing) == 0 and len(position_errors) == 0:
-        score += 1
-
-    # Giới hạn điểm
-    score = max(3, min(10, round(score, 1)))
+    score = 10 - len(missing) * 1.5 - len(position_errors) * 2
+    score = max(0, round(score, 1))
 
     os.remove(img_path)
 
@@ -112,4 +94,4 @@ def predict():
 
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(debug=False)   
