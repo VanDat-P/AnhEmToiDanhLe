@@ -111,3 +111,10 @@ input[type="file"]:hover {
     color: #aaa;
     font-style: italic;
 }
+
+#preview {
+    margin-left: auto;
+    margin-right: auto;
+
+
+}

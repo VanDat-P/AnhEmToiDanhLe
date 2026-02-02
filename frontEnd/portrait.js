@@ -1,12 +1,17 @@
 document.getElementById("submit").onclick = () => {
     const imageFile = document.getElementById("image").files[0];
-    // const imageFile = document.getElementById("img_input").files[0];
     const result = document.getElementById("result");
+    const preview = document.getElementById("preview");
+    const commentEl = document.getElementById("comment");
+
 
     if (!imageFile) {
         alert("Chưa chọn ảnh");
         return;
     }
+
+    preview.src = URL.createObjectURL(imageFile);
+    preview.style.display = "block";
 
     const formData = new FormData();
     formData.append("image", imageFile);
@@ -17,11 +22,28 @@ document.getElementById("submit").onclick = () => {
     })
         .then(res => res.json())
         .then(data => {
+
+            let commentText = "";
+            // let imgSrc = "";
+
+            if (data.score >= 9) {
+                commentText = "quite good";
+
+            } else if (data.score >= 7) {
+                commentText = "good but not enough";
+            } else if (data.score >= 5) {
+                commentText = "🙂 Not bad! Try to improve the facial structure.";
+            } else {
+                commentText = "what a silly guy ?";
+            }
+            commentEl.innerText = commentText;
+
+
             result.innerHTML = `
-                <p><b>🎯 Điểm:</b> ${data.score}</p>
-                <p>✅ có: ${data.detected.join(", ")}</p>
-                <p>❌ Thiếu: ${data.missing.join(", ")}</p>
-            `;
+            <p><b>🎯 Score:</b> ${data.score}</p>
+            <p>❌ Missing: ${data.missing.join(", ")}</p>
+            <p><b> ${commentText}</b></p>
+        `;
         })
         .catch(err => {
             console.error(err);
