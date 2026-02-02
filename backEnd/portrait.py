@@ -10,13 +10,10 @@ CORS(app)
 model = YOLO("MaTruongThanh.pt")
 
 REQUIRED = {
-
-    0: "ear",
-    1: "eyebrow",
-    2: "eye",
-    3: "nose",
-    4: "mouth",
-  
+    0: "eyebrow",
+    1: "eye",
+    2: "nose",
+    3: "mouth",
 }
 
 UPLOAD_FOLDER = "uploads"
@@ -31,31 +28,20 @@ def center(box):
 def check_position(boxes):
     errors = []
 
-    if "face" not in boxes:
-        return ["Không detect được khuôn mặt"]
-
-    face = boxes["face"]
-    fy1, fy2 = face[1], face[3]
-
+    # Mắt phải trên mũi
     if "eye" in boxes and "nose" in boxes:
         if center(boxes["eye"])[1] > center(boxes["nose"])[1]:
             errors.append("Mắt phải nằm trên mũi")
 
+    # Miệng phải dưới mũi
     if "mouth" in boxes and "nose" in boxes:
         if center(boxes["mouth"])[1] < center(boxes["nose"])[1]:
             errors.append("Miệng phải nằm dưới mũi")
 
+    # Chân mày phải trên mắt
     if "eyebrow" in boxes and "eye" in boxes:
         if center(boxes["eyebrow"])[1] > center(boxes["eye"])[1]:
             errors.append("Chân mày phải nằm trên mắt")
-
-    if "hair" in boxes:
-        if center(boxes["hair"])[1] > center(face)[1]:
-            errors.append("Tóc phải nằm trên khuôn mặt")
-
-    if "ear" in boxes and "eye" in boxes:
-        if abs(center(boxes["ear"])[1] - center(boxes["eye"])[1]) > (fy2 - fy1) * 0.25:
-            errors.append("Tai nên nằm ngang mức mắt")
 
     return errors
 
@@ -107,7 +93,5 @@ def predict():
     })
 
 
-
 if __name__ == "__main__":
-    app.run(debug=True)
-
+    app.run(debug=False)   
