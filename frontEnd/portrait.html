@@ -2,18 +2,39 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Chấm điểm tranh chân dung</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chấm Điểm Tranh Chân Dung</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="portrait.css">
 </head>
 <body>
 
-<h2>🗿 🤫🧏‍♂️ Chấm điểm tranh chân dung</h2>
+    <div class="main-card">
+        <div class="header">
+            <div class="icon-wrapper">🎨</div>
+            <h2>Chấm điểm chân dung</h2>
+            <p class="subtitle">Hệ thống chấm điểm tranh vẽ bằng AI</p>
+        </div>
 
-<input id="image" type="file">
-<button id="submit">Chấm điểm tranh vẽ</button>
+        <div class="content">
+            <div class="upload-box">
+                <label for="image" class="upload-label">
+                    <span>Hãy chọn bức tranh của bạn</span>
+                    <small>(hỗ trợ JPG, PNG)</small>
+                </label>
+                <input id="image" type="file" accept="image/*">
+            </div>
 
-<div id="result"></div>
+            <button id="submit" class="btn-primary">
+                 Bắt đầu chấm điểm nhé!
+            </button>
 
-<script src="portrait.js"></script>
+            <div id="result" class="result-container">
+                <span class="placeholder-text">Kết quả của bạn sẽ là gì đây nào?...</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="portrait.js"></script>
 </body>
 </html>
