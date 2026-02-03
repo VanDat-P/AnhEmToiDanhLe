@@ -10,7 +10,7 @@ CORS(app)
 @app.route("/")
 def home():
     return render_template("portrait.html")
-model = YOLO("MaTruongThanh.pt")
+model = YOLO("thayThanhCuaToi.pt")
 
 REQUIRED = {
     0: "eyebrow",
@@ -127,15 +127,11 @@ def predict_scenery():
             "missing": list(SCENERY_REQUIRED.values()),
             "position_errors": ["Tranh phong cảnh quá trống"]
         })
-
-    detected_classes = [int(c) for c in results.boxes.cls.cpu().numpy()]
+    detected_classes = list(set([results.names[int(cls)] for cls in results.boxes.cls]))
     detected = []
-
-    for cid in detected_classes:
-        name = SCENERY_REQUIRED.get(cid)
-        if name and name not in detected:
+    for name in detected_classes:
+        if name in SCENERY_REQUIRED.values():
             detected.append(name)
-
     missing = [v for v in SCENERY_REQUIRED.values() if v not in detected]
 
     score = 0
@@ -154,5 +150,4 @@ def predict_scenery():
 
 
 if __name__ == "__main__":
-    app.run(debug=False)   
-
+    app.run(debug=False)

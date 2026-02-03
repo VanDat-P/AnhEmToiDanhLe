@@ -1,5 +1,5 @@
 let artType = "portrait";
-
+const commentImg = document.getElementById("commentImg");
 document.getElementById("btn-portrait").onclick = () => {
     chooseType("portrait");
 };
@@ -92,7 +92,7 @@ document.getElementById("submit").onclick = () => {
             }
             result.innerHTML = `
                 <p><b>🎯 Score:</b> ${data.score}</p>
-                <p>❌ Missing: ${(data.missing || []).join(", ")}</p>
+                <p id="missing" >❌ Missing: ${(data.missing || []).join(", ")}</p>
                 <p><b>${commentText}</b></p>
             `;
         })
