@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify,render_template
 from flask_cors import CORS
 from ultralytics import YOLO
 import os
@@ -7,6 +7,9 @@ import uuid
 app = Flask(__name__)
 CORS(app)
 
+@app.route("/")
+def home():
+    return render_template("portrait.html")
 model = YOLO("MaTruongThanh.pt")
 
 REQUIRED = {

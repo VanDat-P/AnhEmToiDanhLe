@@ -56,12 +56,12 @@ document.getElementById("submit").onclick = () => {
     const formData = new FormData();
     formData.append("image", imageFile);
 
-    let url ="http://127.0.0.1:5000/predict"
-        
+    let url = "http://127.0.0.1:5000/predict"
+
     if (artType === "scenery") {
-            url ="http://127.0.0.1:5000/predict_scenery";
+        url = "http://127.0.0.1:5000/predict_scenery";
     }
-    
+
     fetch(url, {
         method: "POST",
         body: formData
@@ -72,21 +72,21 @@ document.getElementById("submit").onclick = () => {
             let commentImg = "";
             if (data.score >= 9) {
                 commentText = "🌟 Rất tốt!";
-            
+
             }
             else if (data.score >= 7) {
                 commentText = "👍 Tốt nhưng còn thiếu chút";
-               
+
 
 
             } else if (data.score >= 5) {
                 commentText = "🙂 Ổn, nên cải thiện thêm";
-               
+
 
 
             } else {
                 commentText = "😅 Cần cố gắng nhiều hơn";
-               
+
 
 
             }
