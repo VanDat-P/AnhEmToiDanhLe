@@ -83,8 +83,9 @@ def predict():
     missing = [name for name in REQUIRED.values() if name not in boxes]
     position_errors = check_position(boxes)
 
-    score = 10 - len(missing) * 1.5 - len(position_errors) * 2
+    score = 10 - len(missing) * 1 - len(position_errors) * 1
     score = max(0, round(score, 1))
+
 
     os.remove(img_path)
 
