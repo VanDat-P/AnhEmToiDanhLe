@@ -106,12 +106,13 @@ document.getElementById("submit").onclick = () => {
 
             const detected = data.detected || [];
             const missing = data.missing || [];
-
+            let loaiTranh = artType === "portrait" ? "chân dung" : "phong cảnh";
             if (detected.length > 0) {
                 detectedHTML = `<p>Có: ${detected.join(", ")}</p>`;
             }
             if (detected.length == 0) {
-                 missingHTML = `<p id="missing">❌ Missing: ${missing.join(", ")}</p>`;
+                 missingHTML = `<p id="missing">này mà là tranh ${loaiTranh} hả ?</p>`;
+                 commentText="";
             }
             
             if (detected.length > 0 && missing.length > 0) {
