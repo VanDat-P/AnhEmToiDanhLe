@@ -105,7 +105,7 @@ def predict():
 
 
 # phong canh cua binh kun va lac kun
-scenery_model = YOLO("landscape.pt")
+scenery_model = YOLO("best_landscape_040226.pt")
 
 SCENERY_REQUIRED = {
     0: "house",
