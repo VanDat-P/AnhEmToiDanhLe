@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify,render_template
 from flask_cors import CORS
 from ultralytics import YOLO
 import os
@@ -7,6 +7,9 @@ import uuid
 app = Flask(__name__)
 CORS(app)
 
+@app.route("/")
+def home():
+    return render_template("portrait.html")
 model = YOLO("MaTruongThanh.pt")
 
 REQUIRED = {
@@ -93,14 +96,10 @@ def predict():
     })
 
 
-if __name__ == "__main__":
-    app.run(debug=False)   
-
-
 
 
 # phong canh cua binh kun va lac kun
-scenery_model = YOLO("scenery.pt")
+scenery_model = YOLO("landscape.pt")
 
 SCENERY_REQUIRED = {
     0: "house",
@@ -129,14 +128,11 @@ def predict_scenery():
             "position_errors": ["Tranh phong cảnh quá trống"]
         })
 
-    detected_classes = [int(c) for c in results.boxes.cls.cpu().numpy()]
+    detected_classes = list(set([results.names[int(cls)] for cls in results.boxes.cls]))
     detected = []
-
-    for cid in detected_classes:
-        name = SCENERY_REQUIRED.get(cid)
-        if name and name not in detected:
+    for name in detected_classes:
+        if name in SCENERY_REQUIRED.values():
             detected.append(name)
-
     missing = [v for v in SCENERY_REQUIRED.values() if v not in detected]
 
     score = 0
@@ -152,3 +148,8 @@ def predict_scenery():
         "missing": missing,
         "position_errors": []
     })
+
+
+if __name__ == "__main__":
+    app.run(debug=False)   
+

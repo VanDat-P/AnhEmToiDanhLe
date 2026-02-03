@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Chấm Điểm Tranh</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="portrait.css">
+    <link rel="stylesheet" href="{{url_for('static',filename ='portrait.css')}}">
 </head>
 <body>
 
@@ -18,10 +18,10 @@
         </div>
 
         <div class="content" style="display:flex; gap:20px; justify-content:center;">
-            <button class="btn-primary" onclick="chooseType('portrait')">
+            <button class="btn-primary" id="btn-portrait" >
                 🧑 chân dung
             </button>
-            <button class="btn-primary" onclick="chooseType('scenery')">
+            <button class="btn-primary" id="btn-scenery">
                 🌄 phong cảnh
             </button>
         </div>
@@ -44,7 +44,7 @@
                 <input id="image" type="file" accept="image/*">
             </div>
 
-            <button id="submit" class="btn-primary">
+            <button id="submit" type="button" class="btn-primary">
                 Bắt đầu chấm điểm nhé!
             </button>
             <button id="back" class="btn-secondary" style="margin-top:10px;">
@@ -61,6 +61,6 @@
         </div>
     </div>
 
-    <script src="portrait.js"></script>
+    <script src="{{url_for('static', filename ='portrait.js')}}"></script>
 </body>
 </html>
