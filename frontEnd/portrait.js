@@ -1,5 +1,5 @@
 let artType = "portrait";
-const commentImg = document.getElementById("commentImg");
+
 document.getElementById("btn-portrait").onclick = () => {
     chooseType("portrait");
 };
@@ -43,8 +43,7 @@ document.getElementById("submit").onclick = () => {
     const imageFile = document.getElementById("image").files[0];
     const result = document.getElementById("result");
     const preview = document.getElementById("preview");
-    const commentEl = document.getElementById("comment");
-
+   
     if (!imageFile) {
         alert("Chưa chọn ảnh");
         return;
@@ -69,7 +68,7 @@ document.getElementById("submit").onclick = () => {
         .then(res => res.json())
         .then(data => {
             let commentText = "";
-            let commentImg = "";
+           
             if (data.score >= 9) {
                 commentText = "🌟 Rất tốt!";
 
@@ -90,10 +89,43 @@ document.getElementById("submit").onclick = () => {
 
 
             }
+            let scoreImg = "";
+
+            if (data.score >= 8) {
+            scoreImg = "/Users/datphan/AnhEmToiDanhLe/frontEnd/ảnhMeMe/perfectMeMe.jpg";
+            } else if (data.score >5 && data.score <8) {
+            scoreImg = "/Users/datphan/AnhEmToiDanhLe/frontEnd/ảnhMeMe/itsAlright.jpg";
+            } else if (data.score <5 && data.score >3) {
+            scoreImg = "/Users/datphan/AnhEmToiDanhLe/frontEnd/ảnhMeMe/pray.jpg";
+            } else {
+            scoreImg = "/Users/datphan/AnhEmToiDanhLe/frontEnd/ảnhMeMe/blackCry.jpg";
+            }
+             
+            let detectedHTML = "";
+            let missingHTML = "";
+
+            const detected = data.detected || [];
+            const missing = data.missing || [];
+
+            if (detected.length > 0) {
+                detectedHTML = `<p>Có: ${detected.join(", ")}</p>`;
+            }
+            if (detected.length == 0) {
+                 missingHTML = `<p id="missing">❌ Missing: ${missing.join(", ")}</p>`;
+            }
+            
+            if (detected.length > 0 && missing.length > 0) {
+                missingHTML = `<p id="missing">❌ Missing: ${missing.join(", ")}</p>`;
+            }
+            if(missing.length == 0)  missingHTML = `<p id="missing"></p>`;
+
             result.innerHTML = `
                 <p><b>🎯 Score:</b> ${data.score}</p>
-                <p id="missing" >❌ Missing: ${(data.missing || []).join(", ")}</p>
+                ${detectedHTML}
+                ${missingHTML}
                 <p><b>${commentText}</b></p>
+                <img src="${scoreImg}" class="score-img">
+
             `;
         })
         .catch(() => {

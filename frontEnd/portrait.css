@@ -136,3 +136,15 @@ input[type="file"]:hover {
 #back:hover {
     background-color: rgb(24, 128, 24);
 }
+.score-img {
+    width: 120x;
+    height: 120px;
+
+    object-fit: cover;  
+    border-radius: 50%;  
+
+    display: block;
+    margin: 10px auto;
+
+    border: 2px solid #4da3ff; 
+}
