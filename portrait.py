@@ -71,7 +71,7 @@ def predict():
             "position_errors": ["Không detect được bộ phận nào"]
         })
 
-    detected_classes = [int(c) for c in results.boxes.cls.cpu().numpy()]
+    detected_classes = list(set([results.names[int(cls)] for cls in results.boxes.cls]))
     boxes_xyxy = results.boxes.xyxy.cpu().numpy().tolist()
 
     boxes = {}
@@ -79,9 +79,15 @@ def predict():
         name = REQUIRED.get(cid)
         if name and name not in boxes:
             boxes[name] = box
-
-    missing = [name for name in REQUIRED.values() if name not in boxes]
     position_errors = check_position(boxes)
+    
+    detected = []
+    for name in detected_classes:
+        if name in REQUIRED.values():
+            detected.append(name)
+
+    missing = [name for name in REQUIRED.values() if name not in detected]
+    
 
     score = 10 - len(missing) * 1.5 - len(position_errors) * 2
     score = max(0, round(score, 1))
@@ -90,7 +96,7 @@ def predict():
 
     return jsonify({
         "score": score,
-        "detected": list(boxes.keys()),
+        "detected": detected,
         "missing": missing,
         "position_errors": position_errors
     })
