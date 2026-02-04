@@ -112,7 +112,8 @@ document.getElementById("submit").onclick = () => {
             }
             if (detected.length == 0) {
                  missingHTML = `<p id="missing">này mà là tranh ${loaiTranh} hả ?</p>`;
-                 commentText="";
+                //  missingHTML = `<p id="missing">❌ Missing: ${missing.join(", ")}</p>`;
+                
             }
             
             if (detected.length > 0 && missing.length > 0) {

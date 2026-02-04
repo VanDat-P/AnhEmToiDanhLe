@@ -10,7 +10,7 @@ CORS(app)
 @app.route("/")
 def home():
     return render_template("portrait.html")
-model = YOLO("thayThanhCuaToi.pt")
+model = YOLO("portrait.pt")
 
 REQUIRED = {
     0: "eyebrow",
