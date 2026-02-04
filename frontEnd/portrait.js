@@ -92,13 +92,13 @@ document.getElementById("submit").onclick = () => {
             let scoreImg = "";
 
             if (data.score >= 8) {
-            scoreImg = "/Users/datphan/AnhEmToiDanhLe/frontEnd/ảnhMeMe/perfectMeMe.jpg";
+            scoreImg = "../frontEnd/ảnhMeMe/perfectMeMe.jpg";
             } else if (data.score >5 && data.score <8) {
-            scoreImg = "/Users/datphan/AnhEmToiDanhLe/frontEnd/ảnhMeMe/itsAlright.jpg";
+            scoreImg = "../frontEnd/ảnhMeMe/itsAlright.jpg";
             } else if (data.score <5 && data.score >3) {
-            scoreImg = "/Users/datphan/AnhEmToiDanhLe/frontEnd/ảnhMeMe/pray.jpg";
+            scoreImg = "../frontEnd/ảnhMeMe/pray.jpg";
             } else {
-            scoreImg = "/Users/datphan/AnhEmToiDanhLe/frontEnd/ảnhMeMe/blackCry.jpg";
+            scoreImg = "../frontEnd/ảnhMeMe/blackCry.jpg";
             }
              
             let detectedHTML = "";
