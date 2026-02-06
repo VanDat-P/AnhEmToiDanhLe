@@ -4,6 +4,59 @@ from ultralytics import YOLO
 import os
 import uuid
 
+# phan loai anh
+import cv2
+import numpy as np
+from tensorflow.keras.models import load_model
+
+# phanloaianh
+
+clf_model = load_model("phanLoaiAnh.h5")
+CLASSES = ["ChanDung", "PhongCanh"]
+def classify_image(img_path):
+    img = cv2.imread(img_path)
+    if img is None:
+        raise Exception("Không đọc được ảnh (cv2.imread = None)")
+    
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    
+    # Danh sách các kích thước để thử
+    test_sizes = [(56, 56), (224, 224), (112, 112), (64, 64)]
+    
+    for size in test_sizes:
+        try:
+            img_resized = cv2.resize(img, size)
+            img_resized = img_resized / 255.0
+            
+            # Nếu model là dense (2D input)
+            if len(clf_model.input_shape) == 2:
+                img_processed = img_resized.flatten()
+                # Kiểm tra số features
+                if img_processed.shape[0] != clf_model.input_shape[1]:
+                    # Pad hoặc crop để đúng số features
+                    target_features = clf_model.input_shape[1]
+                    if img_processed.shape[0] > target_features:
+                        img_processed = img_processed[:target_features]
+                    else:
+                        img_processed = np.pad(img_processed, 
+                                             (0, target_features - img_processed.shape[0]))
+                img_processed = img_processed.reshape(1, -1)
+            else:
+                # Conv model
+                img_processed = np.expand_dims(img_resized, axis=0)
+            
+            print(f"Testing with size {size}, input shape: {img_processed.shape}")
+            
+            pred = clf_model.predict(img_processed, verbose=0)
+            class_id = int(np.argmax(pred))
+            
+            return CLASSES[class_id]
+            
+        except Exception as e:
+            print(f"Failed with size {size}: {e}")
+            continue
+    
+    raise Exception("Không thể phân loại với bất kỳ kích thước nào đã thử")
 app = Flask(__name__)
 CORS(app)
 
@@ -50,6 +103,55 @@ def check_position(boxes):
 
 
 @app.route("/predict", methods=["POST"])
+# def predict():
+#     if "image" not in request.files:
+#         return jsonify({"error": "Không có ảnh"}), 400
+
+#     image_file = request.files["image"]
+
+#     filename = f"{uuid.uuid4().hex}.jpg"
+#     img_path = os.path.join(UPLOAD_FOLDER, filename)
+#     image_file.save(img_path)
+
+#     results = model(img_path, verbose=False)[0]
+
+#     if results.boxes is None or len(results.boxes) == 0:
+#         os.remove(img_path)
+#         return jsonify({
+#             "score": 0,
+#             "detected": [],
+#             "missing": list(REQUIRED.values()),
+#             "position_errors": ["Không detect được bộ phận nào"]
+#         })
+#     detected_classes = list(set([results.names[int(cls)] for cls in results.boxes.cls]))
+#     #detected_classes = [int(c) for c in results.boxes.cls.cpu().numpy()]
+#     boxes_xyxy = results.boxes.xyxy.cpu().numpy().tolist()
+#     detected = []
+#     for name in detected_classes:
+#         if name in REQUIRED.values():
+#             detected.append(name)
+#     boxes = {}
+#     for cid, box in zip(detected_classes, boxes_xyxy):
+#         name = REQUIRED.get(cid)
+#         if name and name not in boxes:
+#             boxes[name] = box
+
+#     missing = [name for name in REQUIRED.values() if name not in detected]
+#     position_errors = check_position(boxes)
+
+#     score = 10 - len(missing) * 2 - len(position_errors) * 2
+#     score = max(0, round(score, 1))
+
+
+#     os.remove(img_path)
+
+#     return jsonify({
+#         "score": score,
+#         "detected": detected,
+#         "missing": missing,
+#         "position_errors": position_errors
+#     })
+@app.route("/predict", methods=["POST"])
 def predict():
     if "image" not in request.files:
         return jsonify({"error": "Không có ảnh"}), 400
@@ -71,7 +173,7 @@ def predict():
             "position_errors": ["Không detect được bộ phận nào"]
         })
 
-    detected_classes = [int(c) for c in results.boxes.cls.cpu().numpy()]
+    detected_classes = list(set([results.names[int(cls)] for cls in results.boxes.cls]))
     boxes_xyxy = results.boxes.xyxy.cpu().numpy().tolist()
 
     boxes = {}
@@ -80,23 +182,22 @@ def predict():
         if name and name not in boxes:
             boxes[name] = box
 
-    missing = [name for name in REQUIRED.values() if name not in boxes]
     position_errors = check_position(boxes)
 
-    score = 10 - len(missing) * 1 - len(position_errors) * 1
-    score = max(0, round(score, 1))
+    detected = [name for name in detected_classes if name in REQUIRED.values()]
+    missing = [name for name in REQUIRED.values() if name not in detected]
 
+    score = 10 - len(missing) * 1.5 - len(position_errors) * 2
+    score = max(0, round(score, 1))
 
     os.remove(img_path)
 
     return jsonify({
         "score": score,
-        "detected": list(boxes.keys()),
+        "detected": detected,
         "missing": missing,
         "position_errors": position_errors
     })
-
-
 
 
 # phong canh cua binh kun va lac kun
@@ -147,6 +248,30 @@ def predict_scenery():
         "detected": detected,
         "missing": missing,
         "position_errors": []
+     
+
+    })
+@app.route("/classify", methods=["POST"])
+def classify():
+    if "image" not in request.files:
+        return jsonify({"error": "Không có ảnh"}), 400
+
+    image_file = request.files["image"]
+
+    filename = f"{uuid.uuid4().hex}.jpg"
+    img_path = os.path.join(UPLOAD_FOLDER, filename)
+    image_file.save(img_path)
+
+    try:
+        loai_anh = classify_image(img_path)
+    except Exception as e:
+        os.remove(img_path)
+        return jsonify({"error": str(e)}), 500
+
+    os.remove(img_path)
+
+    return jsonify({
+        "type": loai_anh
     })
 
 
