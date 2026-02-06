@@ -4,6 +4,13 @@ from ultralytics import YOLO
 import os
 import uuid
 
+
+
+
+
+RESULT_FOLDER = "static/results"
+os.makedirs(RESULT_FOLDER, exist_ok=True)
+
 # phan loai anh
 import cv2
 import numpy as np
@@ -163,6 +170,7 @@ def predict():
     image_file.save(img_path)
 
     results = model(img_path, verbose=False)[0]
+    boxed_img = results.plot()  
 
     if results.boxes is None or len(results.boxes) == 0:
         os.remove(img_path)
@@ -173,6 +181,10 @@ def predict():
             "position_errors": ["Không detect được bộ phận nào"]
         })
 
+    # bouding box
+    boxed_name = f"boxed_{filename}"
+    boxed_path = os.path.join(RESULT_FOLDER, boxed_name)
+    cv2.imwrite(boxed_path, boxed_img)
     detected_classes = list(set([results.names[int(cls)] for cls in results.boxes.cls]))
     boxes_xyxy = results.boxes.xyxy.cpu().numpy().tolist()
 
@@ -196,7 +208,8 @@ def predict():
         "score": score,
         "detected": detected,
         "missing": missing,
-        "position_errors": position_errors
+        "position_errors": position_errors,
+         "boxed_image": f"/static/results/{boxed_name}"
     })
 
 
@@ -220,7 +233,10 @@ def predict_scenery():
     image_file.save(img_path)
 
     results = scenery_model(img_path, verbose=False)[0]
-
+    boxed_img = results.plot()
+    boxed_name = f"boxed_{filename}"
+    boxed_path = os.path.join(RESULT_FOLDER, boxed_name)
+    cv2.imwrite(boxed_path, boxed_img)
     if results.boxes is None or len(results.boxes) == 0:
         os.remove(img_path)
         return jsonify({
@@ -247,7 +263,8 @@ def predict_scenery():
         "score": score,
         "detected": detected,
         "missing": missing,
-        "position_errors": []
+        "position_errors": [],
+        "boxed_image": f"/static/results/{boxed_name}"
      
 
     })
