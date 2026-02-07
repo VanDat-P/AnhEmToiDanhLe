@@ -1,0 +1,150 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+
+    background: linear-gradient(135deg, #e0f7fa 0%, #e1f5fe 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.main-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 450px;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 119, 182, 0.15);
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.main-card:hover {
+    transform: translateY(-5px);
+}
+
+
+.icon-wrapper {
+    font-size: 40px;
+    margin-bottom: 10px;
+}
+
+h2 {
+    color: #023e8a;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    color: #90e0ef;
+    color: #6c757d;
+    font-size: 14px;
+    margin-bottom: 30px;
+}
+
+
+.upload-box {
+    margin-bottom: 20px;
+}
+
+input[type="file"] {
+
+    width: 100%;
+    padding: 10px;
+    background: #f8f9fa;
+    border: 2px dashed #caf0f8;
+    border-radius: 10px;
+    color: #555;
+    cursor: pointer;
+}
+
+input[type="file"]:hover {
+    background: #f0faff;
+    border-color: #00b4d8;
+}
+
+
+.btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(45deg, #0077b6, #00b4d8);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 119, 182, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(45deg, #023e8a, #0096c7);
+    box-shadow: 0 6px 20px rgba(0, 119, 182, 0.4);
+    transform: scale(1.02);
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+
+.result-container {
+    margin-top: 25px;
+    min-height: 50px;
+    padding: 15px;
+    background: #f1fcfc;
+    border-radius: 10px;
+    border: 1px solid #caf0f8;
+    color: #0077b6;
+}
+
+.placeholder-text {
+    font-size: 13px;
+    color: #aaa;
+    font-style: italic;
+}
+
+#preview {
+    margin-left: auto;
+    margin-right: auto;
+
+
+}
+
+#back {
+    border: none;
+    border-radius: 10px;
+    background-color: rgb(15, 179, 15);
+    width: 370px;
+    height: 53px;
+    padding: 14px;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: 300;
+
+}
+
+#back:hover {
+    background-color: rgb(24, 128, 24);
+}
+.score-img {
+    width: 120x;
+    height: 120px;
+
+    object-fit: cover;  
+    border-radius: 50%;  
+
+    display: block;
+    margin: 10px auto;
+
+    border: 2px solid #4da3ff; 
+}

@@ -109,55 +109,7 @@ def check_position(boxes):
     return errors
 
 
-@app.route("/predict", methods=["POST"])
-# def predict():
-#     if "image" not in request.files:
-#         return jsonify({"error": "Không có ảnh"}), 400
 
-#     image_file = request.files["image"]
-
-#     filename = f"{uuid.uuid4().hex}.jpg"
-#     img_path = os.path.join(UPLOAD_FOLDER, filename)
-#     image_file.save(img_path)
-
-#     results = model(img_path, verbose=False)[0]
-
-#     if results.boxes is None or len(results.boxes) == 0:
-#         os.remove(img_path)
-#         return jsonify({
-#             "score": 0,
-#             "detected": [],
-#             "missing": list(REQUIRED.values()),
-#             "position_errors": ["Không detect được bộ phận nào"]
-#         })
-#     detected_classes = list(set([results.names[int(cls)] for cls in results.boxes.cls]))
-#     #detected_classes = [int(c) for c in results.boxes.cls.cpu().numpy()]
-#     boxes_xyxy = results.boxes.xyxy.cpu().numpy().tolist()
-#     detected = []
-#     for name in detected_classes:
-#         if name in REQUIRED.values():
-#             detected.append(name)
-#     boxes = {}
-#     for cid, box in zip(detected_classes, boxes_xyxy):
-#         name = REQUIRED.get(cid)
-#         if name and name not in boxes:
-#             boxes[name] = box
-
-#     missing = [name for name in REQUIRED.values() if name not in detected]
-#     position_errors = check_position(boxes)
-
-#     score = 10 - len(missing) * 2 - len(position_errors) * 2
-#     score = max(0, round(score, 1))
-
-
-#     os.remove(img_path)
-
-#     return jsonify({
-#         "score": score,
-#         "detected": detected,
-#         "missing": missing,
-#         "position_errors": position_errors
-#     })
 @app.route("/predict", methods=["POST"])
 def predict():
     if "image" not in request.files:
