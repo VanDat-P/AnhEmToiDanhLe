@@ -9,25 +9,6 @@
 </head>
 <body>
 
-    <!-- CARD CHỌN LOẠI
-    <div class="main-card" id="select-type-card">
-        <div class="header">
-            <div class="icon-wrapper">🖼️</div>
-            <h2>Bạn muốn chấm loại tranh nào?</h2>
-            <p class="subtitle">Hãy chọn một loại để bắt đầu</p>
-        </div>
-
-        <div class="content" style="display:flex; gap:20px; justify-content:center;">
-            <button class="btn-primary" id="btn-portrait" >
-                🧑 chân dung
-            </button>
-            <button class="btn-primary" id="btn-scenery">
-                🌄 phong cảnh
-            </button>
-        </div>
-    </div> -->
-
-    <!-- CARD CHẤM ĐIỂM (GIAO DIỆN CŨ) -->
     <div class="main-card" id="grading-card" >
         <div class="header">
             <div class="icon-wrapper">🎨</div>
@@ -47,16 +28,15 @@
             <button id="submit" type="button" class="btn-primary">
                 Bắt đầu chấm điểm nhé!
             </button>
-            <button id="back" class="btn-secondary" style="margin-top:10px;">
-                    🔙 Chọn lại loại tranh
+            
+            <button id="reset-btn" class="btn-secondary" style="margin-top:10px;">
+                    🔄 Chấm bức tranh khác
             </button>
 
             <img id="preview" style="max-width:300px; display:none; margin-top:10px;">
 
             <div id="result" class="result-container">
                 <span class="placeholder-text">Kết quả của bạn sẽ là gì đây nào?...</span>
-                <p id="comment"></p>
-                <img id="commentImg">
             </div>
         </div>
     </div>
