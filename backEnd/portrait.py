@@ -8,7 +8,7 @@ import numpy as np
 
 app = Flask(__name__)
 CORS(app)
-REQUIRED = ["eye", "eyebrow", "nose", "mouth"]
+REQUIRED = ["eye", "eyebrow", "nose", "mouth", "face", "ear", "hair"]
 SCENERY_REQUIRED = ["house", "tree", "sun"]
 
 model = YOLO("portrait.pt")
@@ -126,163 +126,319 @@ def luat_xa_gan_va_quy_tac_1_3(boxes_dict, img_w, img_h):
         else: nhan_xet.append("Ngôi nhà đặt lệch tạo quy tắc 1/3 rất nghệ thuật, đáng khen đó bảo bối.")
     return nhan_xet
 
-@app.route("/")
-def home():
-    return render_template("portrait.html")
-
 @app.route("/classify", methods=["POST"])
 def classify():
-    if "image" not in request.files: return jsonify({"error": "Không có ảnh"}), 400
-    img_path = os.path.join(UPLOAD_FOLDER, f"{uuid.uuid4().hex}.jpg")
-    request.files["image"].save(img_path)
-    loai_anh = classify_image(img_path)
-    os.remove(img_path)
-    return jsonify({"type": loai_anh})
-
+    if "image" not in request.files: 
+        return jsonify({"error": "Không có ảnh"}), 400
+    
+    img_path = None
+    try:
+        img_path = os.path.join(UPLOAD_FOLDER, f"{uuid.uuid4().hex}.jpg")
+        request.files["image"].save(img_path)
+        
+        # BƯỚC 1: DÙNG MODEL PHÂN LOẠI
+        loai_anh = classify_image(img_path)
+        
+        # Nếu model phân loại trả về Unknown (do confidence thấp)
+        if loai_anh == "Unknown":
+            return jsonify({
+                "type": "Unknown",
+                "message": "Ảnh của em không phải chân dung hoặc phong cảnh rõ ràng. Em hãy chụp lại bài vẽ của mình nhé!"
+            }), 200
+        
+        # BƯỚC 2: KIỂM TRA BẰNG YOLO - CHỈ VỚI CHÂN DUNG
+        if loai_anh == "ChanDung":
+            # Dùng model portrait để kiểm tra
+            results = model(img_path, verbose=False)[0]
+            
+            # Đếm số lượng object phát hiện được trong 7 object
+            detected_objects = []
+            
+            for box in results.boxes:
+                cls_id = int(box.cls[0])
+                raw_name = str(results.names[cls_id]).strip().lower()
+                
+                # Kiểm tra từng object trong 7 object
+                if "eyebrow" in raw_name:
+                    detected_objects.append("eyebrow")
+                elif "eye" in raw_name:
+                    detected_objects.append("eye")
+                elif "nose" in raw_name:
+                    detected_objects.append("nose")
+                elif "mouth" in raw_name:
+                    detected_objects.append("mouth")
+                elif "face" in raw_name:
+                    detected_objects.append("face")
+                elif "ear" in raw_name:
+                    detected_objects.append("ear")
+                elif "hair" in raw_name:
+                    detected_objects.append("hair")
+            
+            # Loại bỏ trùng lặp (ví dụ phát hiện 2 mắt)
+            unique_detected = list(set(detected_objects))
+            total_detected = len(unique_detected)
+            
+            print(f"YOLO phát hiện trong ảnh chân dung: {unique_detected}")
+            print(f"Tổng số object phát hiện: {total_detected}")
+            
+            # KIỂM TRA: Cần ít nhất 3 object trong 7 object
+            if total_detected < 3:
+                print(f"⚠️ Chỉ phát hiện {total_detected} object, cần ít nhất 3")
+                return jsonify({
+                    "type": "Unknown",
+                    "message": f"Ảnh có vẻ là chân dung nhưng chỉ thấy {total_detected} chi tiết. Em hãy vẽ thêm mắt, mũi, miệng, tai, tóc cho rõ nét nhé!"
+                }), 200
+                
+        else:  # PhongCanh - giữ nguyên kiểm tra như cũ
+            # Dùng model scenery để kiểm tra
+            results = scenery_model(img_path, verbose=False)[0]
+            
+            # Đếm số lượng object phát hiện được
+            boxes_dict = {name: [] for name in SCENERY_REQUIRED}
+            
+            for box in results.boxes:
+                cls_id = int(box.cls[0])
+                raw_name = str(results.names[cls_id]).strip().lower()
+                
+                if "house" in raw_name:
+                    boxes_dict["house"].append(box)
+                elif "tree" in raw_name:
+                    boxes_dict["tree"].append(box)
+                elif "sun" in raw_name:
+                    boxes_dict["sun"].append(box)
+            
+            detected = [k for k, v in boxes_dict.items() if len(v) > 0]
+            
+            print(f"YOLO phát hiện trong ảnh phong cảnh: {detected}")
+            
+            # KIỂM TRA: Cần ít nhất 2 trong 3 object (house, tree, sun)
+            if len(detected) < 2:
+                print(f"⚠️ Chỉ phát hiện {len(detected)} object, cần ít nhất 2")
+                return jsonify({
+                    "type": "Unknown",
+                    "message": "Ảnh có vẻ là phong cảnh nhưng các chi tiết chưa rõ. Em hãy vẽ thêm nhà, cây hoặc ông mặt trời nhé!"
+                }), 200
+        
+        # Nếu qua được cả 2 bước kiểm tra
+        if img_path and os.path.exists(img_path):
+            os.remove(img_path)
+            
+        return jsonify({"type": loai_anh})
+        
+    except Exception as e:
+        print("Lỗi classify:", str(e))
+        if img_path and os.path.exists(img_path):
+            os.remove(img_path)
+            
+        return jsonify({
+            "type": "Unknown",
+            "message": "Có lỗi xảy ra khi xử lý ảnh. Vui lòng thử lại!"
+        }), 200
+            
 @app.route("/predict", methods=["POST"])
 def predict():
-    if "image" not in request.files: return jsonify({"error": "Không có ảnh"}), 400
-    filename = f"{uuid.uuid4().hex}.jpg"
-    img_path = os.path.join(UPLOAD_FOLDER, filename)
-    request.files["image"].save(img_path)
-    penalty = float(request.form.get("penalty", 1))
-    print("🔥 PENALTY NHẬN ĐƯỢC:", penalty)
-    img_cv = cv2.imread(img_path)
-    img_h, img_w, _ = img_cv.shape
-    results = model(img_path, verbose=False)[0]
-    boxed_name = f"boxed_{filename}"
-    cv2.imwrite(os.path.join(RESULT_FOLDER, boxed_name), results.plot())
-
-    if not results.boxes:
-        os.remove(img_path)
-        return jsonify({"score": 0, "missing": REQUIRED, "loi_khuyen_giao_vien": ["Chưa thấy khuôn mặt, em đồ lại nét cho đậm hơn xem sao?"]})
-
-    cls_ids = [int(cls) for cls in results.boxes.cls.cpu().numpy()]
-    boxes_xyxy = results.boxes.xyxy.cpu().numpy().tolist()
+    if "image" not in request.files: 
+        return jsonify({"error": "Không có ảnh"}), 400
     
-    boxes_dict = {name: [] for name in REQUIRED}
+    filename = None
+    img_path = None
     
-    print("\n--- [DEBUG] BẮT ĐẦU CHẤM ẢNH ---")
-    for cid, box in zip(cls_ids, boxes_xyxy):
-        goc = str(results.names[cid])
-        raw_name = goc.strip().lower()
-        print(f"🔍 YOLO đọc được chữ: '{goc}'")
+    try:
+        filename = f"{uuid.uuid4().hex}.jpg"
+        img_path = os.path.join(UPLOAD_FOLDER, filename)
+        request.files["image"].save(img_path)
+        penalty = float(request.form.get("penalty", 1))
+        print("🔥 PENALTY NHẬN ĐƯỢC:", penalty)
         
-        if "eyebrow" in raw_name:
-            boxes_dict["eyebrow"].append(box)
-        elif "eye" in raw_name:
-            boxes_dict["eye"].append(box)
-        elif "nose" in raw_name:
-            boxes_dict["nose"].append(box)
-        elif "mouth" in raw_name:
-            boxes_dict["mouth"].append(box)
+        img_cv = cv2.imread(img_path)
+        if img_cv is None:
+            raise Exception("Không thể đọc ảnh")
+            
+        img_h, img_w, _ = img_cv.shape
+        results = model(img_path, verbose=False)[0]
+        boxed_name = f"boxed_{filename}"
+        cv2.imwrite(os.path.join(RESULT_FOLDER, boxed_name), results.plot())
 
-    detected = [k for k, v in boxes_dict.items() if len(v) > 0]
-    missing = [k for k in REQUIRED if k not in detected]
-    
-    print(f"✅ Code đã chốt Phát hiện có: {detected}")
-    print(f"❌ Code báo Thiếu: {missing}")
-    print("--------------------------------\n")
-    
-    loi_bo_cuc = kiem_tra_bo_cuc_tong_the(boxes_xyxy, img_w, img_h)
-    loi_ty_le = luat_ty_le_chan_dung(boxes_dict)
-    
-    loi_khuyen = []
-    if "hair" not in detected and "ear" not in detected:
-        loi_khuyen.append("Gợi ý: Khuôn mặt sẽ hoàn hảo hơn nếu em vẽ thêm phần viền khuôn mặt, tóc vành tai.")
-    if missing:
-        loi_khuyen.append(f"Em nhớ bổ sung các bộ phận còn thiếu nhé: {', '.join(missing)}.")
+        if not results.boxes:
+            if img_path and os.path.exists(img_path):
+                os.remove(img_path)
+            return jsonify({
+                "score": 0, 
+                "missing": REQUIRED, 
+                "loi_khuyen_giao_vien": ["Chưa thấy khuôn mặt, em đồ lại nét cho đậm hơn xem sao?"],
+                "detected": [],
+                "nhan_xet_bo_cuc": ["Tranh trống hoặc nét mờ quá, thầy/cô không chấm được bố cục."],
+                "nhan_xet_ty_le": []
+            })
 
-    # score = 10 - len(missing) * 1.5 - len(loi_ty_le) * 1 - (1 if "Lỗi" in loi_bo_cuc[0] else 0)
-    score = 10 \
-        - len(missing) * (1.5 * penalty) \
-        - len(loi_ty_le) * (1 * penalty) \
-        - ((1 * penalty) if "Lỗi" in loi_bo_cuc[0] else 0)
+        cls_ids = [int(cls) for cls in results.boxes.cls.cpu().numpy()]
+        boxes_xyxy = results.boxes.xyxy.cpu().numpy().tolist()
+        
+        boxes_dict = {name: [] for name in REQUIRED}
+        
+        print("\n--- [DEBUG] BẮT ĐẦU CHẤM ẢNH ---")
+        for cid, box in zip(cls_ids, boxes_xyxy):
+            goc = str(results.names[cid])
+            raw_name = goc.strip().lower()
+            print(f"🔍 YOLO đọc được chữ: '{goc}'")
+            
+            if "eyebrow" in raw_name:
+                boxes_dict["eyebrow"].append(box)
+            elif "eye" in raw_name:
+                boxes_dict["eye"].append(box)
+            elif "nose" in raw_name:
+                boxes_dict["nose"].append(box)
+            elif "mouth" in raw_name:
+                boxes_dict["mouth"].append(box)
 
-    os.remove(img_path)
-    return jsonify({
-        "score": max(0, min(10, round(score, 1))),
-        "detected": detected,
-        "missing": missing,
-        "nhan_xet_bo_cuc": loi_bo_cuc,
-        "nhan_xet_ty_le": loi_ty_le,
-        "loi_khuyen_giao_vien": loi_khuyen if loi_khuyen else ["Tranh em vẽ rất tốt, không có gì để chê!"],
-        "boxed_image": f"/static/results/{boxed_name}"
-    })
+        detected = [k for k, v in boxes_dict.items() if len(v) > 0]
+        missing = [k for k in REQUIRED if k not in detected]
+        
+        print(f"✅ Code đã chốt Phát hiện có: {detected}")
+        print(f"❌ Code báo Thiếu: {missing}")
+        print("--------------------------------\n")
+        
+        loi_bo_cuc = kiem_tra_bo_cuc_tong_the(boxes_xyxy, img_w, img_h)
+        loi_ty_le = luat_ty_le_chan_dung(boxes_dict)
+        
+        loi_khuyen = []
+        if "hair" not in detected and "ear" not in detected:
+            loi_khuyen.append("Gợi ý: Khuôn mặt sẽ hoàn hảo hơn nếu em vẽ thêm phần viền khuôn mặt, tóc vành tai.")
+        if missing:
+            loi_khuyen.append(f"Em nhớ bổ sung các bộ phận còn thiếu nhé: {', '.join(missing)}.")
+
+        score = 10 \
+            - len(missing) * (1.5 * penalty) \
+            - len(loi_ty_le) * (1 * penalty) \
+            - ((1 * penalty) if "Lỗi" in loi_bo_cuc[0] else 0)
+
+        if img_path and os.path.exists(img_path):
+            os.remove(img_path)
+            
+        return jsonify({
+            "score": max(0, min(10, round(score, 1))),
+            "detected": detected,
+            "missing": missing,
+            "nhan_xet_bo_cuc": loi_bo_cuc,
+            "nhan_xet_ty_le": loi_ty_le,
+            "loi_khuyen_giao_vien": loi_khuyen if loi_khuyen else ["Tranh em vẽ rất tốt, không có gì để chê!"],
+            "boxed_image": f"/static/results/{boxed_name}"
+        })
+        
+    except Exception as e:
+        print("Lỗi predict:", str(e))
+        if img_path and os.path.exists(img_path):
+            os.remove(img_path)
+        return jsonify({
+            "score": 0,
+            "detected": [],
+            "missing": REQUIRED,
+            "nhan_xet_bo_cuc": ["Có lỗi xảy ra khi xử lý ảnh."],
+            "nhan_xet_ty_le": [],
+            "loi_khuyen_giao_vien": ["Xin lỗi, đã có lỗi xảy ra. Em vui lòng thử lại với ảnh khác nhé!"]
+        }), 200
 
 @app.route("/predict_scenery", methods=["POST"])
 def predict_scenery():
-    if "image" not in request.files: return jsonify({"error": "Không có ảnh"}), 400
-    filename = f"{uuid.uuid4().hex}.jpg"
-    img_path = os.path.join(UPLOAD_FOLDER, filename)
-    request.files["image"].save(img_path)
-    penalty = float(request.form.get("penalty", 1))
-    print("🔥 PENALTY NHẬN ĐƯỢC:", penalty)
-    img_cv = cv2.imread(img_path)
-    img_h, img_w, _ = img_cv.shape
-    results = scenery_model(img_path, verbose=False)[0]
-    boxed_name = f"boxed_{filename}"
-    cv2.imwrite(os.path.join(RESULT_FOLDER, boxed_name), results.plot())
-
-    if not results.boxes:
-        os.remove(img_path)
-        return jsonify({"score": 0, "missing": SCENERY_REQUIRED, "loi_khuyen_giao_vien": ["Tranh trống quá, em thử vẽ thêm nhà và cây đi cục dàng!"]})
-
-    cls_ids = [int(cls) for cls in results.boxes.cls.cpu().numpy()]
-    boxes_xyxy = results.boxes.xyxy.cpu().numpy().tolist()
+    if "image" not in request.files: 
+        return jsonify({"error": "Không có ảnh"}), 400
     
-    boxes_dict = {name: [] for name in SCENERY_REQUIRED}
-    for cid, box in zip(cls_ids, boxes_xyxy):
-        goc = str(results.names[cid])
-        raw_name = goc.strip().lower()
+    filename = None
+    img_path = None
+    
+    try:
+        filename = f"{uuid.uuid4().hex}.jpg"
+        img_path = os.path.join(UPLOAD_FOLDER, filename)
+        request.files["image"].save(img_path)
+        penalty = float(request.form.get("penalty", 1))
+        print("🔥 PENALTY NHẬN ĐƯỢC:", penalty)
         
-        if "house" in raw_name:
-            boxes_dict["house"].append(box)
-        elif "tree" in raw_name:
-            boxes_dict["tree"].append(box)
-        elif "sun" in raw_name:
-            boxes_dict["sun"].append(box)
+        img_cv = cv2.imread(img_path)
+        if img_cv is None:
+            raise Exception("Không thể đọc ảnh")
+            
+        img_h, img_w, _ = img_cv.shape
+        results = scenery_model(img_path, verbose=False)[0]
+        boxed_name = f"boxed_{filename}"
+        cv2.imwrite(os.path.join(RESULT_FOLDER, boxed_name), results.plot())
 
-    detected = [k for k, v in boxes_dict.items() if len(v) > 0]
-    missing = [v for v in SCENERY_REQUIRED if v not in detected]
-    
-    loi_khuyen = []
-    if "house" not in detected:
-        loi_khuyen.append("Em thiếu mất ngôi nhà rồi huhu, đây là điểm nhấn quan trọng nhất của tranh phong cảnh đó.")
-    if "tree" not in detected:
-        loi_khuyen.append("Thêm một vài bóng cây xanh sẽ giúp bức tranh có sức sống hơn rất nhiều.")
-    if "sun" not in detected:
-        loi_khuyen.append("Bầu trời hơi trống, em thử vẽ thêm ông mặt trời, mây và chim xem sao nha cục dàng.")
-    if len(detected) == 3:
-        loi_khuyen.append("Tranh của em rất đầy đủ chi tiết! Nếu muốn xuất sắc hơn, có thể điểm thêm bãi cỏ hoặc đàn chim lững lờ trôi nhé.")
+        if not results.boxes:
+            if img_path and os.path.exists(img_path):
+                os.remove(img_path)
+            return jsonify({
+                "score": 0, 
+                "missing": SCENERY_REQUIRED, 
+                "loi_khuyen_giao_vien": ["Tranh trống quá, em thử vẽ thêm nhà và cây đi cục dàng!"],
+                "detected": [],
+                "nhan_xet_bo_cuc": ["Tranh trống hoặc nét mờ quá, thầy/cô không chấm được bố cục."],
+                "nhan_xet_mau_sac": "",
+                "nhan_xet_nghe_thuat": []
+            })
 
-    loi_bo_cuc = kiem_tra_bo_cuc_tong_the(boxes_xyxy, img_w, img_h)
-    
-    # score = (4 if "house" in detected else 0) + (4 if "tree" in detected else 0) + (2 if "sun" in detected else 0)
-    # if "Lỗi" in loi_bo_cuc[0]: score -= 1.5
-    score = (4 if "house" in detected else 0) \
-      + (4 if "tree" in detected else 0) \
-      + (2 if "sun" in detected else 0)
+        cls_ids = [int(cls) for cls in results.boxes.cls.cpu().numpy()]
+        boxes_xyxy = results.boxes.xyxy.cpu().numpy().tolist()
+        
+        boxes_dict = {name: [] for name in SCENERY_REQUIRED}
+        for cid, box in zip(cls_ids, boxes_xyxy):
+            goc = str(results.names[cid])
+            raw_name = goc.strip().lower()
+            
+            if "house" in raw_name:
+                boxes_dict["house"].append(box)
+            elif "tree" in raw_name:
+                boxes_dict["tree"].append(box)
+            elif "sun" in raw_name:
+                boxes_dict["sun"].append(box)
 
-    if "Lỗi" in loi_bo_cuc[0]:
-        score -= 1.5 * penalty
-    
-    os.remove(img_path)
-    return jsonify({
-        "score": max(0, min(10, round(score, 1))),
-        "detected": detected,
-        "missing": missing,
-        "nhan_xet_bo_cuc": loi_bo_cuc,
-        "nhan_xet_mau_sac": phan_tich_mau_sac(img_cv),
-        "nhan_xet_nghe_thuat": luat_xa_gan_va_quy_tac_1_3(boxes_dict, img_w, img_h),
-        "loi_khuyen_giao_vien": loi_khuyen,
-        "boxed_image": f"/static/results/{boxed_name}"
-    })
+        detected = [k for k, v in boxes_dict.items() if len(v) > 0]
+        missing = [v for v in SCENERY_REQUIRED if v not in detected]
+        
+        loi_khuyen = []
+        if "house" not in detected:
+            loi_khuyen.append("Em thiếu mất ngôi nhà rồi huhu, đây là điểm nhấn quan trọng nhất của tranh phong cảnh đó.")
+        if "tree" not in detected:
+            loi_khuyen.append("Thêm một vài bóng cây xanh sẽ giúp bức tranh có sức sống hơn rất nhiều.")
+        if "sun" not in detected:
+            loi_khuyen.append("Bầu trời hơi trống, em thử vẽ thêm ông mặt trời, mây và chim xem sao nha cục dàng.")
+        if len(detected) == 3:
+            loi_khuyen.append("Tranh của em rất đầy đủ chi tiết! Nếu muốn xuất sắc hơn, có thể điểm thêm bãi cỏ hoặc đàn chim lững lờ trôi nhé.")
+
+        loi_bo_cuc = kiem_tra_bo_cuc_tong_the(boxes_xyxy, img_w, img_h)
+        
+        score = (4 if "house" in detected else 0) \
+          + (4 if "tree" in detected else 0) \
+          + (2 if "sun" in detected else 0)
+
+        if "Lỗi" in loi_bo_cuc[0]:
+            score -= 1.5 * penalty
+        
+        if img_path and os.path.exists(img_path):
+            os.remove(img_path)
+            
+        return jsonify({
+            "score": max(0, min(10, round(score, 1))),
+            "detected": detected,
+            "missing": missing,
+            "nhan_xet_bo_cuc": loi_bo_cuc,
+            "nhan_xet_mau_sac": phan_tich_mau_sac(img_cv),
+            "nhan_xet_nghe_thuat": luat_xa_gan_va_quy_tac_1_3(boxes_dict, img_w, img_h),
+            "loi_khuyen_giao_vien": loi_khuyen,
+            "boxed_image": f"/static/results/{boxed_name}"
+        })
+        
+    except Exception as e:
+        print("Lỗi predict_scenery:", str(e))
+        if img_path and os.path.exists(img_path):
+            os.remove(img_path)
+        return jsonify({
+            "score": 0,
+            "detected": [],
+            "missing": SCENERY_REQUIRED,
+            "nhan_xet_bo_cuc": ["Có lỗi xảy ra khi xử lý ảnh."],
+            "nhan_xet_mau_sac": "",
+            "nhan_xet_nghe_thuat": [],
+            "loi_khuyen_giao_vien": ["Xin lỗi, đã có lỗi xảy ra. Em vui lòng thử lại với ảnh khác nhé!"]
+        }), 200
 
 if __name__ == "__main__":
     app.run(debug=False)
-
-
-
-
-    
