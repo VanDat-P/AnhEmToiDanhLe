@@ -8,28 +8,48 @@ import numpy as np
 
 app = Flask(__name__)
 CORS(app)
-
-RESULT_FOLDER = "static/results"
-UPLOAD_FOLDER = "uploads"
-os.makedirs(RESULT_FOLDER, exist_ok=True)
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-model = YOLO("portrait.pt")
-scenery_model = YOLO("landscape.pt")
-
-REQUIRED = ["eyebrow", "eye", "nose", "mouth"]
+REQUIRED = ["eye", "eyebrow", "nose", "mouth"]
 SCENERY_REQUIRED = ["house", "tree", "sun"]
 
-def classify_image_yolo(img_path):
-    p_res = model(img_path, verbose=False)[0]
-    if len(p_res.boxes) > 0:
-        return "ChanDung"
-    
-    s_res = scenery_model(img_path, verbose=False)[0]
-    if len(s_res.boxes) > 0:
-        return "PhongCanh"
-        
-    return "ChanDung" 
+model = YOLO("best_portrait.pt")
+scenery_model = YOLO("best_scenery.pt")
+
+RESULT_FOLDER = "static/results"
+os.makedirs(RESULT_FOLDER, exist_ok=True)
+UPLOAD_FOLDER = "static/uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# phan loai anh
+import cv2
+import numpy as np
+from tensorflow.keras.models import load_model
+
+# phanloaianh
+
+clf_model = load_model("phanLoaiAnh.h5")
+CLASSES = ["ChanDung", "PhongCanh"]
+def classify_image(img_path):
+
+    img = cv2.imread(img_path)
+
+    # thêm dòng này
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+    size = clf_model.input_shape[1]
+
+    img = cv2.resize(img, (size, size))
+    img = img / 255.0
+    img = np.expand_dims(img, axis=0)
+
+    pred = clf_model.predict(img)[0]
+
+    print("Prediction:", pred)
+
+    class_id = np.argmax(pred)
+
+    print("Class:", CLASSES[class_id])
+
+    return CLASSES[class_id]
+
 
 def get_center(box):
     return ((box[0] + box[2]) / 2, (box[1] + box[3]) / 2)
@@ -115,7 +135,7 @@ def classify():
     if "image" not in request.files: return jsonify({"error": "Không có ảnh"}), 400
     img_path = os.path.join(UPLOAD_FOLDER, f"{uuid.uuid4().hex}.jpg")
     request.files["image"].save(img_path)
-    loai_anh = classify_image_yolo(img_path)
+    loai_anh = classify_image(img_path)
     os.remove(img_path)
     return jsonify({"type": loai_anh})
 
@@ -125,7 +145,8 @@ def predict():
     filename = f"{uuid.uuid4().hex}.jpg"
     img_path = os.path.join(UPLOAD_FOLDER, filename)
     request.files["image"].save(img_path)
-
+    penalty = float(request.form.get("penalty", 1))
+    print("🔥 PENALTY NHẬN ĐƯỢC:", penalty)
     img_cv = cv2.imread(img_path)
     img_h, img_w, _ = img_cv.shape
     results = model(img_path, verbose=False)[0]
@@ -172,8 +193,12 @@ def predict():
     if missing:
         loi_khuyen.append(f"Em nhớ bổ sung các bộ phận còn thiếu nhé: {', '.join(missing)}.")
 
-    score = 10 - len(missing) * 1.5 - len(loi_ty_le) * 1 - (1 if "Lỗi" in loi_bo_cuc[0] else 0)
-    
+    # score = 10 - len(missing) * 1.5 - len(loi_ty_le) * 1 - (1 if "Lỗi" in loi_bo_cuc[0] else 0)
+    score = 10 \
+        - len(missing) * (1.5 * penalty) \
+        - len(loi_ty_le) * (1 * penalty) \
+        - ((1 * penalty) if "Lỗi" in loi_bo_cuc[0] else 0)
+
     os.remove(img_path)
     return jsonify({
         "score": max(0, min(10, round(score, 1))),
@@ -191,7 +216,8 @@ def predict_scenery():
     filename = f"{uuid.uuid4().hex}.jpg"
     img_path = os.path.join(UPLOAD_FOLDER, filename)
     request.files["image"].save(img_path)
-
+    penalty = float(request.form.get("penalty", 1))
+    print("🔥 PENALTY NHẬN ĐƯỢC:", penalty)
     img_cv = cv2.imread(img_path)
     img_h, img_w, _ = img_cv.shape
     results = scenery_model(img_path, verbose=False)[0]
@@ -232,8 +258,14 @@ def predict_scenery():
 
     loi_bo_cuc = kiem_tra_bo_cuc_tong_the(boxes_xyxy, img_w, img_h)
     
-    score = (4 if "house" in detected else 0) + (4 if "tree" in detected else 0) + (2 if "sun" in detected else 0)
-    if "Lỗi" in loi_bo_cuc[0]: score -= 1.5
+    # score = (4 if "house" in detected else 0) + (4 if "tree" in detected else 0) + (2 if "sun" in detected else 0)
+    # if "Lỗi" in loi_bo_cuc[0]: score -= 1.5
+    score = (4 if "house" in detected else 0) \
+      + (4 if "tree" in detected else 0) \
+      + (2 if "sun" in detected else 0)
+
+    if "Lỗi" in loi_bo_cuc[0]:
+        score -= 1.5 * penalty
     
     os.remove(img_path)
     return jsonify({
@@ -249,3 +281,8 @@ def predict_scenery():
 
 if __name__ == "__main__":
     app.run(debug=False)
+
+
+
+
+    

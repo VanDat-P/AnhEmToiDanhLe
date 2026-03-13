@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Điều chỉnh</title>
+<link rel="stylesheet" href="portrait.css">
+</head>
+
+<body>
+
+<nav class="navbar">
+    <div class="nav-logo">🎨 AI Art Grader</div>
+
+    <ul class="nav-menu">
+        <li><a href="portrait.html">Trang chủ</a></li>
+        <li><a href="settings.html">Điều chỉnh</a></li>
+        <li><a href="#">Hướng dẫn</a></li>
+        <li><a href="#">Giới thiệu</a></li>
+    </ul>
+</nav>
+
+<div class="main-card">
+
+<h2>Điều chỉnh mức trừ điểm</h2>
+
+<label>Mức độ trừ điểm</label>
+
+<input type="range" min="0" max="5" value="1" id="penalty">
+
+<p>Mức hiện tại: <span id="value"></span></p>
+
+</div>
+<script>
+const slider = document.getElementById("penalty");
+const value = document.getElementById("value");
+
+/* hàm đổi text */
+function getLevelText(v){
+    if(v == 5) return "siêu khó";
+    if(v == 4) return "khó";
+    if(v == 3) return "trung bình";
+    if(v == 2) return "dễ";
+    if(v == 1) return "siêu dễ";
+    if(v == 0) return "không trừ";
+}
+
+/* load lại giá trị đã lưu */
+let saved = localStorage.getItem("penalty");
+
+if(saved){
+    slider.value = saved;
+    value.innerText = getLevelText(saved);
+}else{
+    value.innerText = getLevelText(slider.value);
+}
+
+/* khi kéo slider */
+slider.oninput = function(){
+    value.innerText = getLevelText(this.value);
+    localStorage.setItem("penalty", this.value);
+}
+</script>
+</body>
+</html>

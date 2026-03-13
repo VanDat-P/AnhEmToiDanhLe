@@ -1,16 +1,19 @@
+
+
 document.getElementById("submit").onclick = async () => {
+      const penalty = localStorage.getItem("penalty") || 1;
     const imageFile = document.getElementById("image").files[0];
     const result = document.getElementById("result");
     const preview = document.getElementById("preview");
    
     if (!imageFile) {
         alert("Chưa chọn ảnh");
-        return;
+        return; 
     }
 
     preview.src = URL.createObjectURL(imageFile);
     preview.style.display = "block";
-    
+    document.getElementById("yourImageTitle").style.display = "block";
     // Thêm dòng báo đang tải để người dùng biết máy đang chấm
     result.innerHTML = `<p style="color: #007bff; font-weight: bold;">⌛ Đang phân tích và chấm điểm...</p>`;
 
@@ -35,6 +38,7 @@ document.getElementById("submit").onclick = async () => {
         // Tạo FormData MỚI cho chấm điểm
         const scoreFormData = new FormData();
         scoreFormData.append("image", imageFile); // Thêm file lại từ đầu
+        scoreFormData.append("penalty", penalty);
 
         // Chọn URL dựa trên kết quả phân loại
         let url = classifyData.type === "ChanDung"
@@ -88,8 +92,28 @@ document.getElementById("submit").onclick = async () => {
 
         // Xử lý hiển thị Luật mềm & Ảnh Boxed an toàn
         let loaiTranhText = classifyData.type === "ChanDung" ? "🧑 Chân dung" : "🌄 Phong cảnh";
-        let boxedImageHTML = data.boxed_image ? `<img src="http://127.0.0.1:5000${data.boxed_image}" style="max-width: 100%; border: 2px solid #007bff; border-radius: 8px; margin: 10px 0;">` : "";
-        
+        // let boxedImageHTML = data.boxed_image ? `<img src="http://127.0.0.1:5000${data.boxed_image}" style="max-width: 100%; border: 2px solid #007bff; border-radius: 8px; margin: 10px 0;">` : "";
+        let boxedImageHTML = "";
+
+        if (data.boxed_image) {
+            boxedImageHTML = `
+                <button id="showDetected" style="
+                    background:#007bff;
+                    color:white;
+                    border:none;
+                    padding:8px 15px;
+                    border-radius:5px;
+                    cursor:pointer;
+                    margin-bottom:10px;">
+                     Xem ảnh AI phát hiện
+                </button>
+
+                <div id="detectedBox" style="display:none;">
+                    <img src="http://127.0.0.1:5000${data.boxed_image}" 
+                    style="max-width:100%; border:2px solid #007bff; border-radius:8px; margin:10px 0;">
+                </div>
+            `;
+        }
         let luatMemHTML = "";
         
         // Sửa lỗi ghép mảng (join) an toàn cho tất cả các field
@@ -121,8 +145,11 @@ document.getElementById("submit").onclick = async () => {
             ${boxedImageHTML}
             
             <div style="text-align: left; margin-bottom: 15px; line-height: 1.6;">
-                ${detectedHTML}
-                ${missingHTML}
+                
+                <div id="detectInfo" style="display:none;">
+                    ${detectedHTML}
+                    ${missingHTML}
+                </div>
                 <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
                 ${luatMemHTML}
             </div>
@@ -130,9 +157,53 @@ document.getElementById("submit").onclick = async () => {
             <p style="color: #ff5722; font-size: 1.1em; text-align: center;"><b>${commentText}</b></p>
             <img src="${scoreImg}" class="score-img" style="max-width: 200px; display: block; margin: 0 auto; border-radius: 10px;">
         `;
+                        // đổi layout sang ngang sau khi có kết quả
+            document.getElementById("content").classList.add("horizontal-layout");
+            document.querySelector(".main-card").classList.add("wide");
+            document.getElementById("resetBtn").style.display = "block";
+            document.getElementById("submit").style.display = "none";
+            document.querySelector(".upload-box").style.display = "none";
+            const btn = document.getElementById("showDetected");
 
+          
+
+                if (btn) {
+                    btn.onclick = () => {
+                        const box = document.getElementById("detectedBox");
+                        const info = document.getElementById("detectInfo");
+
+                        if (box.style.display === "none") {
+                            box.style.display = "block";
+                            info.style.display = "block";
+                            btn.innerText = "🙈 Ẩn ảnh AI phát hiện";
+                        } else {
+                            box.style.display = "none";
+                            info.style.display = "none";
+                            btn.innerText = "👀 Xem ảnh AI phát hiện";
+                        }
+                    };
+                }
     } catch (error) {
         console.error("Lỗi:", error);
         result.innerHTML = `<p style="color: red; font-weight: bold; padding: 10px; background: #ffe6e6; border-radius: 5px;">❌ Lỗi: ${error.message} <br><small>(Bạn nhớ bật file Python chạy Server lên nhé!)</small></p>`;
     }
+};
+document.getElementById("resetBtn").onclick = () => {
+
+    document.getElementById("image").value = "";
+
+    document.getElementById("preview").style.display = "none";
+    document.getElementById("yourImageTitle").style.display = "none";
+
+    document.getElementById("resetBtn").style.display = "none";
+
+    document.getElementById("result").innerHTML =
+    `<span class="placeholder-text">
+        Kết quả của bạn sẽ là gì đây nào?...
+     </span>`;
+
+    document.getElementById("content").classList.remove("horizontal-layout");
+    document.querySelector(".main-card").classList.remove("wide");
+    document.getElementById("submit").style.display = "block";
+    document.querySelector(".upload-box").style.display = "block";
 };
