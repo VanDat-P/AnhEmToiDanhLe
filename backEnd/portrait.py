@@ -11,8 +11,8 @@ CORS(app)
 REQUIRED = ["eye", "eyebrow", "nose", "mouth"]
 SCENERY_REQUIRED = ["house", "tree", "sun"]
 
-model = YOLO("best_portrait.pt")
-scenery_model = YOLO("best_scenery.pt")
+model = YOLO("portrait.pt")
+scenery_model = YOLO("landscape.pt")
 
 RESULT_FOLDER = "static/results"
 os.makedirs(RESULT_FOLDER, exist_ok=True)
