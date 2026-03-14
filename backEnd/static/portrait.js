@@ -1,7 +1,5 @@
-
-
 document.getElementById("submit").onclick = async () => {
-      const penalty = localStorage.getItem("penalty") || 1;
+    const penalty = localStorage.getItem("penalty") || 1;
     const imageFile = document.getElementById("image").files[0];
     const result = document.getElementById("result");
     const preview = document.getElementById("preview");
@@ -14,7 +12,8 @@ document.getElementById("submit").onclick = async () => {
     preview.src = URL.createObjectURL(imageFile);
     preview.style.display = "block";
     document.getElementById("yourImageTitle").style.display = "block";
-    // Thêm dòng báo đang tải để người dùng biết máy đang chấm
+    
+    // Hiển thị loading
     result.innerHTML = `<p style="color: #007bff; font-weight: bold;">⌛ Đang phân tích và chấm điểm...</p>`;
 
     try {
@@ -37,19 +36,47 @@ document.getElementById("submit").onclick = async () => {
         
         // Tạo FormData MỚI cho chấm điểm
         const scoreFormData = new FormData();
-        scoreFormData.append("image", imageFile); // Thêm file lại từ đầu
+        scoreFormData.append("image", imageFile);
         scoreFormData.append("penalty", penalty);
 
         // Chọn URL dựa trên kết quả phân loại
-        let url = classifyData.type === "ChanDung"
-            ? "http://127.0.0.1:5000/predict"
-            : "http://127.0.0.1:5000/predict_scenery";
-
+        let url;
+        if (classifyData.type === "ChanDung") {
+            url = "http://127.0.0.1:5000/predict";
+        } else if (classifyData.type === "PhongCanh") {
+            url = "http://127.0.0.1:5000/predict_scenery";
+        } else {
+            result.innerHTML = `
+                <div style="background: #e3f2fd; padding: 25px; border-radius: 20px; border: 3px solid #90caf9; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                    <div style="font-size: 4em; margin: 10px 0;">🎨</div>
+                    <p style="color: #42a5f5; font-size: 1.3em; margin: 15px 0;">
+                        Có vẻ như em đang cố vẽ một bức tranh thật đặc biệt! 
+                    </p>
+                    <p style="color: #66bb6a; font-size: 1.2em; background: #c8e6c9; padding: 15px; border-radius: 15px; margin: 15px 0;">
+                        🌟 Lần tới, em thử vẽ thêm chi tiết cho khuôn mặt <br>
+                        hoặc vẽ nhà, cây, ông mặt trời để đạt điểm cao hơn nhé!
+                    </p>
+                    <div style="margin-top: 20px;">
+                        <span style="font-size: 2em;">🖍️</span>
+                        <span style="font-size: 2em;">✨</span>
+                        <span style="font-size: 2em;">🎯</span>
+                    </div>
+                    <p style="color: #ffa726; font-style: italic; margin-top: 20px;">Bức tranh của em rất sáng tạo! Cố gắng thêm chút nữa nhé! 💪</p>
+                </div>
+            `;
+            return;
+        }
+        
         // Gọi API chấm điểm
         const scoreRes = await fetch(url, {
             method: "POST",
             body: scoreFormData
         });
+
+        if (!scoreRes.ok) {
+            const err = await scoreRes.json();
+            throw new Error(err.error || "Lỗi chấm điểm");
+        }
 
         const data = await scoreRes.json();
 
@@ -65,17 +92,19 @@ document.getElementById("submit").onclick = async () => {
             commentText = "😅 Cần cố gắng nhiều hơn nha em huhu";
         }
 
+        // Fix đường dẫn ảnh meme
         let scoreImg = "";
         if (data.score >= 8) {
-            scoreImg = "../frontEnd/ảnhMeMe/perfectMeMe.jpg";
-        } else if (data.score >= 5 && data.score < 8) {
-            scoreImg = "../frontEnd/ảnhMeMe/itsAlright.jpg";
-        } else if (data.score < 5 && data.score >= 3) {
-            scoreImg = "../frontEnd/ảnhMeMe/pray.jpg";
+            scoreImg = "ảnhMeMe/perfectMeMe.jpg";
+        } else if (data.score >= 5) {
+            scoreImg = "ảnhMeMe/itsAlright.jpg";
+        } else if (data.score >= 3) {
+            scoreImg = "ảnhMeMe/pray.jpg";
         } else {
-            scoreImg = "../frontEnd/ảnhMeMe/blackCry.jpg";
+            scoreImg = "ảnhMeMe/blackCry.jpg";
         }
 
+        // Xử lý detected/missing
         let detectedHTML = "";
         let missingHTML = "";
 
@@ -90,9 +119,8 @@ document.getElementById("submit").onclick = async () => {
             missingHTML = `<p id="missing" style="color: red;">❌ <b>Thiếu mất rồi:</b> ${missing.join(", ")}</p>`;
         }
 
-        // Xử lý hiển thị Luật mềm & Ảnh Boxed an toàn
+        // Xử lý hiển thị
         let loaiTranhText = classifyData.type === "ChanDung" ? "🧑 Chân dung" : "🌄 Phong cảnh";
-        // let boxedImageHTML = data.boxed_image ? `<img src="http://127.0.0.1:5000${data.boxed_image}" style="max-width: 100%; border: 2px solid #007bff; border-radius: 8px; margin: 10px 0;">` : "";
         let boxedImageHTML = "";
 
         if (data.boxed_image) {
@@ -105,20 +133,21 @@ document.getElementById("submit").onclick = async () => {
                     border-radius:5px;
                     cursor:pointer;
                     margin-bottom:10px;">
-                     Xem ảnh AI phát hiện
+                     👀 Xem ảnh AI phát hiện
                 </button>
-
                 <div id="detectedBox" style="display:none;">
                     <img src="http://127.0.0.1:5000${data.boxed_image}" 
                     style="max-width:100%; border:2px solid #007bff; border-radius:8px; margin:10px 0;">
                 </div>
             `;
         }
+
+        // Xử lý nhận xét
         let luatMemHTML = "";
         
-        // Sửa lỗi ghép mảng (join) an toàn cho tất cả các field
-        let nhanXetBoCuc = data.nhan_xet_bo_cuc || data.danh_gia_bo_cuc;
-        if (nhanXetBoCuc && Array.isArray(nhanXetBoCuc)) luatMemHTML += `<p>📐 <b>Bố cục:</b> ${nhanXetBoCuc.join(" ")}</p>`;
+        if (data.nhan_xet_bo_cuc && Array.isArray(data.nhan_xet_bo_cuc)) {
+            luatMemHTML += `<p>📐 <b>Bố cục:</b> ${data.nhan_xet_bo_cuc.join(" ")}</p>`;
+        }
         
         if (data.nhan_xet_ty_le && Array.isArray(data.nhan_xet_ty_le) && data.nhan_xet_ty_le.length > 0) {
             luatMemHTML += `<p>👤 <b>Tỷ lệ mặt:</b> ${data.nhan_xet_ty_le.join("<br>")}</p>`;
@@ -145,7 +174,6 @@ document.getElementById("submit").onclick = async () => {
             ${boxedImageHTML}
             
             <div style="text-align: left; margin-bottom: 15px; line-height: 1.6;">
-                
                 <div id="detectInfo" style="display:none;">
                     ${detectedHTML}
                     ${missingHTML}
@@ -155,53 +183,48 @@ document.getElementById("submit").onclick = async () => {
             </div>
             
             <p style="color: #ff5722; font-size: 1.1em; text-align: center;"><b>${commentText}</b></p>
-            <img src="${scoreImg}" class="score-img" style="max-width: 200px; display: block; margin: 0 auto; border-radius: 10px;">
+            <img src="${scoreImg}" class="score-img" style="max-width: 200px; display: block; margin: 0 auto; border-radius: 10px;" onerror="this.style.display='none'">
         `;
-                        // đổi layout sang ngang sau khi có kết quả
-            document.getElementById("content").classList.add("horizontal-layout");
-            document.querySelector(".main-card").classList.add("wide");
-            document.getElementById("resetBtn").style.display = "block";
-            document.getElementById("submit").style.display = "none";
-            document.querySelector(".upload-box").style.display = "none";
-            const btn = document.getElementById("showDetected");
 
-          
+        // Đổi layout
+        document.getElementById("content").classList.add("horizontal-layout");
+        document.querySelector(".main-card").classList.add("wide");
+        document.getElementById("resetBtn").style.display = "block";
+        document.getElementById("submit").style.display = "none";
+        document.querySelector(".upload-box").style.display = "none";
 
-                if (btn) {
-                    btn.onclick = () => {
-                        const box = document.getElementById("detectedBox");
-                        const info = document.getElementById("detectInfo");
-
-                        if (box.style.display === "none") {
-                            box.style.display = "block";
-                            info.style.display = "block";
-                            btn.innerText = "🙈 Ẩn ảnh AI phát hiện";
-                        } else {
-                            box.style.display = "none";
-                            info.style.display = "none";
-                            btn.innerText = "👀 Xem ảnh AI phát hiện";
-                        }
-                    };
+        // Xử lý nút xem ảnh phát hiện
+        const btn = document.getElementById("showDetected");
+        if (btn) {
+            btn.onclick = () => {
+                const box = document.getElementById("detectedBox");
+                const info = document.getElementById("detectInfo");
+                if (box.style.display === "none") {
+                    box.style.display = "block";
+                    info.style.display = "block";
+                    btn.innerText = "🙈 Ẩn ảnh AI phát hiện";
+                } else {
+                    box.style.display = "none";
+                    info.style.display = "none";
+                    btn.innerText = "👀 Xem ảnh AI phát hiện";
                 }
+            };
+        }
     } catch (error) {
         console.error("Lỗi:", error);
         result.innerHTML = `<p style="color: red; font-weight: bold; padding: 10px; background: #ffe6e6; border-radius: 5px;">❌ Lỗi: ${error.message} <br><small>(Bạn nhớ bật file Python chạy Server lên nhé!)</small></p>`;
     }
 };
+
 document.getElementById("resetBtn").onclick = () => {
-
     document.getElementById("image").value = "";
-
     document.getElementById("preview").style.display = "none";
     document.getElementById("yourImageTitle").style.display = "none";
-
     document.getElementById("resetBtn").style.display = "none";
-
     document.getElementById("result").innerHTML =
-    `<span class="placeholder-text">
-        Kết quả của bạn sẽ là gì đây nào?...
-     </span>`;
-
+        `<span class="placeholder-text">
+            Kết quả của bạn sẽ là gì đây nào?...
+         </span>`;
     document.getElementById("content").classList.remove("horizontal-layout");
     document.querySelector(".main-card").classList.remove("wide");
     document.getElementById("submit").style.display = "block";

@@ -7,50 +7,49 @@ import cv2
 import numpy as np
 
 app = Flask(__name__)
-CORS(app)
+
+# === CORS phải được khởi tạo NGAY sau app ===
+CORS(app, origins=["http://localhost:5500", "http://127.0.0.1:5500", "http://localhost:3000", "http://127.0.0.1:3000"])
+
+# === ROUTE TRANG CHỦ - ĐÃ SỬA ĐỂ HIỂN THỊ GIAO DIỆN ===
+@app.route('/')
+def home():
+    return render_template('portrait.html')
+
+# === CÁC HẰNG SỐ ===
 REQUIRED = ["eye", "eyebrow", "nose", "mouth", "face", "ear", "hair"]
 SCENERY_REQUIRED = ["house", "tree", "sun"]
 
+# === LOAD MODELS ===
 model = YOLO("portrait.pt")
 scenery_model = YOLO("landscape.pt")
 
+# === TẠO THƯ MỤC ===
 RESULT_FOLDER = "static/results"
 os.makedirs(RESULT_FOLDER, exist_ok=True)
 UPLOAD_FOLDER = "static/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-# phan loai anh
-import cv2
-import numpy as np
-from tensorflow.keras.models import load_model
 
-# phanloaianh
+# === PHÂN LOẠI ẢNH ===
+from tensorflow.keras.models import load_model
 
 clf_model = load_model("phanLoaiAnh.h5")
 CLASSES = ["ChanDung", "PhongCanh"]
+
 def classify_image(img_path):
-
     img = cv2.imread(img_path)
-
-    # thêm dòng này
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
     size = clf_model.input_shape[1]
-
     img = cv2.resize(img, (size, size))
     img = img / 255.0
     img = np.expand_dims(img, axis=0)
-
     pred = clf_model.predict(img)[0]
-
     print("Prediction:", pred)
-
     class_id = np.argmax(pred)
-
     print("Class:", CLASSES[class_id])
-
     return CLASSES[class_id]
 
-
+# === CÁC HÀM TIỆN ÍCH ===
 def get_center(box):
     return ((box[0] + box[2]) / 2, (box[1] + box[3]) / 2)
 
@@ -126,6 +125,7 @@ def luat_xa_gan_va_quy_tac_1_3(boxes_dict, img_w, img_h):
         else: nhan_xet.append("Ngôi nhà đặt lệch tạo quy tắc 1/3 rất nghệ thuật, đáng khen đó bảo bối.")
     return nhan_xet
 
+# === API ENDPOINTS ===
 @app.route("/classify", methods=["POST"])
 def classify():
     if "image" not in request.files: 
@@ -136,29 +136,22 @@ def classify():
         img_path = os.path.join(UPLOAD_FOLDER, f"{uuid.uuid4().hex}.jpg")
         request.files["image"].save(img_path)
         
-        # BƯỚC 1: DÙNG MODEL PHÂN LOẠI
         loai_anh = classify_image(img_path)
         
-        # Nếu model phân loại trả về Unknown (do confidence thấp)
         if loai_anh == "Unknown":
             return jsonify({
                 "type": "Unknown",
                 "message": "Ảnh của em không phải chân dung hoặc phong cảnh rõ ràng. Em hãy chụp lại bài vẽ của mình nhé!"
             }), 200
         
-        # BƯỚC 2: KIỂM TRA BẰNG YOLO - CHỈ VỚI CHÂN DUNG
         if loai_anh == "ChanDung":
-            # Dùng model portrait để kiểm tra
             results = model(img_path, verbose=False)[0]
-            
-            # Đếm số lượng object phát hiện được trong 7 object
             detected_objects = []
             
             for box in results.boxes:
                 cls_id = int(box.cls[0])
                 raw_name = str(results.names[cls_id]).strip().lower()
                 
-                # Kiểm tra từng object trong 7 object
                 if "eyebrow" in raw_name:
                     detected_objects.append("eyebrow")
                 elif "eye" in raw_name:
@@ -174,14 +167,12 @@ def classify():
                 elif "hair" in raw_name:
                     detected_objects.append("hair")
             
-            # Loại bỏ trùng lặp (ví dụ phát hiện 2 mắt)
             unique_detected = list(set(detected_objects))
             total_detected = len(unique_detected)
             
             print(f"YOLO phát hiện trong ảnh chân dung: {unique_detected}")
             print(f"Tổng số object phát hiện: {total_detected}")
             
-            # KIỂM TRA: Cần ít nhất 3 object trong 7 object
             if total_detected < 3:
                 print(f"⚠️ Chỉ phát hiện {total_detected} object, cần ít nhất 3")
                 return jsonify({
@@ -189,11 +180,8 @@ def classify():
                     "message": f"Ảnh có vẻ là chân dung nhưng chỉ thấy {total_detected} chi tiết. Em hãy vẽ thêm mắt, mũi, miệng, tai, tóc cho rõ nét nhé!"
                 }), 200
                 
-        else:  # PhongCanh - giữ nguyên kiểm tra như cũ
-            # Dùng model scenery để kiểm tra
+        else:
             results = scenery_model(img_path, verbose=False)[0]
-            
-            # Đếm số lượng object phát hiện được
             boxes_dict = {name: [] for name in SCENERY_REQUIRED}
             
             for box in results.boxes:
@@ -211,7 +199,6 @@ def classify():
             
             print(f"YOLO phát hiện trong ảnh phong cảnh: {detected}")
             
-            # KIỂM TRA: Cần ít nhất 2 trong 3 object (house, tree, sun)
             if len(detected) < 2:
                 print(f"⚠️ Chỉ phát hiện {len(detected)} object, cần ít nhất 2")
                 return jsonify({
@@ -219,7 +206,6 @@ def classify():
                     "message": "Ảnh có vẻ là phong cảnh nhưng các chi tiết chưa rõ. Em hãy vẽ thêm nhà, cây hoặc ông mặt trời nhé!"
                 }), 200
         
-        # Nếu qua được cả 2 bước kiểm tra
         if img_path and os.path.exists(img_path):
             os.remove(img_path)
             
@@ -229,12 +215,11 @@ def classify():
         print("Lỗi classify:", str(e))
         if img_path and os.path.exists(img_path):
             os.remove(img_path)
-            
         return jsonify({
             "type": "Unknown",
             "message": "Có lỗi xảy ra khi xử lý ảnh. Vui lòng thử lại!"
         }), 200
-            
+
 @app.route("/predict", methods=["POST"])
 def predict():
     if "image" not in request.files: 

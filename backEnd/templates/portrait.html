@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chấm Điểm Tranh</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/portrait.css">  <!-- ĐÃ SỬA -->
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-logo">🎨 AI Art Grader</div>
+
+        <ul class="nav-menu">
+            <li><a href="portrait.html">Trang chủ</a></li>
+            <li><a href="adjustment.html">Điều chỉnh</a></li>
+            <li><a href="#">Hướng dẫn</a></li>
+            <li><a href="#">Giới thiệu</a></li>
+        </ul>
+    </nav>
+    
+    <div class="main-card" id="grading-card" >
+        <div class="header">
+            <div class="icon-wrapper">🎨</div>
+            <h2 id="title">Chấm điểm tranh</h2>
+            <p class="subtitle">Hệ thống chấm điểm tranh vẽ bằng AI</p>
+        </div>
+
+        <div class="content" id="content">
+            <div class="left-panel">
+                <div class="upload-box">
+                    <label for="image">
+                        <span>Hãy chọn bức tranh của bạn</span>
+                        <small>(JPG, PNG)</small>
+                    </label>
+                    <input id="image" type="file" accept="image/*">
+                </div>
+
+                <button id="submit" type="button" class="btn-primary">
+                    Bắt đầu chấm điểm nhé!
+                </button>
+                <p id="yourImageTitle" style="display:none;font-weight:600;margin-top:10px;">
+                     Ảnh của bạn
+                </p>
+                <img id="preview" style="max-width:300px; display:none; margin-top:10px;">
+                <button id="resetBtn" style="display:none;" class="btn-primary">
+                    Chọn ảnh mới
+                </button>
+            </div>
+
+            <div class="right-panel">
+                <div id="result" class="result-container">
+                    <span class="placeholder-text">
+                        Kết quả của bạn sẽ là gì đây nào?...
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/portrait.js"></script>  
+</body>
+</html>
