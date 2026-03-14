@@ -290,6 +290,12 @@ def predict():
                 boxes_dict["nose"].append(box)
             elif "mouth" in raw_name:
                 boxes_dict["mouth"].append(box)
+            elif "face" in raw_name:
+                boxes_dict["face"].append(box)
+            elif "ear" in raw_name:
+                boxes_dict["ear"].append(box)
+            elif "hair" in raw_name:
+                boxes_dict["hair"].append(box)
 
         detected = [k for k, v in boxes_dict.items() if len(v) > 0]
         missing = [k for k in REQUIRED if k not in detected]
