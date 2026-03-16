@@ -16,6 +16,10 @@ CORS(app, origins=["http://localhost:5500", "http://127.0.0.1:5500", "http://loc
 def home():
     return render_template('portrait.html')
 
+@app.route('/adjustment')
+def adjustment():
+    return render_template('adjustment.html')
+
 # === CÁC HẰNG SỐ ===
 REQUIRED = ["eye", "eyebrow", "nose", "mouth", "face", "ear", "hair"]
 SCENERY_REQUIRED = ["house", "tree", "sun"]
@@ -297,7 +301,7 @@ def predict():
             loi_khuyen.append("Gợi ý: Khuôn mặt sẽ hoàn hảo hơn nếu em vẽ thêm phần viền khuôn mặt, tóc vành tai.")
         if missing:
             loi_khuyen.append(f"Em nhớ bổ sung các bộ phận còn thiếu nhé: {', '.join(missing)}.")
-
+        
         score = 10 \
             - len(missing) * (1.5 * penalty) \
             - len(loi_ty_le) * (1 * penalty) \
@@ -341,7 +345,7 @@ def predict_scenery():
         filename = f"{uuid.uuid4().hex}.jpg"
         img_path = os.path.join(UPLOAD_FOLDER, filename)
         request.files["image"].save(img_path)
-        penalty = float(request.form.get("penalty", 1))
+        penalty = float(request.form.get("penalty"))
         print("🔥 PENALTY NHẬN ĐƯỢC:", penalty)
         
         img_cv = cv2.imread(img_path)
@@ -432,4 +436,4 @@ def predict_scenery():
         }), 200
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(debug=True)
