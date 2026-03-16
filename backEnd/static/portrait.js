@@ -186,6 +186,7 @@ document.getElementById("submit").onclick = async () => {
             <img src="${scoreImg}" class="score-img" style="max-width: 200px; display: block; margin: 0 auto; border-radius: 10px;" onerror="this.style.display='none'">
         `;
 
+        
         // Đổi layout
         document.getElementById("content").classList.add("horizontal-layout");
         document.querySelector(".main-card").classList.add("wide");
