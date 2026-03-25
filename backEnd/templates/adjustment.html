@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Điều chỉnh</title>
-<link rel="stylesheet" href="portrait.css">
+<link rel="stylesheet" href="../static/portrait.css">
 </head>
 
 <body>
@@ -25,7 +25,7 @@
 
 <label>Mức độ trừ điểm</label>
 
-<input type="range" min="0" max="5" value="1" id="penalty">
+<input type="range" min="1" max="2" value="1" step="0.2" id="penalty">
 
 <p>Mức hiện tại: <span id="value"></span></p>
 
@@ -36,12 +36,12 @@ const value = document.getElementById("value");
 
 /* hàm đổi text */
 function getLevelText(v){
-    if(v == 5) return "siêu khó";
-    if(v == 4) return "khó";
-    if(v == 3) return "trung bình";
-    if(v == 2) return "dễ";
-    if(v == 1) return "siêu dễ";
-    if(v == 0) return "không trừ";
+    if(v == 2) return "cực khó";
+    if(v == 1.8) return "khó";
+    if(v == 1.6) return "trung bình";
+    if(v == 1.4) return "trung bình dễ";
+    if(v == 1.2) return "dễ";
+    if(v == 1) return "cực dễ";
 }
 
 /* load lại giá trị đã lưu */
