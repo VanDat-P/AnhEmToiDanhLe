@@ -25,7 +25,7 @@ REQUIRED = ["eye", "eyebrow", "nose", "mouth", "face", "ear", "hair"]
 SCENERY_REQUIRED = ["house", "tree", "sun"]
 
 # === LOAD MODELS ===
-model = YOLO("portrait.pt")
+model = YOLO("best (5).pt")
 scenery_model = YOLO("landscape.pt")
 
 # === TẠO THƯ MỤC ===
@@ -177,8 +177,8 @@ def classify():
             print(f"YOLO phát hiện trong ảnh chân dung: {unique_detected}")
             print(f"Tổng số object phát hiện: {total_detected}")
             
-            if total_detected < 3:
-                print(f"⚠️ Chỉ phát hiện {total_detected} object, cần ít nhất 3")
+            if total_detected < 2:
+                print(f"⚠️ Chỉ phát hiện {total_detected} object, cần ít nhất 2")
                 return jsonify({
                     "type": "Unknown",
                     "message": f"Ảnh có vẻ là chân dung nhưng chỉ thấy {total_detected} chi tiết. Em hãy vẽ thêm mắt, mũi, miệng, tai, tóc cho rõ nét nhé!"
