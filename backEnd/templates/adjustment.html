@@ -1,64 +1,96 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<title>Điều chỉnh</title>
-<link rel="stylesheet" href="../static/portrait.css">
+    <meta charset="UTF-8">
+    <title>Điều chỉnh độ khó</title>
+    <link rel="stylesheet" href="../static/portrait.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
 
 <nav class="navbar">
-    <div class="nav-logo">🎨 AI Art Grader</div>
-
+    <div class="nav-logo"><i class="fa-solid fa-palette"></i> AI Art Grader</div>
     <ul class="nav-menu">
-        <li><a href="/">Trang chủ</a></li>
-        <li><a href="/adjustment">Điều chỉnh</a></li>
-        <li><a href="#">Lịch sử</a></li>
-        <li><a href="#">Giới thiệu</a></li>
+        <li>
+            <a href="/"><i class="fa-solid fa-house"></i> Trang chủ</a>
+        </li>
+        <li>
+            <a href="/adjustment" class="active"><i class="fa-solid fa-sliders"></i> Điều chỉnh</a>
+        </li>
+        <li>
+            <a href="#"><i class="fa-solid fa-book-open"></i> Hướng dẫn</a>
+        </li>
+        <li>
+            <a href="#"><i class="fa-solid fa-circle-info"></i> Giới thiệu</a>
+        </li>
     </ul>
 </nav>
 
 <div class="main-card">
+    <h2>Điều chỉnh độ khó chấm điểm</h2>
+    <p style="color: var(--text-gray); font-size: 0.9rem;">Tùy chỉnh mức độ khắt khe của AI khi chấm tranh.</p>
 
-<h2>Điều chỉnh mức trừ điểm</h2>
-
-<label>Mức độ trừ điểm</label>
-
-<input type="range" min="1" max="2" value="1" step="0.2" id="penalty">
-
-<p>Mức hiện tại: <span id="value"></span></p>
-
+    <div class="slider-wrapper">
+        <div class="slider-labels">
+            <span>Rất Dễ (1.0)</span>
+            <span>Rất Khó (2.0)</span>
+        </div>
+        
+        <input type="range" min="1" max="2" value="1" step="0.1" id="penalty">
+        
+        <div class="status-box" id="status-box">
+            Mức hiện tại: <br>
+            <span id="level-text">Cực dễ</span> <br>
+            <small style="color: var(--text-gray);">(Hệ số phạt: <span id="level-value">1.0</span>x)</small>
+        </div>
+    </div>
 </div>
+
 <script>
-const slider = document.getElementById("penalty");
-const value = document.getElementById("value");
+    const slider = document.getElementById("penalty");
+    const levelText = document.getElementById("level-text");
+    const levelValue = document.getElementById("level-value");
+    const statusBox = document.getElementById("status-box");
 
-/* hàm đổi text */
-function getLevelText(v){
-    if(v == 2) return "cực khó";
-    if(v == 1.8) return "khó";
-    if(v == 1.6) return "trung bình";
-    if(v == 1.4) return "trung bình dễ";
-    if(v == 1.2) return "dễ";
-    if(v == 1) return "cực dễ";
-}
+    const difficultyLevels = [
+        { max_val: 1.1, text: "Dễ Nhất", color: "#4ade80" },      
+        { max_val: 1.3, text: "Dễ", color: "#86efac" },           
+        { max_val: 1.5, text: "Trung bình", color: "#facc15" },   
+        { max_val: 1.7, text: "Khá Khó", color: "#fb923c" },      
+        { max_val: 1.9, text: "Khó", color: "#f87171" },          
+        { max_val: 2.0, text: "Cực Khó", color: "#ef4444" }       
+    ];
 
-/* load lại giá trị đã lưu */
-let saved = localStorage.getItem("penalty");
+    function getLevelInfo(value) {
+        const numValue = parseFloat(value);
+        for (let level of difficultyLevels) {
+            if (numValue <= level.max_val) {
+                return level;
+            }
+        }
+        return difficultyLevels[difficultyLevels.length - 1]; 
+    }
 
-if(saved){
-    slider.value = saved;
-    value.innerText = getLevelText(saved);
-}else{
-    value.innerText = getLevelText(slider.value);
-}
+    function updateUI(value) {
+        const info = getLevelInfo(value);
+        levelValue.innerText = parseFloat(value).toFixed(1);
+        levelText.innerText = info.text;
+        levelText.style.color = info.color;
+        slider.style.setProperty('--slider-color', info.color);
+    }
 
-/* khi kéo slider */
-slider.oninput = function(){
-    value.innerText = getLevelText(this.value);
-    localStorage.setItem("penalty", this.value);
-}
+    let savedPenalty = localStorage.getItem("penalty");
+    if (savedPenalty) {
+        slider.value = savedPenalty;
+    }
+    updateUI(slider.value);
+
+    slider.addEventListener("input", function() {
+        updateUI(this.value);
+        localStorage.setItem("penalty", this.value);
+    });
 </script>
 </body>
 </html>
