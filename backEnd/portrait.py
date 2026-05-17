@@ -21,6 +21,13 @@ def home():
 def adjustment():
     return render_template('adjustment.html')
 
+@app.route('/about_us')
+def aboutus():
+    return render_template('about_us.html')
+
+@app.route('/guide')
+def guide():
+    return render_template('guide.html')
 # === CÁC HẰNG SỐ ===
 REQUIRED = ["eye", "eyebrow", "nose", "mouth", "face", "ear", "hair"]
 SCENERY_REQUIRED = ["house", "tree", "sun"]

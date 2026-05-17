@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Điều chỉnh độ khó</title>
+    <title>About us</title>
     <link rel="stylesheet" href="../static/portrait.css">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -14,30 +14,14 @@
     <div class="nav-logo"><i class="fa-solid fa-palette"></i> AI Art Grader</div>
     <ul class="nav-menu">
         <li><a href="/"><i class="fa-solid fa-house" ></i> Trang chủ</a></li>
-        <li><a href="/adjustment" class = "active"><i class="fa-solid fa-sliders"></i> Điều chỉnh</a></li>
-        <li><a href="/guide"><i class="fa-solid fa-book-open"></i> Hướng dẫn</a></li>
+        <li><a href="/adjustment"><i class="fa-solid fa-sliders" ></i> Điều chỉnh</a></li>
+        <li><a href="/guide" class = "active"><i class="fa-solid fa-book-open"></i> Hướng dẫn</a></li>
         <li><a href="/about_us"><i class="fa-solid fa-circle-info"></i> Giới thiệu</a></li>
     </ul>
 </nav>
 
 <div class="main-card">
-    <h2>Điều chỉnh độ khó chấm điểm</h2>
-    <p style="color: var(--text-gray); font-size: 0.9rem;">Tùy chỉnh mức độ khắt khe của AI khi chấm tranh.</p>
-
-    <div class="slider-wrapper">
-        <div class="slider-labels">
-            <span>Rất Dễ (1.0)</span>
-            <span>Rất Khó (2.0)</span>
-        </div>
-        
-        <input type="range" min="1" max="2" value="1" step="0.1" id="penalty">
-        
-        <div class="status-box" id="status-box">
-            Mức hiện tại: <br>
-            <span id="level-text">Cực dễ</span> <br>
-            <small style="color: var(--text-gray);">(Hệ số phạt: <span id="level-value">1.0</span>x)</small>
-        </div>
-    </div>
+    <h2>Hướng dẫn</h2>
 </div>
 
 <script>
