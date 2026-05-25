@@ -6,11 +6,14 @@ import uuid
 import cv2
 import numpy as np
 from tensorflow.keras.models import load_model
+import json
+from datetime import datetime
+from gliner import GLiNER
 
 app = Flask(__name__)
 
 # === CORS phải được khởi tạo NGAY sau app ===
-CORS(app, origins=["http://localhost:5500", "http://127.0.0.1:5500", "http://localhost:3000", "http://127.0.0.1:3000"])
+CORS(app, origins=["http://localhost:5500", "http://127.0.0.1:5500", "http://localhost:5000", "http://127.0.0.1:5000"])
 
 # === ROUTE TRANG CHỦ ===
 @app.route('/')
@@ -28,6 +31,102 @@ def aboutus():
 @app.route('/guide')
 def guide():
     return render_template('guide.html')
+
+# === API LƯU CÀI ĐẶT TỪ ADJUSTMENT ===
+@app.route("/save_settings", methods=["POST"])
+def save_settings():
+    try:
+        data = request.get_json()
+        user_text = data.get("text", "")
+        penalty = float(data.get("penalty", 1.5))
+        
+        # Lưu vào file JSON trên server
+        settings_file = "user_settings.json"
+        
+        # Đọc file cũ nếu có
+        if os.path.exists(settings_file):
+            with open(settings_file, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+        else:
+            settings = {}
+        
+        # Cập nhật
+        settings['text'] = user_text
+        settings['penalty'] = penalty
+        settings['last_updated'] = str(datetime.now())
+        
+        # Ghi vào file
+        with open(settings_file, 'w', encoding='utf-8') as f:
+            json.dump(settings, f, ensure_ascii=False, indent=2)
+        
+        print("=== ĐÃ LƯU CÀI ĐẶT ===")
+        print(f"Độ khó: {penalty}x")
+        print(f"Nội dung: {user_text}")
+        
+        # === EXTRACT VERB & NOUN BẰNG GLINER ===
+        if user_text and user_text.strip():
+            try:
+                # Load model GLiNER
+                gliner_model = GLiNER.from_pretrained("urchade/gliner_multi")
+                
+                # Định nghĩa nhãn
+                labels = ["verb", "noun"]
+                
+                # Xử lý
+                entities = gliner_model.predict_entities(user_text, labels)
+                
+                # Lọc verbs và nouns
+                verbs = list(set([e['text'] for e in entities if e['label'].lower() == 'verb']))
+                nouns = list(set([e['text'] for e in entities if e['label'].lower() == 'noun']))
+                
+                # In kết quả extract
+                print("-" * 50)
+                print("🔤 VERBS:", verbs if verbs else "Không tìm thấy")
+                print("📚 NOUNS:", nouns if nouns else "Không tìm thấy")
+                print("-" * 50)
+                
+            except Exception as e:
+                print(f"❌ Lỗi extract GLiNER: {e}")
+        
+        print("======================")
+        
+        return jsonify({
+            "success": True,
+            "message": "Đã lưu cài đặt lên server!"
+        })
+        
+    except Exception as e:
+        print("Lỗi lưu settings:", str(e))
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+# === API LẤY CÀI ĐẶT ĐÃ LƯU ===
+@app.route("/get_settings", methods=["GET"])
+def get_settings():
+    try:
+        settings_file = "user_settings.json"
+        if os.path.exists(settings_file):
+            with open(settings_file, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+            return jsonify({
+                "success": True,
+                "text": settings.get("text", ""),
+                "penalty": settings.get("penalty", 1.5)
+            })
+        else:
+            return jsonify({
+                "success": True,
+                "text": "",
+                "penalty": 1.5
+            })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
 # === CÁC HẰNG SỐ ===
 REQUIRED = ["eye", "eyebrow", "nose", "mouth", "face", "ear", "hair"]
 SCENERY_REQUIRED = ["house", "tree", "sun"]
@@ -122,7 +221,6 @@ def luat_ty_le_chan_dung(boxes_dict):
         if (get_center(ey[0])[1] - get_center(eb[0])[1]) > (ey[0][3] - ey[0][1]) * 2.5:
             nhan_xet.append("Lông mày em vẽ cao quá, nhìn nhân vật như đang giật mình vậy.")
             
-    # MỚI THÊM: Luật vị trí tai so với mắt
     ears = boxes_dict.get("ear", [])
     if ears and ey:
         ear_y = get_center(ears[0])[1]
@@ -136,14 +234,12 @@ def phan_tich_nghe_thuat_phong_canh(boxes_dict, img_w, img_h):
     nhan_xet = []
     h, t, s = boxes_dict.get("house", []), boxes_dict.get("tree", []), boxes_dict.get("sun", [])
     
-    # Luật xa gần
     if h and t:
         if get_bottom(h[0]) < get_bottom(t[0]): 
             nhan_xet.append("Lưu ý luật xa gần: Nhà ở gần nên vẽ thấp hơn cây ở xa em nha!")
         else: 
             nhan_xet.append("Em đã áp dụng rất tốt quy luật xa gần, amazing good job!")
         
-    # Quy tắc 1/3 (Điểm nhấn)
     if h:
         hx = get_center(h[0])[0]
         if (img_w * 0.25) < hx < (img_w * 0.75): 
@@ -151,7 +247,6 @@ def phan_tich_nghe_thuat_phong_canh(boxes_dict, img_w, img_h):
         else: 
             nhan_xet.append("Ngôi nhà đặt lệch tạo quy tắc 1/3 rất nghệ thuật, đáng khen đó bảo bối.")
         
-    # MỚI THÊM: Kích thước mặt trời so với ngôi nhà
     if h and s:
         sun_area = get_area(s[0])
         house_area = get_area(h[0])
@@ -273,7 +368,6 @@ def predict():
         if missing:
             loi_khuyen.append(f"Em nhớ bổ sung các bộ phận còn thiếu nhé: {', '.join(missing)}.")
         
-        # === TÍNH ĐIỂM CHÂN DUNG PHÂN HÓA ===
         trong_so_chan_dung = {"face": 1.5, "eye": 1.5, "nose": 1.0, "mouth": 1.0, "hair": 1.0, "eyebrow": 0.5, "ear": 0.5}
         diem_thanh_phan = sum([trong_so_chan_dung.get(obj, 0) for obj in detected])
 
@@ -361,7 +455,6 @@ def predict_scenery():
         nhan_xet_nghe_thuat_list = phan_tich_nghe_thuat_phong_canh(boxes_dict, img_w, img_h)
         nhan_xet_mau_sac_str = phan_tich_mau_sac(img_cv)
 
-        # === TÍNH ĐIỂM PHONG CẢNH PHÂN HÓA ===
         trong_so_phong_canh = {"house": 2.5, "tree": 2.0, "sun": 1.0}
         diem_thanh_phan = sum([trong_so_phong_canh.get(obj, 0) for obj in detected])
 

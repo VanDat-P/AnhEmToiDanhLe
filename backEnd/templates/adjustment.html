@@ -4,55 +4,74 @@
     <meta charset="UTF-8">
     <title>Điều chỉnh độ khó</title>
     <link rel="stylesheet" href="../static/portrait.css">
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-
 <body>
 
 <nav class="navbar">
     <div class="nav-logo"><i class="fa-solid fa-palette"></i> AI Art Grader</div>
     <ul class="nav-menu">
-        <li><a href="/"><i class="fa-solid fa-house" ></i> Trang chủ</a></li>
-        <li><a href="/adjustment" class = "active"><i class="fa-solid fa-sliders"></i> Điều chỉnh</a></li>
+        <li><a href="/"><i class="fa-solid fa-house"></i> Trang chủ</a></li>
+        <li><a href="/adjustment" class="active"><i class="fa-solid fa-sliders"></i> Điều chỉnh</a></li>
         <li><a href="/guide"><i class="fa-solid fa-book-open"></i> Hướng dẫn</a></li>
         <li><a href="/about_us"><i class="fa-solid fa-circle-info"></i> Giới thiệu</a></li>
     </ul>
 </nav>
 
 <div class="main-card">
-    <h2>Điều chỉnh độ khó chấm điểm</h2>
-    <p style="color: var(--text-gray); font-size: 0.9rem;">Tùy chỉnh mức độ khắt khe của AI khi chấm tranh.</p>
+    <h2>🎨 AI Art Grader</h2>
+    <p style="color: var(--text-gray); font-size: 0.9rem;">Nhập mô tả tranh của bạn và chọn độ khó</p>
 
+    <!-- Thanh độ khó -->
     <div class="slider-wrapper">
         <div class="slider-labels">
-            <span>Rất Dễ (1.0)</span>
-            <span>Rất Khó (2.0)</span>
+            <span>😊 Dễ dãi (1.0)</span>
+            <span>😐 Trung bình (1.5)</span>
+            <span>💀 Khắt khe (2.0)</span>
         </div>
         
-        <input type="range" min="1" max="2" value="1" step="0.1" id="penalty">
+        <input type="range" min="1" max="2" value="1.5" step="0.05" id="penalty">
         
         <div class="status-box" id="status-box">
-            Mức hiện tại: <br>
-            <span id="level-text">Cực dễ</span> <br>
-            <small style="color: var(--text-gray);">(Hệ số phạt: <span id="level-value">1.0</span>x)</small>
+            Mức độ hiện tại: <br>
+            <span id="level-text">TRUNG BÌNH</span> <br>
+            <small style="color: var(--text-gray);">(Hệ số phạt: <span id="level-value">1.5</span>x)</small>
         </div>
     </div>
+
+    <!-- Ô nhập văn bản -->
+    <div class="input-wrapper">
+        <div class="input-header">
+            <i class="fa-solid fa-pen-fancy"></i>
+            <span>Mô tả tác phẩm</span>
+        </div>
+        <textarea id="userText" class="user-textarea" rows="4" placeholder="Ví dụ: Bức tranh vẽ phong cảnh núi non, màu sắc tươi sáng, bố cục hài hòa, nét vẽ mềm mại..."></textarea>
+        <div class="char-count">
+            <span id="charCount">0</span> ký tự
+        </div>
+    </div>
+
+    <!-- Nút lưu (lưu lên server) -->
+    <button class="btn-save" id="saveBtn">
+        <i class="fa-solid fa-floppy-disk"></i> Lưu cài đặt
+    </button>
 </div>
 
 <script>
     const slider = document.getElementById("penalty");
     const levelText = document.getElementById("level-text");
     const levelValue = document.getElementById("level-value");
-    const statusBox = document.getElementById("status-box");
+    const userText = document.getElementById("userText");
+    const charCount = document.getElementById("charCount");
+    const saveBtn = document.getElementById("saveBtn");
 
     const difficultyLevels = [
-        { max_val: 1.1, text: "Dễ Nhất", color: "#4ade80" },      
-        { max_val: 1.3, text: "Dễ", color: "#86efac" },           
-        { max_val: 1.5, text: "Trung bình", color: "#facc15" },   
-        { max_val: 1.7, text: "Khá Khó", color: "#fb923c" },      
-        { max_val: 1.9, text: "Khó", color: "#f87171" },          
-        { max_val: 2.0, text: "Cực Khó", color: "#ef4444" }       
+        { max_val: 1.1, text: "DỄ DÃI", color: "#4ade80" },      
+        { max_val: 1.3, text: "DỄ", color: "#86efac" },           
+        { max_val: 1.5, text: "TRUNG BÌNH", color: "#facc15" },   
+        { max_val: 1.7, text: "KHÁ KHÓ", color: "#fb923c" },      
+        { max_val: 1.9, text: "KHÓ", color: "#f87171" },          
+        { max_val: 2.0, text: "CỰC KHÓ", color: "#ef4444" }       
     ];
 
     function getLevelInfo(value) {
@@ -73,16 +92,110 @@
         slider.style.setProperty('--slider-color', info.color);
     }
 
-    let savedPenalty = localStorage.getItem("penalty");
-    if (savedPenalty) {
-        slider.value = savedPenalty;
-    }
-    updateUI(slider.value);
+    // Đếm số ký tự
+    userText.addEventListener('input', function() {
+        charCount.textContent = this.value.length;
+    });
 
+    // Lưu cài đặt lên server
+    function saveSettings() {
+        let text = userText.value;
+        let penalty = slider.value;
+        
+        if (!text.trim()) {
+            alert('📝 Vui lòng nhập văn bản trước khi lưu!');
+            return;
+        }
+        
+        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+        saveBtn.disabled = true;
+        
+        fetch('http://localhost:5000/save_settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                text: text, 
+                penalty: parseFloat(penalty)
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                // Lưu local backup
+                localStorage.setItem("penalty", penalty);
+                localStorage.setItem("userDescription", text);
+                
+                saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> Đã lưu cài đặt';
+                setTimeout(() => {
+                    saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu cài đặt';
+                }, 2000);
+            } else {
+                alert('Lỗi: ' + result.error);
+                saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu cài đặt';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Lỗi kết nối server! Vẫn lưu tạm ở trình duyệt.');
+            // Fallback: lưu local
+            localStorage.setItem("penalty", penalty);
+            localStorage.setItem("userDescription", text);
+            saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> Đã lưu (local)';
+            setTimeout(() => {
+                saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu cài đặt';
+            }, 1500);
+        })
+        .finally(() => {
+            saveBtn.disabled = false;
+        });
+    }
+
+    // Tải dữ liệu từ server khi load trang
+    function loadSettingsFromServer() {
+        fetch('http://localhost:5000/get_settings')
+        .then(response => response.json())
+        .then(result => {
+            if (result.success && result.text) {
+                userText.value = result.text;
+                slider.value = result.penalty;
+                charCount.textContent = result.text.length;
+                updateUI(slider.value);
+                console.log('Đã tải cài đặt từ server');
+            } else {
+                // Fallback: tải từ localStorage
+                let savedPenalty = localStorage.getItem("penalty");
+                let savedText = localStorage.getItem("userDescription");
+                if (savedPenalty) slider.value = savedPenalty;
+                if (savedText) {
+                    userText.value = savedText;
+                    charCount.textContent = savedText.length;
+                }
+                updateUI(slider.value);
+            }
+        })
+        .catch(error => {
+            console.error('Lỗi tải từ server:', error);
+            // Fallback: tải từ localStorage
+            let savedPenalty = localStorage.getItem("penalty");
+            let savedText = localStorage.getItem("userDescription");
+            if (savedPenalty) slider.value = savedPenalty;
+            if (savedText) {
+                userText.value = savedText;
+                charCount.textContent = savedText.length;
+            }
+            updateUI(slider.value);
+        });
+    }
+
+    // Khởi tạo
+    loadSettingsFromServer();
+    
     slider.addEventListener("input", function() {
         updateUI(this.value);
-        localStorage.setItem("penalty", this.value);
     });
+    
+    saveBtn.addEventListener("click", saveSettings);
 </script>
+
 </body>
 </html>
