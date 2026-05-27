@@ -1,5 +1,26 @@
 {
-  "text": "ĐÁNH NHAU, ĐI BỘ, CÂY VIẾT, BÒ",
-  "penalty": 1.5,
-  "last_updated": "2026-05-25 20:33:28.028447"
+  "text": "tranh phải có mắt mũi miệng",
+  "penalty": 1.0,
+  "last_updated": "2026-05-27 12:45:10.730873",
+  "verbs_vi": [
+    "phải",
+    "có"
+  ],
+  "nouns_vi": [
+    "mũi",
+    "miệng",
+    "tranh",
+    "mắt"
+  ],
+  "verbs_en": [
+    "Right",
+    "Have"
+  ],
+  "nouns_en": [
+    "nose",
+    "mouth",
+    "painting",
+    "eye"
+  ],
+  "art_type": "portrait"
 }

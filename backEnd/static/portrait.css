@@ -502,3 +502,107 @@ input[type=range] {
 .btn-send:active {
     transform: translateY(0);
 }
+
+/* =========================================
+   10. TYPE WRAPPER - CHỌN LOẠI TRANH MỚI
+========================================= */
+.type-wrapper {
+    margin: 25px 0;
+    padding: 24px;
+    background: white;
+    border-radius: 20px;
+    border: 1.5px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.type-options {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+.type-option {
+    flex: 1;
+    cursor: pointer;
+}
+
+#type-radio {
+    display: none;
+}
+
+.type-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 20px;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.type-card i {
+    font-size: 32px;
+    color: #64748b;
+    transition: all 0.3s ease;
+}
+
+.type-card span {
+    font-size: 16px;
+    font-weight: 600;
+    color: #475569;
+    transition: all 0.3s ease;
+}
+
+/* Hover effect */
+.type-option:hover .type-card {
+    transform: translateY(-3px);
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.type-option:hover .type-card i {
+    color: #3b82f6;
+    transform: scale(1.05);
+}
+
+.type-option:hover .type-card span {
+    color: #3b82f6;
+}
+
+/* Selected state */
+#type-radio:checked + .type-card {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border-color: #3b82f6;
+    box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.4);
+}
+
+#type-radio:checked + .type-card i {
+    color: white;
+}
+
+#type-radio:checked + .type-card span {
+    color: white;
+}
+
+/* Active animation */
+#type-radio:checked + .type-card {
+    animation: typeSelect 0.3s ease;
+}
+
+@keyframes typeSelect {
+    0% {
+        transform: scale(0.95);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Xóa class cũ nếu có */
+.type {
+    display: none;
+}
