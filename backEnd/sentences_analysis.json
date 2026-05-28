@@ -1,28 +1,7 @@
 {
-  "text": "mắt cao hơn mũi. bức tranh có mắt, mũi, miệng",
-  "penalty": 1.55,
-  "last_updated": "2026-05-28 18:17:51.890621",
-  "verbs_vi": [
-    "có"
-  ],
-  "nouns_vi": [
-    "mũi",
-    "bức",
-    "tranh",
-    "miệng",
-    "mắt"
-  ],
-  "verbs_en": [
-    "Have"
-  ],
-  "nouns_en": [
-    "nose",
-    "mouth",
-    "eye"
-  ],
-  "art_type": "portrait",
-  "scenery_text": "bức tranh có cây, nhà, mặt trời. mặt trời thấp hơn cây",
-  "scenery_sentences_data": [
+  "art_type": "scenery",
+  "total_sentences": 2,
+  "sentences": [
     {
       "sentence": "bức tranh có cây, nhà, mặt trời",
       "raw_verbs_vi": [
@@ -118,17 +97,6 @@
           "M"
         ]
       ]
-    }
-  ],
-  "scenery_last_updated": "2026-05-28 17:36:53.690396",
-  "rules": [
-    {
-      "object1": "eye",
-      "relation": "higher_than",
-      "object2": "nose",
-      "object1_vi": "mắt",
-      "object2_vi": "mũi",
-      "relation_vi": "cao hơn"
     }
   ]
 }

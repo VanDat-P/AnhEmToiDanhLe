@@ -125,16 +125,18 @@
             charCount.textContent = this.value.length;
         });
 
-        // Lưu cài đặt lên server
+        // Lưu cài đặt lên server (CHỈ 1 HÀM DUY NHẤT)
         function saveSettings() {
             let text = userText.value;
             let penalty = slider.value;
-            
+
             // Lấy giá trị loại tranh được chọn
             const selectedType = document.querySelector('input[name="type"]:checked');
+
             
-            if (!text.trim()) {
-                alert('📝 Vui lòng nhập văn bản trước khi lưu!');
+
+            if (!selectedType) {
+                alert('🎨 Vui lòng chọn loại tranh (Chân dung hoặc Phong cảnh)!');
                 return;
             }
 
@@ -144,13 +146,11 @@
             // Tạo object data để gửi
             let postData = {
                 text: text,
-                penalty: parseFloat(penalty)
+                penalty: parseFloat(penalty),
+                art_type: selectedType.value  // 'portrait' hoặc 'scenery'
             };
-            
-            // Thêm loại tranh nếu có chọn
-            if (selectedType) {
-                postData.art_type = selectedType.value;  // Đổi key thành art_type
-            }
+
+            console.log("📤 Đang gửi dữ liệu:", postData);
 
             fetch('http://localhost:5000/save_settings', {
                 method: 'POST',
@@ -159,15 +159,17 @@
             })
             .then(response => response.json())
             .then(result => {
+                console.log("📥 Kết quả từ server:", result);
                 if (result.success) {
                     // Lưu local backup
                     localStorage.setItem("penalty", penalty);
                     localStorage.setItem("userDescription", text);
-                    if (selectedType) {
-                        localStorage.setItem("artType", selectedType.value);
-                    }
+                    localStorage.setItem("selectedArtType", selectedType.value);  // QUAN TRỌNG
+                    localStorage.setItem("artType", selectedType.value);
 
                     saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> Đã lưu cài đặt';
+                    console.log(`✅ Đã lưu cài đặt cho: ${selectedType.value}`);
+                    
                     setTimeout(() => {
                         saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu cài đặt';
                     }, 2000);
@@ -182,9 +184,8 @@
                 // Fallback: lưu local
                 localStorage.setItem("penalty", penalty);
                 localStorage.setItem("userDescription", text);
-                if (selectedType) {
-                    localStorage.setItem("artType", selectedType.value);
-                }
+                localStorage.setItem("selectedArtType", selectedType.value);  // QUAN TRỌNG
+                localStorage.setItem("artType", selectedType.value);
                 saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> Đã lưu (local)';
                 setTimeout(() => {
                     saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu cài đặt';
@@ -200,37 +201,29 @@
             fetch('http://localhost:5000/get_settings')
                 .then(response => response.json())
                 .then(result => {
-                    if (result.success && result.text) {
-                        userText.value = result.text;
+                    console.log("📥 Dữ liệu từ server:", result);
+                    if (result.success) {
+                        // Hiển thị penalty
                         slider.value = result.penalty;
-                        charCount.textContent = result.text.length;
                         updateUI(slider.value);
-                        
-                        // Load loại tranh nếu có từ server
-                        if (result.art_type) {
-                            const typeRadio = document.querySelector(`input[name="type"][value="${result.art_type}"]`);
-                            if (typeRadio) typeRadio.checked = true;
-                        } else if (result.type) { // Fallback cho key cũ
-                            const typeRadio = document.querySelector(`input[name="type"][value="${result.type}"]`);
-                            if (typeRadio) typeRadio.checked = true;
-                        }
-                        console.log('Đã tải cài đặt từ server');
-                    } else {
-                        // Fallback: tải từ localStorage
-                        let savedPenalty = localStorage.getItem("penalty");
+
+                        // Load từ localStorage (ưu tiên hơn)
+                        let savedType = localStorage.getItem("selectedArtType");
                         let savedText = localStorage.getItem("userDescription");
-                        let savedType = localStorage.getItem("artType");
                         
-                        if (savedPenalty) slider.value = savedPenalty;
+                        if (savedType) {
+                            const radioToCheck = document.querySelector(`input[name="type"][value="${savedType}"]`);
+                            if (radioToCheck) {
+                                radioToCheck.checked = true;
+                                console.log(`📌 Đã khôi phục lựa chọn: ${savedType}`);
+                            }
+                        }
+
                         if (savedText) {
                             userText.value = savedText;
                             charCount.textContent = savedText.length;
+                            console.log(`📌 Đã khôi phục text: ${savedText.substring(0, 50)}...`);
                         }
-                        if (savedType) {
-                            const typeRadio = document.querySelector(`input[name="type"][value="${savedType}"]`);
-                            if (typeRadio) typeRadio.checked = true;
-                        }
-                        updateUI(slider.value);
                     }
                 })
                 .catch(error => {
@@ -238,29 +231,33 @@
                     // Fallback: tải từ localStorage
                     let savedPenalty = localStorage.getItem("penalty");
                     let savedText = localStorage.getItem("userDescription");
-                    let savedType = localStorage.getItem("artType");
+                    let savedType = localStorage.getItem("selectedArtType");
                     
-                    if (savedPenalty) slider.value = savedPenalty;
+                    if (savedPenalty) {
+                        slider.value = savedPenalty;
+                        updateUI(slider.value);
+                    }
                     if (savedText) {
                         userText.value = savedText;
                         charCount.textContent = savedText.length;
                     }
                     if (savedType) {
-                        const typeRadio = document.querySelector(`input[name="type"][value="${savedType}"]`);
-                        if (typeRadio) typeRadio.checked = true;
+                        const radioToCheck = document.querySelector(`input[name="type"][value="${savedType}"]`);
+                        if (radioToCheck) radioToCheck.checked = true;
                     }
-                    updateUI(slider.value);
                 });
         }
 
-        // Khởi tạo
-        loadSettingsFromServer();
-
+        // Gắn sự kiện cho nút lưu
+        saveBtn.addEventListener("click", saveSettings);
+        
+        // Điều chỉnh slider
         slider.addEventListener("input", function () {
             updateUI(this.value);
         });
 
-        saveBtn.addEventListener("click", saveSettings);
+        // Khởi tạo khi load trang
+        loadSettingsFromServer();
     </script>
 
 </body>
