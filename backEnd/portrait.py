@@ -58,61 +58,50 @@ VALID_VERBS = {
 
 # === OBJECT MAPPING ===
 SCENERY_OBJECT_MAPPING = {
-    "cây": "tree",
-    "nhà": "house",
-    "mặt trời": "sun"
+    "ông mặt trời": "sun", "mặt trời": "sun", "vầng thái dương": "sun",
+    "ngôi nhà": "house", "căn nhà": "house", "mái nhà": "house", "nhà": "house",
+    "cái cây": "tree", "bóng cây": "tree", "ngọn cây": "tree", "cây": "tree",
+    "đám mây": "cloud", "mây": "cloud",
+    "ngọn núi": "mountain", "dãy núi": "mountain", "núi": "mountain",
+    "dòng sông": "river", "con sông": "river", "sông": "river",
+    "con chim": "bird", "đàn chim": "bird", "chim": "bird",
+    "bông hoa": "flower", "khóm hoa": "flower", "hoa": "flower"
 }
 
 PORTRAIT_OBJECT_MAPPING = {
-    "mắt": "eye",
-    "mũi": "nose",
-    "miệng": "mouth",
-    "tai": "ear",
-    "mày": "eyebrow",
-    "lông mày": "eyebrow",
-    "tóc": "hair",
-    "khuôn mặt": "face",
-    "mặt": "face"
+    "khuôn mặt": "face", "gương mặt": "face", "mặt": "face",
+    "lông mày": "eyebrow", "chân mày": "eyebrow", "mày": "eyebrow",
+    "mái tóc": "hair", "tóc": "hair",
+    "đôi mắt": "eye", "mắt": "eye",
+    "cái mũi": "nose", "mũi": "nose",
+    "cái miệng": "mouth", "miệng": "mouth",
+    "cái tai": "ear", "đôi tai": "ear", "tai": "ear"
 }
 
 PORTRAIT_OBJECT_VI = {
-    "eye": "mắt",
-    "nose": "mũi",
-    "mouth": "miệng",
-    "ear": "tai",
-    "eyebrow": "lông mày",
-    "hair": "tóc",
-    "face": "khuôn mặt"
+    "eye": "mắt", "nose": "mũi", "mouth": "miệng",
+    "ear": "tai", "eyebrow": "lông mày", "hair": "tóc", "face": "khuôn mặt"
 }
 
 SCENERY_OBJECT_VI = {
-    "tree": "cây",
-    "house": "nhà",
-    "sun": "mặt trời"
+    "tree": "cây", "house": "nhà", "sun": "mặt trời", 
+    "moon": "mặt trăng", "cloud": "mây", "mountain": "núi", 
+    "river": "sông", "bird": "chim", "flower": "hoa"
 }
 
 RELATION_MAPPING = {
-    "cao hơn": "higher_than",
-    "thấp hơn": "lower_than",
-    "bên trái": "left_of",
-    "bên phải": "right_of",
-    "ở trên": "above",
-    "ở dưới": "below",
-    "cao hon": "higher_than",
-    "thap hon": "lower_than",
-    "ben trai": "left_of",
-    "ben phai": "right_of",
-    "o tren": "above",
-    "o duoi": "below"
+    "phía trên": "above", "ở trên": "above", "bên trên": "above", "trên": "above",
+    "phía dưới": "below", "ở dưới": "below", "bên dưới": "below", "dưới": "below",
+    "bên trái": "left_of", "phía trái": "left_of", "trái": "left_of",
+    "bên phải": "right_of", "phía phải": "right_of", "phải": "right_of",
+    "cao hơn": "higher_than", "to hơn": "higher_than", "lớn hơn": "higher_than",
+    "thấp hơn": "lower_than", "nhỏ hơn": "lower_than", "bé hơn": "lower_than"
 }
 
 RELATION_VI = {
-    "higher_than": "cao hơn",
-    "lower_than": "thấp hơn",
-    "left_of": "bên trái",
-    "right_of": "bên phải",
-    "above": "ở trên",
-    "below": "ở dưới"
+    "higher_than": "cao hơn", "lower_than": "thấp hơn",
+    "left_of": "bên trái", "right_of": "bên phải",
+    "above": "ở trên", "below": "ở dưới"
 }
 
 def filter_valid_nouns_en(nouns_list, art_type="portrait"):
@@ -145,47 +134,115 @@ def filter_valid_verbs_en(verbs_list):
             valid_verbs.append(verb_lower)
     return valid_verbs
 
+def phan_tich_trong_so_tieu_chi(user_text):
+    # Thang điểm mặc định
+    weights = {"objects": 5.0, "layout": 2.0, "art_proportion": 2.0, "color": 1.0}
+    if not user_text or not user_text.strip():
+        return weights
+        
+    text = user_text.lower()
+    
+    # Chỉ bắt các từ khóa mang tính NGHỆ THUẬT & PHONG CÁCH
+    if any(kw in text for kw in ["màu", "sắc", "rực rỡ", "tươi sáng", "đậm"]):
+        weights["color"] += 3.0
+        weights["objects"] -= 1.0 
+        
+    if any(kw in text for kw in ["bố cục", "căn giữa", "vị trí", "trái", "phải", "trên", "dưới"]):
+        weights["layout"] += 2.0
+        weights["objects"] -= 1.0
+        
+    if any(kw in text for kw in ["tỷ lệ", "xa gần", "nghệ thuật", "hài hòa", "cân đối"]):
+        weights["art_proportion"] += 2.0
+        weights["objects"] -= 1.0
+        
+    # Chuẩn hóa về thang 10
+    total = sum(weights.values())
+    for key in weights:
+        weights[key] = (weights[key] / total) * 10.0
+        
+    return weights
+        
+    text = user_text.lower()
+    
+    # 0. MỚI THÊM: Giáo viên cực kỳ gắt gao về việc PHẢI CÓ vật thể
+    if any(kw in text for kw in ["phải có", "bắt buộc", "thiếu", "không có", "trừ điểm"]):
+        weights["objects"] += 4.0   # Tăng vọt điểm vật thể lên
+        weights["layout"] -= 1.0    # Cắt bớt điểm các phần khác
+        weights["art_proportion"] -= 1.0
+        weights["color"] -= 0.5
+    
+    # 1. Giáo viên khó tính về MÀU SẮC
+    if any(kw in text for kw in ["màu", "màu sắc", "tô màu", "rực rỡ", "tươi sáng", "đậm"]):
+        weights["color"] += 3.0
+        weights["objects"] -= 1.0 
+        
+    # 2. Giáo viên khó tính về BỐ CỤC / VỊ TRÍ
+    if any(kw in text for kw in ["bố cục", "căn giữa", "vị trí", "bên trái", "bên phải", "ở trên", "ở dưới", "to hơn", "nhỏ hơn"]):
+        weights["layout"] += 2.0
+        weights["objects"] -= 1.0
+        
+    # 3. Giáo viên khó tính về NGHỆ THUẬT / QUY LUẬT
+    if any(kw in text for kw in ["tỷ lệ", "xa gần", "nghệ thuật", "hài hòa", "cân đối", "sáng tạo"]):
+        weights["art_proportion"] += 2.0
+        weights["objects"] -= 1.0
+        
+    # CHUẨN HÓA: Ép tổng điểm luôn luôn bằng đúng 10.0
+    total = sum(weights.values())
+    for key in weights:
+        weights[key] = (weights[key] / total) * 10.0
+        
+    return weights
+
 def parse_rules(user_text, art_type="scenery"):
     rules = []
-    
     if not user_text or not user_text.strip():
         return rules
     
-    if art_type == "portrait":
-        pattern = r"(mắt|mũi|miệng|tai|mày|lông mày|tóc|khuôn mặt|mặt)\s*(?:phải|nên|cần)?\s*(cao hơn|thấp hơn|bên trái|bên phải|ở trên|ở dưới|cao hon|thap hon|ben trai|ben phai|o tren|o duoi)\s*(?:so với)?\s*(mắt|mũi|miệng|tai|mày|lông mày|tóc|khuôn mặt|mặt)"
-        matches = re.findall(pattern, user_text.lower())
-        
-        for obj1_vi, rel_vi, obj2_vi in matches:
-            obj1_en = PORTRAIT_OBJECT_MAPPING.get(obj1_vi, obj1_vi)
-            obj2_en = PORTRAIT_OBJECT_MAPPING.get(obj2_vi, obj2_vi)
-            
-            if obj1_en in VALID_PORTRAIT_NOUNS and obj2_en in VALID_PORTRAIT_NOUNS:
-                rules.append({
-                    "object1": obj1_en,
-                    "relation": RELATION_MAPPING.get(rel_vi, rel_vi),
-                    "object2": obj2_en,
-                    "object1_vi": obj1_vi,
-                    "object2_vi": obj2_vi,
-                    "relation_vi": RELATION_VI.get(RELATION_MAPPING.get(rel_vi, rel_vi), rel_vi)
-                })
-    else:
-        pattern = r"(mặt trời|cây|nhà)\s*(?:phải|nên|cần)?\s*(cao hơn|thấp hơn|bên trái|bên phải|ở trên|ở dưới|cao hon|thap hon|ben trai|ben phai|o tren|o duoi)\s*(?:so với)?\s*(mặt trời|cây|nhà)"
-        matches = re.findall(pattern, user_text.lower())
-        
-        for obj1_vi, rel_vi, obj2_vi in matches:
-            obj1_en = SCENERY_OBJECT_MAPPING.get(obj1_vi, obj1_vi)
-            obj2_en = SCENERY_OBJECT_MAPPING.get(obj2_vi, obj2_vi)
-            
-            if obj1_en in VALID_SCENERY_NOUNS and obj2_en in VALID_SCENERY_NOUNS:
-                rules.append({
-                    "object1": obj1_en,
-                    "relation": RELATION_MAPPING.get(rel_vi, rel_vi),
-                    "object2": obj2_en,
-                    "object1_vi": obj1_vi,
-                    "object2_vi": obj2_vi,
-                    "relation_vi": RELATION_VI.get(RELATION_MAPPING.get(rel_vi, rel_vi), rel_vi)
-                })
+    # SỬA: Tách theo dấu chấm (.)
+    clauses = [c.strip() for c in user_text.lower().split('.') if c.strip()]
     
+    obj_dict = PORTRAIT_OBJECT_MAPPING if art_type == "portrait" else SCENERY_OBJECT_MAPPING
+    vi_dict = PORTRAIT_OBJECT_VI if art_type == "portrait" else SCENERY_OBJECT_VI
+    
+    for clause in clauses:
+        if not clause or len(clause.strip()) < 3:
+            continue
+            
+        found_objects = []
+        found_relations = []
+        
+        clause_temp = clause
+        for vi_word, en_key in obj_dict.items():
+            pattern = rf"(?:\b|\s|^){vi_word}(?:\b|\s|$)"
+            for match in re.finditer(pattern, clause_temp):
+                found_objects.append({"vi": vi_word, "en": en_key, "pos": match.start()})
+                clause_temp = clause_temp[:match.start()] + " " * len(match.group()) + clause_temp[match.end():]
+                
+        clause_temp_rel = clause
+        for vi_word, en_key in RELATION_MAPPING.items():
+            pattern = rf"(?:\b|\s|^){vi_word}(?:\b|\s|$)"
+            for match in re.finditer(pattern, clause_temp_rel):
+                found_relations.append({"vi": vi_word, "en": en_key, "pos": match.start()})
+                clause_temp_rel = clause_temp_rel[:match.start()] + " " * len(match.group()) + clause_temp_rel[match.end():]
+
+        found_objects = sorted(found_objects, key=lambda x: x['pos'])
+        found_relations = sorted(found_relations, key=lambda x: x['pos'])
+
+        if len(found_objects) >= 2 and len(found_relations) >= 1:
+            obj_A, obj_B, rel = found_objects[0], found_objects[1], found_relations[0]
+            
+            if obj_A['pos'] < rel['pos'] < obj_B['pos']:
+                rules.append({
+                    "object1": obj_A['en'], "relation": rel['en'], "object2": obj_B['en'],
+                    "object1_vi": vi_dict.get(obj_A['en'], obj_A['vi']), 
+                    "object2_vi": vi_dict.get(obj_B['en'], obj_B['vi']), "relation_vi": rel['vi']
+                })
+            elif rel['pos'] < obj_A['pos'] < obj_B['pos']:
+                rules.append({
+                    "object1": obj_B['en'], "relation": rel['en'], "object2": obj_A['en'],
+                    "object1_vi": vi_dict.get(obj_B['en'], obj_B['vi']), 
+                    "object2_vi": vi_dict.get(obj_A['en'], obj_A['vi']), "relation_vi": rel['vi']
+                })
     return rules
 
 def check_rule(rule, boxes_dict):
@@ -232,11 +289,6 @@ def save_settings():
         penalty = float(data.get("penalty", 1.5))
         art_type = data.get("art_type", "")
         
-        verbs_list = []
-        nouns_list = []
-        verbs_en_list = []
-        nouns_en_list = []
-        
         settings_file = "user_settings.json"
         
         if os.path.exists(settings_file):
@@ -244,43 +296,81 @@ def save_settings():
                 settings = json.load(f)
         else:
             settings = {}
+            
+        verbs_list = []
+        nouns_list = []
+        verbs_en_list = []
+        nouns_en_list = []
+        all_rules = []
+        sentences_data = []
         
         if user_text and user_text.strip():
-            try:
-                pos_tags = pos_tag(user_text)
-                
-                for word, tag in pos_tags:
-                    if tag.startswith('V'):
-                        verbs_list.append(word)
-                    elif tag.startswith('N'):
-                        nouns_list.append(word)
-                
-                verbs_list = list(set(verbs_list))
-                nouns_list = list(set(nouns_list))
-                
-                if verbs_list:
-                    for verb in verbs_list:
+            # SỬA: Tách thành nhiều câu theo dấu chấm (.)
+            clauses = [c.strip() for c in user_text.split('.') if c.strip()]
+            obj_dict = PORTRAIT_OBJECT_MAPPING if art_type == "portrait" else SCENERY_OBJECT_MAPPING
+            
+            for clause in clauses:
+                try:
+                    pos_tags = pos_tag(clause)
+                    
+                    raw_verbs_vi = [word for word, tag in pos_tags if tag.startswith('V')]
+                    raw_nouns_vi = [word for word, tag in pos_tags if tag.startswith('N')]
+                    
+                    # Bắt thêm danh từ ghép thủ công tránh underthesea tách lỗi
+                    for vi_word in obj_dict.keys():
+                        if re.search(rf"(?:\b|\s|^){vi_word}(?:\b|\s|$)", clause.lower()) and vi_word not in raw_nouns_vi:
+                            raw_nouns_vi.append(vi_word)
+                            
+                    clause_verbs_en = []
+                    for v in raw_verbs_vi:
                         try:
-                            translated = translator.translate(verb)
-                            verbs_en_list.append(translated)
+                            clause_verbs_en.append(translator.translate(v).lower())
                         except:
-                            verbs_en_list.append(verb)
-                
-                if nouns_list:
-                    for noun in nouns_list:
-                        try:
-                            translated = translator.translate(noun)
-                            nouns_en_list.append(translated)
-                        except:
-                            nouns_en_list.append(noun)
-                
-                if art_type:
-                    nouns_en_list = filter_valid_nouns_en(nouns_en_list, art_type)
-                
-            except Exception as e:
-                print(f"Lỗi extract: {e}")
-        
-        rules = parse_rules(user_text, art_type)
+                            clause_verbs_en.append(v)
+                            
+                    clause_nouns_en = []
+                    for n in raw_nouns_vi:
+                        en_mapped = obj_dict.get(n.lower())
+                        if en_mapped:
+                            clause_nouns_en.append(en_mapped)
+                        else:
+                            try:
+                                clause_nouns_en.append(translator.translate(n).lower())
+                            except:
+                                clause_nouns_en.append(n)
+                                
+                    clause_nouns_en = filter_valid_nouns_en(clause_nouns_en, art_type)
+                    
+                    # Kiểm tra tính bắt buộc
+                    has_co = any(v.lower() in ["có", "phải", "cần", "vẽ", "bắt buộc"] for v in raw_verbs_vi) or "có" in clause.lower()
+                    clause_rules = parse_rules(clause, art_type)
+                    
+                    sentences_data.append({
+                        "sentence": clause,
+                        "raw_verbs_vi": list(set(raw_verbs_vi)),
+                        "raw_nouns_vi": list(set(raw_nouns_vi)),
+                        "verbs_en": list(set(clause_verbs_en)),
+                        "nouns_en": list(set(clause_nouns_en)),
+                        "mandatory_nouns_en": list(set(clause_nouns_en)) if has_co else [],
+                        "optional_nouns_en": [] if has_co else list(set(clause_nouns_en)),
+                        "has_co_verb": has_co,
+                        "comparison_rules": clause_rules,
+                        "pos_tags": pos_tags
+                    })
+                    
+                    verbs_list.extend(raw_verbs_vi)
+                    nouns_list.extend(raw_nouns_vi)
+                    verbs_en_list.extend(clause_verbs_en)
+                    nouns_en_list.extend(clause_nouns_en)
+                    all_rules.extend(clause_rules)
+                    
+                except Exception as e:
+                    print(f"Lỗi extract: {e}")
+            
+            verbs_list = list(set(verbs_list))
+            nouns_list = list(set(nouns_list))
+            verbs_en_list = list(set(verbs_en_list))
+            nouns_en_list = list(set(nouns_en_list))
         
         settings['text'] = user_text
         settings['penalty'] = penalty
@@ -289,7 +379,14 @@ def save_settings():
         settings['nouns_vi'] = nouns_list
         settings['verbs_en'] = verbs_en_list
         settings['nouns_en'] = nouns_en_list
-        settings['rules'] = rules
+        settings['rules'] = all_rules
+        
+        # SỬA: Lưu JSON theo cấu trúc mới
+        if art_type:
+            settings[f"{art_type}_text"] = user_text
+            settings[f"{art_type}_sentences_data"] = sentences_data
+            settings[f"{art_type}_last_updated"] = str(datetime.now())
+            
         settings['last_updated'] = str(datetime.now())
         
         with open(settings_file, 'w', encoding='utf-8') as f:
@@ -305,7 +402,7 @@ def save_settings():
             "nouns_vi": nouns_list,
             "verbs_en": verbs_en_list,
             "nouns_en": nouns_en_list,
-            "rules": rules
+            "rules": all_rules
         })
         
     except Exception as e:
@@ -418,7 +515,7 @@ def kiem_tra_bo_cuc_tong_the(boxes_xyxy, img_w, img_h):
     
     loi = []
     if ty_le < 0.05:
-        loi.append("Lỗi tỷ lệ: Hình vẽ bị quá nhỏ và lọt thỏm giữa tờ giấy. Hãy vẽ to và tự tin lên cục dàng!")
+        loi.append("Lỗi tỷ lệ: Hình vẽ bị quá nhỏ và lọt thỏm giữa tờ giấy. Hãy vẽ to và tự tự lên cục dàng!")
     elif ty_le > 0.85:
         loi.append("Lỗi lề: Em vẽ hình to quá bị chạm vào sát mép giấy, bức tranh nhìn hơi chật chội rồi cưng ơi.")
     if abs(((min_x + max_x) / 2) - (img_w / 2)) > (img_w * 0.15):
@@ -624,21 +721,145 @@ def predict():
         if missing:
             loi_khuyen.append(f"Em nhớ bổ sung các bộ phận còn thiếu nhé: {', '.join(missing)}.")
         
+        # --- CƠ CHẾ ĐIỂM ĐỘNG CHÂN DUNG ---
+        user_text = settings.get("text", "")
+        dynamic_weights = phan_tich_trong_so_tieu_chi(user_text)
+
         trong_so_chan_dung = {"face": 1.5, "eye": 1.5, "nose": 1.0, "mouth": 1.0, "hair": 1.0, "eyebrow": 0.5, "ear": 0.5}
+        diem_toi_da = sum(trong_so_chan_dung.values())
+        
         diem_thanh_phan = sum([trong_so_chan_dung.get(obj, 0) for obj in detected])
+        diem_thanh_phan_chuan = (diem_thanh_phan / diem_toi_da) * dynamic_weights["objects"] if diem_toi_da > 0 else 0
 
         so_loi_bo_cuc = sum(1 for l in loi_bo_cuc if "Lỗi" in l)
-        diem_bo_cuc = max(0, 1.5 - so_loi_bo_cuc * 0.5) 
+        diem_bo_cuc = max(0, dynamic_weights["layout"] - (so_loi_bo_cuc * (dynamic_weights["layout"] / 2))) 
 
         so_loi_ty_le = len(loi_ty_le)
-        diem_ty_le = max(0, 1.5 - so_loi_ty_le * 0.5) 
+        diem_ty_le = max(0, dynamic_weights["art_proportion"] - (so_loi_ty_le * (dynamic_weights["art_proportion"] / 3))) 
 
-        bonus_rules = min(len(rule_success) * 0.3, 1.0)
-        penalt_rules = len(rule_errors) * 0.2
+        # Vì ảnh chân dung chưa phân tích màu sắc, hệ thống tự động tặng full điểm màu theo trọng số
+        diem_mau_sac = dynamic_weights["color"]
 
-        score_base = diem_thanh_phan + diem_bo_cuc + diem_ty_le + bonus_rules - penalt_rules
-        muc_phat = (so_loi_bo_cuc + so_loi_ty_le + len(missing) * 0.5) * (penalty - 1)
-        score = max(0, min(10, round(score_base - muc_phat, 1)))
+        bonus_rules = min(len(rule_success) * 0.5, 1.5)
+        penalt_rules = len(rule_errors) * 0.5
+
+        score_base = diem_thanh_phan_chuan + diem_bo_cuc + diem_ty_le + diem_mau_sac + bonus_rules - penalt_rules
+        so_vat_thieu = len(missing)
+        muc_phat_do_kho = (so_loi_bo_cuc + so_loi_ty_le + so_vat_thieu * 0.5) * (penalty - 1)
+
+        # --- CƠ CHẾ ĐIỂM ĐỘNG VÀ ĐIỂM TUYỆT ĐỐI (ĐÃ SỬA LỖI TĂNG ĐIỂM) CHO CHÂN DUNG ---
+        user_text = settings.get("text", "")
+        tru_diem_tuyet_doi = 0.0
+        cong_diem_tuyet_doi = 0.0
+        
+        # Đếm số vật thiếu để tính điểm phạt độ khó tự nhiên
+        so_vat_thieu_tu_nhien = len(missing)
+
+        if user_text:
+            text_lower = user_text.lower()
+            tat_ca_vat_the = detected + missing  
+            vat_bi_phat = []
+            
+            # SỬA: TÁCH VĂN BẢN THEO DẤU CHẤM
+            danh_sach_cau = [c.strip() for c in text_lower.split('.') if c.strip()]
+            
+            for cau in danh_sach_cau:
+                
+                # 1. QUÉT LỆNH THƯỞNG
+                for match in re.finditer(r'(?:cộng|thưởng|thêm)\s*(\d+(?:\.\d+)?)\s*điểm', cau):
+                    diem_cong = float(match.group(1))
+                    da_xu_ly_luat = False
+                    
+                    # 1.1 Ưu tiên kiểm tra Luật Không Gian/Tỷ Lệ (Relations)
+                    for rs in rule_success:
+                        if rs.lower() in cau:
+                            cong_diem_tuyet_doi += diem_cong
+                            loi_khuyen.append(f"🌟 Lời khen: Cộng {diem_cong} điểm vì vẽ đúng luật '{rs}'!")
+                            da_xu_ly_luat = True
+                            break
+                    if da_xu_ly_luat: continue
+                    
+                    # 1.2 Kiểm tra Vật Thể (Objects)
+                    for obj in tat_ca_vat_the:
+                        cac_cach_goi = [vi for vi, en in PORTRAIT_OBJECT_MAPPING.items() if en == obj]
+                        if not cac_cach_goi: cac_cach_goi = [PORTRAIT_OBJECT_VI.get(obj, obj)]
+                        matched_name = next((name for name in cac_cach_goi if name in cau), None)
+                        
+                        if matched_name:
+                            cau_phu_dinh = any(kw in cau for kw in ["không", "chưa", "thiếu"])
+                            if cau_phu_dinh and obj in missing:
+                                cong_diem_tuyet_doi += diem_cong
+                                loi_khuyen.append(f"🌟 Lời khen: Cộng {diem_cong} điểm vì em đã KHÔNG VẼ '{matched_name}'!")
+                                break
+                            elif not cau_phu_dinh and obj in detected:
+                                cong_diem_tuyet_doi += diem_cong
+                                loi_khuyen.append(f"🌟 Lời khen: Cộng {diem_cong} điểm vì em ĐÃ VẼ '{matched_name}'!")
+                                break
+                
+                # 2. QUÉT LỆNH PHẠT
+                for match in re.finditer(r'(?:trừ|phạt|bớt)\s*(\d+(?:\.\d+)?)\s*điểm', cau):
+                    diem_tru = float(match.group(1))
+                    da_xu_ly_luat = False
+                    
+                    # 2.1 Ưu tiên kiểm tra Luật Không Gian/Tỷ Lệ bị vi phạm
+                    for re_err in rule_errors:
+                        if re_err.lower() in cau:
+                            tru_diem_tuyet_doi += diem_tru
+                            loi_khuyen.append(f"⚠️ Cảnh báo: Trừ thẳng {diem_tru} điểm do vi phạm luật: '{re_err}'!")
+                            da_xu_ly_luat = True
+                            break
+                    if da_xu_ly_luat: continue
+
+                    # 2.2 Kiểm tra Vật Thể bị sai sót
+                    for obj in tat_ca_vat_the:
+                        cac_cach_goi = [vi for vi, en in PORTRAIT_OBJECT_MAPPING.items() if en == obj]
+                        if not cac_cach_goi: cac_cach_goi = [PORTRAIT_OBJECT_VI.get(obj, obj)]
+                        matched_name = next((name for name in cac_cach_goi if name in cau), None)
+                        
+                        if matched_name and obj not in vat_bi_phat:
+                            cau_phu_dinh = any(kw in cau for kw in ["không", "chưa", "thiếu"])
+                            if cau_phu_dinh and obj in missing:
+                                tru_diem_tuyet_doi += diem_tru
+                                vat_bi_phat.append(obj)
+                                so_vat_thieu_tu_nhien -= 1 
+                                loi_khuyen = [lk for lk in loi_khuyen if matched_name not in lk]
+                                loi_khuyen.append(f"⚠️ Cảnh báo: Trừ thẳng {diem_tru} điểm do THIẾU '{matched_name}'!")
+                                break
+                            elif not cau_phu_dinh and obj in detected:
+                                tru_diem_tuyet_doi += diem_tru
+                                vat_bi_phat.append(obj)
+                                loi_khuyen.append(f"⚠️ Cảnh báo: Trừ thẳng {diem_tru} điểm vì VẼ THỪA '{matched_name}' sai yêu cầu!")
+                                break
+
+        # 2. TÍNH ĐIỂM THÀNH PHẦN (Dựa trên danh sách detected thật 100%)
+        dynamic_weights = phan_tich_trong_so_tieu_chi(user_text)
+
+        trong_so_chan_dung = {"face": 1.5, "eye": 1.5, "nose": 1.0, "mouth": 1.0, "hair": 1.0, "eyebrow": 0.5, "ear": 0.5}
+        diem_toi_da = sum(trong_so_chan_dung.values())
+        
+        diem_thanh_phan = sum([trong_so_chan_dung.get(obj, 0) for obj in detected])
+        diem_thanh_phan_chuan = (diem_thanh_phan / diem_toi_da) * dynamic_weights["objects"] if diem_toi_da > 0 else 0
+
+        # 3. TÍNH ĐIỂM CÁC TIÊU CHÍ KHÁC
+        so_loi_bo_cuc = sum(1 for l in loi_bo_cuc if "Lỗi" in l)
+        diem_bo_cuc = max(0, dynamic_weights["layout"] - (so_loi_bo_cuc * (dynamic_weights["layout"] / 2))) 
+
+        so_loi_ty_le = len(loi_ty_le)
+        diem_ty_le = max(0, dynamic_weights["art_proportion"] - (so_loi_ty_le * (dynamic_weights["art_proportion"] / 3))) 
+
+        diem_mau_sac = dynamic_weights["color"]
+
+        bonus_rules = min(len(rule_success) * 0.5, 1.5)
+        penalt_rules = len(rule_errors) * 0.5
+
+        # 4. TỔNG KẾT ĐIỂM
+        score_base = diem_thanh_phan_chuan + diem_bo_cuc + diem_ty_le + diem_mau_sac + bonus_rules - penalt_rules
+        
+        # TÍNH PHẠT ĐỘ KHÓ: Sử dụng biến đã được trừ đi những vật bị phạt lệnh
+        muc_phat_do_kho = (so_loi_bo_cuc + so_loi_ty_le + so_vat_thieu_tu_nhien * 0.5) * (penalty - 1)
+
+        score_tinh_toan = score_base - muc_phat_do_kho - tru_diem_tuyet_doi + cong_diem_tuyet_doi
+        score = max(0, min(10, round(score_tinh_toan, 1)))
 
         if img_path and os.path.exists(img_path):
             os.remove(img_path)
@@ -648,7 +869,7 @@ def predict():
             "detected": detected,
             "missing": missing,
             "rule_errors": rule_errors,
-            "rule_success": rule_success,
+            "rule_success": rule_success,   
             "nhan_xet_bo_cuc": loi_bo_cuc,
             "nhan_xet_ty_le": loi_ty_le,
             "loi_khuyen_giao_vien": loi_khuyen if loi_khuyen else ["Tranh em vẽ rất tốt, không có gì để chê!"],
@@ -763,41 +984,168 @@ def predict_scenery():
         nhan_xet_nghe_thuat_list = phan_tich_nghe_thuat_phong_canh(boxes_dict, img_w, img_h)
         nhan_xet_mau_sac_str = phan_tich_mau_sac(img_cv)
 
+        # --- CƠ CHẾ ĐIỂM ĐỘNG PHONG CẢNH ---
+        user_text = settings.get("text", "")
+        dynamic_weights = phan_tich_trong_so_tieu_chi(user_text)
+
         trong_so_phong_canh = {"house": 2.5, "tree": 2.0, "sun": 1.5}
         for noun in base_required:
-            if noun not in trong_so_phong_canh:
-                trong_so_phong_canh[noun] = 1.0
-        
+            if noun not in trong_so_phong_canh: trong_so_phong_canh[noun] = 1.0
+            
         diem_thanh_phan = sum([trong_so_phong_canh.get(obj, 1.0) for obj in detected])
         diem_toi_da = sum([trong_so_phong_canh.get(obj, 1.0) for obj in base_required])
+        diem_thanh_phan_chuan = (diem_thanh_phan / diem_toi_da) * dynamic_weights["objects"] if diem_toi_da > 0 else 0
 
         so_loi_bo_cuc = sum(1 for l in loi_bo_cuc if "Lỗi" in l)
-        diem_bo_cuc = max(0, 2.0 - so_loi_bo_cuc * 0.5)
+        diem_bo_cuc = max(0, dynamic_weights["layout"] - (so_loi_bo_cuc * (dynamic_weights["layout"] / 3)))
 
-        diem_nghe_thuat = 0.0
+        diem_nghe_thuat = dynamic_weights["art_proportion"] * 0.5
         for nx in nhan_xet_nghe_thuat_list:
             if "tốt" in nx or "nghệ thuật" in nx or "amazing" in nx:
-                diem_nghe_thuat += 1.0 
-            elif "to hơn" in nx:
-                diem_nghe_thuat -= 0.5 
-        diem_nghe_thuat = max(0, min(2.0, diem_nghe_thuat))
+                diem_nghe_thuat += (dynamic_weights["art_proportion"] * 0.25)
+            elif "to hơn" in nx or "lưu ý" in nx.lower():
+                diem_nghe_thuat -= (dynamic_weights["art_proportion"] * 0.25)
+        diem_nghe_thuat = max(0, min(dynamic_weights["art_proportion"], diem_nghe_thuat))
 
-        diem_mau_sac = 1.0
+        diem_mau_sac = dynamic_weights["color"] * 0.6 
         if "nhạt nhòa" in nhan_xet_mau_sac_str or "hơi tối" in nhan_xet_mau_sac_str:
-            diem_mau_sac -= 0.5 
+            diem_mau_sac -= (dynamic_weights["color"] * 0.3)
         elif "rất tốt" in nhan_xet_mau_sac_str or "rực rỡ" in nhan_xet_mau_sac_str:
-            diem_mau_sac += 0.5
+            diem_mau_sac += (dynamic_weights["color"] * 0.4)
+        diem_mau_sac = max(0, min(dynamic_weights["color"], diem_mau_sac))
 
-        bonus_rules = min(len(rule_success) * 0.3, 1.0)
-        penalt_rules = len(rule_errors) * 0.2
+        bonus_rules = min(len(rule_success) * 0.5, 1.5)
+        penalt_rules = len(rule_errors) * 0.5
 
-        diem_thanh_phan_chuan = (diem_thanh_phan / diem_toi_da) * 5.0 if diem_toi_da > 0 else 0
+        score_base = diem_thanh_phan_chuan + diem_bo_cuc + diem_nghe_thuat + diem_mau_sac + bonus_rules - penalt_rules
+        so_vat_thieu = len(missing)
+        muc_phat_do_kho = (so_loi_bo_cuc * 0.5 + so_vat_thieu * 0.8) * (penalty - 1)
+
+        # --- CƠ CHẾ ĐIỂM ĐỘNG VÀ ĐIỂM TUYỆT ĐỐI (ĐÃ SỬA LỖI TĂNG ĐIỂM) ---
+        user_text = settings.get("text", "")
+        tru_diem_tuyet_doi = 0.0
+        cong_diem_tuyet_doi = 0.0
+        
+        # Đếm số vật thiếu để tính điểm phạt độ khó tự nhiên
+        so_vat_thieu_tu_nhien = len(missing)
+
+        if user_text:
+            text_lower = user_text.lower()
+            tat_ca_vat_the = detected + missing  
+            vat_bi_phat = []
+            
+            # SỬA: TÁCH VĂN BẢN THEO DẤU CHẤM
+            danh_sach_cau = [c.strip() for c in text_lower.split('.') if c.strip()]
+            
+            for cau in danh_sach_cau:
+                
+                # 1. QUÉT LỆNH THƯỞNG
+                for match in re.finditer(r'(?:cộng|thưởng|thêm)\s*(\d+(?:\.\d+)?)\s*điểm', cau):
+                    diem_cong = float(match.group(1))
+                    da_xu_ly_luat = False
+                    
+                    # 1.1 Ưu tiên kiểm tra Luật Không Gian (Relations)
+                    for rs in rule_success:
+                        if rs.lower() in cau:
+                            cong_diem_tuyet_doi += diem_cong
+                            loi_khuyen.append(f"🌟 Lời khen: Cộng {diem_cong} điểm vì vẽ đúng luật '{rs}'!")
+                            da_xu_ly_luat = True
+                            break
+                    if da_xu_ly_luat: continue
+                    
+                    # 1.2 Kiểm tra Vật Thể (Objects)
+                    for obj in tat_ca_vat_the:
+                        cac_cach_goi = [vi for vi, en in SCENERY_OBJECT_MAPPING.items() if en == obj]
+                        if not cac_cach_goi: cac_cach_goi = [SCENERY_OBJECT_VI.get(obj, obj)]
+                        matched_name = next((name for name in cac_cach_goi if name in cau), None)
+                        
+                        if matched_name:
+                            cau_phu_dinh = any(kw in cau for kw in ["không", "chưa", "thiếu"])
+                            if cau_phu_dinh and obj in missing:
+                                cong_diem_tuyet_doi += diem_cong
+                                loi_khuyen.append(f"🌟 Lời khen: Cộng {diem_cong} điểm vì em đã KHÔNG VẼ '{matched_name}'!")
+                                break
+                            elif not cau_phu_dinh and obj in detected:
+                                cong_diem_tuyet_doi += diem_cong
+                                loi_khuyen.append(f"🌟 Lời khen: Cộng {diem_cong} điểm vì em ĐÃ VẼ '{matched_name}'!")
+                                break
+                
+                # 2. QUÉT LỆNH PHẠT
+                for match in re.finditer(r'(?:trừ|phạt|bớt)\s*(\d+(?:\.\d+)?)\s*điểm', cau):
+                    diem_tru = float(match.group(1))
+                    da_xu_ly_luat = False
+                    
+                    # 2.1 Ưu tiên kiểm tra Luật Không Gian bị vi phạm
+                    for re_err in rule_errors:
+                        if re_err.lower() in cau:
+                            tru_diem_tuyet_doi += diem_tru
+                            loi_khuyen.append(f"⚠️ Cảnh báo: Trừ thẳng {diem_tru} điểm do vi phạm luật: '{re_err}'!")
+                            da_xu_ly_luat = True
+                            break
+                    if da_xu_ly_luat: continue
+
+                    # 2.2 Kiểm tra Vật Thể bị sai sót
+                    for obj in tat_ca_vat_the:
+                        cac_cach_goi = [vi for vi, en in SCENERY_OBJECT_MAPPING.items() if en == obj]
+                        if not cac_cach_goi: cac_cach_goi = [SCENERY_OBJECT_VI.get(obj, obj)]
+                        matched_name = next((name for name in cac_cach_goi if name in cau), None)
+                        
+                        if matched_name and obj not in vat_bi_phat:
+                            cau_phu_dinh = any(kw in cau for kw in ["không", "chưa", "thiếu"])
+                            if cau_phu_dinh and obj in missing:
+                                tru_diem_tuyet_doi += diem_tru
+                                vat_bi_phat.append(obj)
+                                so_vat_thieu_tu_nhien -= 1 
+                                loi_khuyen = [lk for lk in loi_khuyen if matched_name not in lk]
+                                loi_khuyen.append(f"⚠️ Cảnh báo: Trừ thẳng {diem_tru} điểm do THIẾU '{matched_name}'!")
+                                break
+                            elif not cau_phu_dinh and obj in detected:
+                                tru_diem_tuyet_doi += diem_tru
+                                vat_bi_phat.append(obj)
+                                loi_khuyen.append(f"⚠️ Cảnh báo: Trừ thẳng {diem_tru} điểm vì VẼ THỪA '{matched_name}' sai yêu cầu!")
+                                break
+
+        # 2. TÍNH ĐIỂM THÀNH PHẦN 
+        dynamic_weights = phan_tich_trong_so_tieu_chi(user_text)
+
+        trong_so_phong_canh = {"house": 2.5, "tree": 2.0, "sun": 1.5}
+        for noun in base_required:
+            if noun not in trong_so_phong_canh: trong_so_phong_canh[noun] = 1.0
+            
+        diem_thanh_phan = sum([trong_so_phong_canh.get(obj, 1.0) for obj in detected]) 
+        diem_toi_da = sum([trong_so_phong_canh.get(obj, 1.0) for obj in base_required])
+        diem_thanh_phan_chuan = (diem_thanh_phan / diem_toi_da) * dynamic_weights["objects"] if diem_toi_da > 0 else 0
+
+        # 3. TÍNH ĐIỂM CÁC TIÊU CHÍ KHÁC
+        so_loi_bo_cuc = sum(1 for l in loi_bo_cuc if "Lỗi" in l)
+        diem_bo_cuc = max(0, dynamic_weights["layout"] - (so_loi_bo_cuc * (dynamic_weights["layout"] / 3)))
+
+        diem_nghe_thuat = dynamic_weights["art_proportion"] * 0.5
+        for nx in nhan_xet_nghe_thuat_list:
+            if "tốt" in nx or "nghệ thuật" in nx or "amazing" in nx:
+                diem_nghe_thuat += (dynamic_weights["art_proportion"] * 0.25)
+            elif "to hơn" in nx or "lưu ý" in nx.lower():
+                diem_nghe_thuat -= (dynamic_weights["art_proportion"] * 0.25)
+        diem_nghe_thuat = max(0, min(dynamic_weights["art_proportion"], diem_nghe_thuat))
+
+        diem_mau_sac = dynamic_weights["color"] * 0.6 
+        if "nhạt nhòa" in nhan_xet_mau_sac_str or "hơi tối" in nhan_xet_mau_sac_str:
+            diem_mau_sac -= (dynamic_weights["color"] * 0.3)
+        elif "rất tốt" in nhan_xet_mau_sac_str or "rực rỡ" in nhan_xet_mau_sac_str:
+            diem_mau_sac += (dynamic_weights["color"] * 0.4)
+        diem_mau_sac = max(0, min(dynamic_weights["color"], diem_mau_sac))
+
+        bonus_rules = min(len(rule_success) * 0.5, 1.5)
+        penalt_rules = len(rule_errors) * 0.5
+
+        # 4. TỔNG KẾT ĐIỂM
         score_base = diem_thanh_phan_chuan + diem_bo_cuc + diem_nghe_thuat + diem_mau_sac + bonus_rules - penalt_rules
         
-        so_vat_thieu = len(missing)
-        muc_phat = (so_loi_bo_cuc * 0.5 + so_vat_thieu * 0.8) * (penalty - 1)
-        score = score_base - muc_phat
-        score = max(0, min(10, round(score * 1.25, 1)))
+        # TÍNH PHẠT ĐỘ KHÓ: Sử dụng biến đã được trừ đi những vật bị phạt lệnh
+        muc_phat_do_kho = (so_loi_bo_cuc * 0.5 + so_vat_thieu_tu_nhien * 0.8) * (penalty - 1)
+
+        score_tinh_toan = score_base - muc_phat_do_kho - tru_diem_tuyet_doi + cong_diem_tuyet_doi
+        score = max(0, min(10, round(score_tinh_toan, 1)))
 
         if img_path and os.path.exists(img_path):
             os.remove(img_path)
