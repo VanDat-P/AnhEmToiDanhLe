@@ -11,7 +11,9 @@ from datetime import datetime
 from underthesea import pos_tag
 from deep_translator import GoogleTranslator
 import re
+from sentence_transformers import SentenceTransformer, util
 
+embed_model = SentenceTransformer("all-MiniLM-L6-v2")
 app = Flask(__name__)
 
 # === CORS ===
@@ -280,6 +282,38 @@ def check_rule(rule, boxes_dict):
 
     return False
 
+templates= [["N","V","N"],["V","N","C","N"]]
+
+def parse_rulesv2(tokens, sentence):
+    try:
+        sentence_embed = embed_model.encode(sentence)
+        possible_rules=[]
+        for template in templates:
+            rule = ""
+            current_idx=0
+            for word_type in template:
+                while(current_idx<len(tokens) and tokens[current_idx][1]!=word_type):
+                    current_idx +=1
+                if current_idx>=len(tokens): 
+                    break
+                rule+=f" {tokens[current_idx][0]}"
+                current_idx +=1
+            rule_embed = embed_model.encode(rule)
+ 
+            print(f"{rule}, score: {util.cos_sim(sentence_embed, rule_embed).item():.2f}")
+
+            if util.cos_sim(sentence_embed, rule_embed)>0.8:
+                rule_dict = {
+                    "rule": rule,
+                    "template": template
+                }
+                possible_rules.append(rule_dict)
+        return possible_rules
+    except Exception as e:
+        print(f"lỗi khi parse rule: {e}")
+def calculate_template_rule(rule):
+    pass
+
 # === API LƯU CÀI ĐẶT ===
 @app.route("/save_settings", methods=["POST"])
 def save_settings():
@@ -346,6 +380,7 @@ def save_settings():
                     clause_rules = parse_rules(clause, art_type)
                     
                     sentences_data.append({
+                        "raw_tokens" : pos_tags,
                         "sentence": clause,
                         "raw_verbs_vi": list(set(raw_verbs_vi)),
                         "raw_nouns_vi": list(set(raw_nouns_vi)),
@@ -393,7 +428,7 @@ def save_settings():
             json.dump(settings, f, ensure_ascii=False, indent=2)
         
         print(f"✅ Đã lưu settings cho {art_type}")
-        
+        parse_rulesv2(pos_tags,user_text)
         return jsonify({
             "success": True,
             "message": "Đã lưu cài đặt lên server!",
@@ -522,6 +557,7 @@ def kiem_tra_bo_cuc_tong_the(boxes_xyxy, img_w, img_h):
         loi.append("Lỗi xô lệch: Trọng tâm hình vẽ đang bị lệch hẳn sang một bên, chưa căn giữa.")
     
     return loi if loi else ["Tuyệt vời! Bố cục cân đối, nằm ngay ngắn, amazing good job em!"]
+
 
 def luat_ty_le_chan_dung(boxes_dict):
     nhan_xet = []
