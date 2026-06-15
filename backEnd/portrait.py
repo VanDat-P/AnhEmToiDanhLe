@@ -97,7 +97,8 @@ RELATION_MAPPING = {
     "bên trái": "left_of", "phía trái": "left_of", "trái": "left_of",
     "bên phải": "right_of", "phía phải": "right_of", "phải": "right_of",
     "cao hơn": "higher_than", "to hơn": "higher_than", "lớn hơn": "higher_than",
-    "thấp hơn": "lower_than", "nhỏ hơn": "lower_than", "bé hơn": "lower_than"
+    "thấp hơn": "lower_than", "nhỏ hơn": "lower_than", "bé hơn": "lower_than",
+    "có": "have"
 }
 
 RELATION_VI = {
@@ -282,7 +283,7 @@ def check_rule(rule, boxes_dict):
 
     return False
 
-templates= [["N","V","N"],["V","N","C","N"]]
+templates= [["V","N"],["V","N","C","N"],["V","Ns"]]
 
 def parse_rulesv2(tokens, sentence):
     try:
@@ -309,10 +310,22 @@ def parse_rulesv2(tokens, sentence):
                 }
                 possible_rules.append(rule_dict)
         return possible_rules
-    except Exception as e:
+    except Exception as e:        
         print(f"lỗi khi parse rule: {e}")
-def calculate_template_rule(rule):
-    pass
+
+def check_rulev2(rule, boxes_dict):
+    try:
+
+        template_idx = templates.index(rule["template"])
+        match template_idx:
+            case 0:
+                tempalte_0(rule, boxes_dict) # V + N
+            case 1:
+                template_1(rule, boxes_dict) # V + N + C + N
+            case 2:
+                template_2(rule, boxes_dict) # V + Ns
+    except Exeption as e:
+        print(f"Có lỗi xảy ra khi check rules. Lỗi {e}")
 
 # === API LƯU CÀI ĐẶT ===
 @app.route("/save_settings", methods=["POST"])
@@ -480,7 +493,7 @@ def get_settings():
 
 # === CÁC HẰNG SỐ ===
 REQUIRED = ["eye", "eyebrow", "nose", "mouth", "face", "ear", "hair"]
-SCENERY_REQUIRED = ["house", "tree", "sun"]
+SCENERY_REQUIRED = ["tree", "sun"]
 
 print("📦 Đang tải models...")
 
@@ -731,6 +744,7 @@ def predict():
                 if req == raw_name:
                     boxes_dict[req].append(box)
 
+
         detected = [k for k, v in boxes_dict.items() if len(v) > 0]
         missing = [k for k in REQUIRED if k not in detected]
         
@@ -951,7 +965,7 @@ def predict_scenery():
         
         for noun in nouns_from_settings:
             noun_lower = noun.lower().strip()
-            if noun_lower not in base_required and noun_lower not in ["house", "tree", "sun"]:
+            if noun_lower not in base_required and noun_lower not in ["tree", "sun"]:
                 base_required.append(noun_lower)
         
         img_cv = cv2.imread(img_path)
@@ -1002,8 +1016,6 @@ def predict_scenery():
                 rule_errors.append(f"{obj1_vi} không {relation_vi} {obj2_vi}")
         
         loi_khuyen = []
-        if "house" not in detected:
-            loi_khuyen.append("Em thiếu mất ngôi nhà rồi huhu, đây là điểm nhấn quan trọng nhất của tranh phong cảnh đó.")
         if "tree" not in detected:
             loi_khuyen.append("Thêm một vài bóng cây xanh sẽ giúp bức tranh có sức sống hơn rất nhiều.")
         if "sun" not in detected:
