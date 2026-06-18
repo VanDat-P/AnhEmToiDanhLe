@@ -1,24 +1,26 @@
 {
-  "text": "tranh có nhà và cây",
+  "text": "tranh có nhà và cây. Có mây.",
   "penalty": 1.55,
-  "last_updated": "2026-06-12 23:43:46.906953",
+  "last_updated": "2026-06-17 15:26:54.237589",
   "verbs_vi": [
     "có"
   ],
   "nouns_vi": [
     "tranh",
     "cây",
-    "nhà"
+    "nhà",
+    "mây"
   ],
   "verbs_en": [
     "have"
   ],
   "nouns_en": [
+    "cloud",
     "house",
     "tree"
   ],
   "art_type": "scenery",
-  "scenery_text": "tranh có nhà và cây",
+  "scenery_text": "tranh có nhà và cây. Có mây.",
   "scenery_sentences_data": [
     {
       "raw_tokens": [
@@ -65,7 +67,16 @@
       ],
       "optional_nouns_en": [],
       "has_co_verb": true,
-      "comparison_rules": [],
+      "comparison_rules": [
+        {
+          "object1": "tree",
+          "relation": "have",
+          "object2": "house",
+          "object1_vi": "cây",
+          "object2_vi": "nhà",
+          "relation_vi": "có"
+        }
+      ],
       "pos_tags": [
         [
           "tranh",
@@ -88,10 +99,60 @@
           "N"
         ]
       ]
+    },
+    {
+      "raw_tokens": [
+        [
+          "có",
+          "V"
+        ],
+        [
+          "mây",
+          "N"
+        ]
+      ],
+      "sentence": "có mây",
+      "raw_verbs_vi": [
+        "có"
+      ],
+      "raw_nouns_vi": [
+        "mây"
+      ],
+      "verbs_en": [
+        "have"
+      ],
+      "nouns_en": [
+        "cloud"
+      ],
+      "mandatory_nouns_en": [
+        "cloud"
+      ],
+      "optional_nouns_en": [],
+      "has_co_verb": true,
+      "comparison_rules": [],
+      "pos_tags": [
+        [
+          "có",
+          "V"
+        ],
+        [
+          "mây",
+          "N"
+        ]
+      ]
     }
   ],
-  "scenery_last_updated": "2026-06-12 23:43:46.906915",
-  "rules": [],
+  "scenery_last_updated": "2026-06-17 15:26:54.237551",
+  "rules": [
+    {
+      "object1": "tree",
+      "relation": "have",
+      "object2": "house",
+      "object1_vi": "cây",
+      "object2_vi": "nhà",
+      "relation_vi": "có"
+    }
+  ],
   "portrait_text": "có nhà và cây",
   "portrait_sentences_data": [
     {

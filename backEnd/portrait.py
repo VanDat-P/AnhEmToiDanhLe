@@ -12,8 +12,8 @@ from underthesea import pos_tag
 from deep_translator import GoogleTranslator
 import re
 from sentence_transformers import SentenceTransformer, util
-
-embed_model = SentenceTransformer("all-MiniLM-L6-v2")
+from templates import *
+embed_model = SentenceTransformer("bkai-foundation-models/vietnamese-bi-encoder")
 app = Flask(__name__)
 
 # === CORS ===
@@ -70,6 +70,8 @@ SCENERY_OBJECT_MAPPING = {
     "bông hoa": "flower", "khóm hoa": "flower", "hoa": "flower"
 }
 
+
+
 PORTRAIT_OBJECT_MAPPING = {
     "khuôn mặt": "face", "gương mặt": "face", "mặt": "face",
     "lông mày": "eyebrow", "chân mày": "eyebrow", "mày": "eyebrow",
@@ -98,7 +100,7 @@ RELATION_MAPPING = {
     "bên phải": "right_of", "phía phải": "right_of", "phải": "right_of",
     "cao hơn": "higher_than", "to hơn": "higher_than", "lớn hơn": "higher_than",
     "thấp hơn": "lower_than", "nhỏ hơn": "lower_than", "bé hơn": "lower_than",
-    "có": "have"
+    "có": "have","và": "and"
 }
 
 RELATION_VI = {
@@ -106,7 +108,7 @@ RELATION_VI = {
     "left_of": "bên trái", "right_of": "bên phải",
     "above": "ở trên", "below": "ở dưới"
 }
-
+MAPPING = SCENERY_OBJECT_MAPPING | PORTRAIT_OBJECT_MAPPING | RELATION_MAPPING
 def filter_valid_nouns_en(nouns_list, art_type="portrait"):
     valid_nouns = []
     
@@ -291,39 +293,43 @@ def parse_rulesv2(tokens, sentence):
         possible_rules=[]
         for template in templates:
             rule = ""
+            rule_en = ""
             current_idx=0
             for word_type in template:
                 while(current_idx<len(tokens) and tokens[current_idx][1]!=word_type):
                     current_idx +=1
                 if current_idx>=len(tokens): 
                     break
-                rule+=f" {tokens[current_idx][0]}"
+                rule+=f" {str(tokens[current_idx][0])}"
+                rule_en +=f" {MAPPING[tokens[current_idx][0]]}"
                 current_idx +=1
             rule_embed = embed_model.encode(rule)
  
             print(f"{rule}, score: {util.cos_sim(sentence_embed, rule_embed).item():.2f}")
 
-            if util.cos_sim(sentence_embed, rule_embed)>0.8:
+            if util.cos_sim(sentence_embed, rule_embed)>0.5:
                 rule_dict = {
                     "rule": rule,
-                    "template": template
+                    "rule_en": rule_en,
+                    "template": template,
+                    "raw_text": str(sentence)
                 }
                 possible_rules.append(rule_dict)
+                break
+            print(f"rule: {rule} | {rule_en}")
         return possible_rules
-    except Exception as e:        
+    except Exception as e:
         print(f"lỗi khi parse rule: {e}")
 
 def check_rulev2(rule, boxes_dict):
     try:
-
         template_idx = templates.index(rule["template"])
         match template_idx:
             case 0:
                 tempalte_0(rule, boxes_dict) # V + N
             case 1:
                 template_1(rule, boxes_dict) # V + N + C + N
-            case 2:
-                template_2(rule, boxes_dict) # V + Ns
+                
     except Exeption as e:
         print(f"Có lỗi xảy ra khi check rules. Lỗi {e}")
 
@@ -350,7 +356,7 @@ def save_settings():
         nouns_en_list = []
         all_rules = []
         sentences_data = []
-        
+        possible_rules = []
         if user_text and user_text.strip():
             # SỬA: Tách thành nhiều câu theo dấu chấm (.)
             clauses = [c.strip() for c in user_text.split('.') if c.strip()]
@@ -358,7 +364,9 @@ def save_settings():
             
             for clause in clauses:
                 try:
+                    clause = clause.lower()
                     pos_tags = pos_tag(clause)
+                    possible_rules.append(parse_rulesv2(pos_tags,clause))
                     
                     raw_verbs_vi = [word for word, tag in pos_tags if tag.startswith('V')]
                     raw_nouns_vi = [word for word, tag in pos_tags if tag.startswith('N')]
@@ -440,8 +448,11 @@ def save_settings():
         with open(settings_file, 'w', encoding='utf-8') as f:
             json.dump(settings, f, ensure_ascii=False, indent=2)
         
+        with open ("rules.json","w", encoding = "utf-8") as f:
+            json.dump(possible_rules, f,ensure_ascii=False ,indent = 4)
         print(f"✅ Đã lưu settings cho {art_type}")
-        parse_rulesv2(pos_tags,user_text)
+
+        
         return jsonify({
             "success": True,
             "message": "Đã lưu cài đặt lên server!",
@@ -452,7 +463,7 @@ def save_settings():
             "nouns_en": nouns_en_list,
             "rules": all_rules
         })
-        
+
     except Exception as e:
         print(f"❌ Lỗi: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500

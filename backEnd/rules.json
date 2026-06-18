@@ -1,0 +1,26 @@
+[
+    [
+        {
+            "rule": " có nhà và cây",
+            "rule_en": " have house and tree",
+            "template": [
+                "V",
+                "N",
+                "C",
+                "N"
+            ],
+            "raw_text": "tranh có nhà và cây"
+        }
+    ],
+    [
+        {
+            "rule": " có mây",
+            "rule_en": " have cloud",
+            "template": [
+                "V",
+                "N"
+            ],
+            "raw_text": "có mây"
+        }
+    ]
+]
