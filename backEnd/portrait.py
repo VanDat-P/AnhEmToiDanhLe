@@ -5,6 +5,7 @@ import os
 import uuid
 import cv2
 import numpy as np
+import math # MỚI THÊM: Dùng cho template tính khoảng cách
 from tensorflow.keras.models import load_model
 import json
 from datetime import datetime
@@ -12,8 +13,8 @@ from underthesea import pos_tag
 from deep_translator import GoogleTranslator
 import re
 from sentence_transformers import SentenceTransformer, util
-
-embed_model = SentenceTransformer("all-MiniLM-L6-v2")
+from templates import *
+embed_model = SentenceTransformer("bkai-foundation-models/vietnamese-bi-encoder")
 app = Flask(__name__)
 
 # === CORS ===
@@ -70,6 +71,8 @@ SCENERY_OBJECT_MAPPING = {
     "bông hoa": "flower", "khóm hoa": "flower", "hoa": "flower"
 }
 
+
+
 PORTRAIT_OBJECT_MAPPING = {
     "khuôn mặt": "face", "gương mặt": "face", "mặt": "face",
     "lông mày": "eyebrow", "chân mày": "eyebrow", "mày": "eyebrow",
@@ -98,7 +101,7 @@ RELATION_MAPPING = {
     "bên phải": "right_of", "phía phải": "right_of", "phải": "right_of",
     "cao hơn": "higher_than", "to hơn": "higher_than", "lớn hơn": "higher_than",
     "thấp hơn": "lower_than", "nhỏ hơn": "lower_than", "bé hơn": "lower_than",
-    "có": "have"
+    "có": "have","và": "and"
 }
 
 RELATION_VI = {
@@ -106,7 +109,7 @@ RELATION_VI = {
     "left_of": "bên trái", "right_of": "bên phải",
     "above": "ở trên", "below": "ở dưới"
 }
-
+MAPPING = SCENERY_OBJECT_MAPPING | PORTRAIT_OBJECT_MAPPING | RELATION_MAPPING
 def filter_valid_nouns_en(nouns_list, art_type="portrait"):
     valid_nouns = []
     
@@ -291,41 +294,213 @@ def parse_rulesv2(tokens, sentence):
         possible_rules=[]
         for template in templates:
             rule = ""
+            rule_en = ""
             current_idx=0
             for word_type in template:
                 while(current_idx<len(tokens) and tokens[current_idx][1]!=word_type):
                     current_idx +=1
                 if current_idx>=len(tokens): 
                     break
-                rule+=f" {tokens[current_idx][0]}"
+                rule+=f" {str(tokens[current_idx][0])}"
+                rule_en +=f" {MAPPING[tokens[current_idx][0]]}"
                 current_idx +=1
             rule_embed = embed_model.encode(rule)
  
             print(f"{rule}, score: {util.cos_sim(sentence_embed, rule_embed).item():.2f}")
 
-            if util.cos_sim(sentence_embed, rule_embed)>0.8:
+            if util.cos_sim(sentence_embed, rule_embed)>0.5:
                 rule_dict = {
                     "rule": rule,
-                    "template": template
+                    "rule_en": rule_en,
+                    "template": template,
+                    "raw_text": str(sentence)
                 }
                 possible_rules.append(rule_dict)
+                break
+            print(f"rule: {rule} | {rule_en}")
         return possible_rules
-    except Exception as e:        
+    except Exception as e:
         print(f"lỗi khi parse rule: {e}")
 
 def check_rulev2(rule, boxes_dict):
     try:
-
         template_idx = templates.index(rule["template"])
         match template_idx:
             case 0:
                 tempalte_0(rule, boxes_dict) # V + N
             case 1:
                 template_1(rule, boxes_dict) # V + N + C + N
-            case 2:
-                template_2(rule, boxes_dict) # V + Ns
-    except Exeption as e:
+                
+    except Exception as e: # Sửa Exeption thành Exception để tránh NameError
         print(f"Có lỗi xảy ra khi check rules. Lỗi {e}")
+
+# =========================================================================
+# CÁC HÀM TÍNH ĐIỂM BỘ TEMPLATE MỚI THÊM VÀO (CHẤM ĐIỂM TINH TẾ - LUẬT MỀM)
+# =========================================================================
+
+def get_center_abs(box):
+    """Lấy tâm của bounding box [xmin, ymin, xmax, ymax]"""
+    return (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+
+def get_area_abs(box):
+    """Tính diện tích bounding box"""
+    return (box[2] - box[0]) * (box[3] - box[1])
+
+def template_0(rule_dict, boxes_dict, img_w=1000, img_h=1000): 
+    # V + N (VD: "have apple")
+    text = rule_dict["rule_en"].split() if "rule_en" in rule_dict else rule_dict["rule"].split()
+    if len(text) < 2: return 0.0
+    op, obj = text[0], text[1]
+    
+    if op == "have": return 1.0 if obj in boxes_dict and len(boxes_dict[obj]) > 0 else 0.0
+    elif op == "not": return 1.0 if obj not in boxes_dict or len(boxes_dict[obj]) == 0 else 0.0
+    return 0.0
+
+tempalte_0 = template_0 # Alias sửa lỗi typo gọi hàm trong hàm check_rulev2 gốc
+
+def template_1(rule_dict, boxes_dict, img_w=1000, img_h=1000): 
+    # V + N + C + N (VD: "have apple and banana")
+    text = rule_dict["rule_en"].split() if "rule_en" in rule_dict else rule_dict["rule"].split()
+    if len(text) < 4: return 0.0
+    op, obj1, cond, obj2 = text[0], text[1], text[2], text[3]
+    
+    has_obj1 = obj1 in boxes_dict and len(boxes_dict[obj1]) > 0
+    has_obj2 = obj2 in boxes_dict and len(boxes_dict[obj2]) > 0
+    
+    if op == "have":
+        if cond == "and": return 1.0 if has_obj1 and has_obj2 else 0.0
+        if cond == "or": return 1.0 if has_obj1 or has_obj2 else 0.0
+    elif op == "not":
+        if cond == "and": return 1.0 if not has_obj1 and not has_obj2 else 0.0
+        if cond == "or": return 1.0 if not has_obj1 or not has_obj2 else 0.0
+    return 0.0
+
+def template_2(rule_dict, boxes_dict, img_w=1000, img_h=1000): 
+    # Số lượng: "count apple >= 2"
+    text = rule_dict["rule_en"].split() if "rule_en" in rule_dict else rule_dict["rule"].split()
+    if len(text) < 4: return 0.0
+    obj, op, target_count = text[1], text[2], int(text[3])
+    current_count = len(boxes_dict.get(obj, []))
+    
+    if op == "==":
+        if current_count == target_count: return 1.0
+        return max(0.0, 1.0 - abs(current_count - target_count) / max(1, target_count))
+    elif op == ">=":
+        if current_count >= target_count: return 1.0
+        return current_count / target_count if target_count > 0 else 1.0
+    elif op == "<=":
+        if current_count <= target_count: return 1.0
+        return max(0.0, 1.0 - (current_count - target_count) / max(1, target_count))
+    return 0.0
+
+def template_3(rule_dict, boxes_dict, img_w=1000, img_h=1000): 
+    # Màu sắc (Mô hình YOLO hiện tại của bạn chưa cấp xuất màu sắc cho box, trả về 1.0 mặc định)
+    return 1.0 
+
+def template_4(rule_dict, boxes_dict, img_w, img_h): 
+    # Kích thước: "size apple small"
+    text = rule_dict["rule_en"].split() if "rule_en" in rule_dict else rule_dict["rule"].split()
+    if len(text) < 3: return 0.0
+    obj, target_size = text[1], text[2]
+    
+    if obj not in boxes_dict or len(boxes_dict[obj]) == 0: return 0.0
+    scores = []
+    frame_area = img_w * img_h
+    for box in boxes_dict[obj]:
+        area_ratio = get_area_abs(box) / frame_area if frame_area > 0 else 0
+        if target_size == "small": scores.append(max(0.0, 1.0 - area_ratio / 0.1))
+        elif target_size == "medium":
+            if 0.1 <= area_ratio <= 0.3: scores.append(1.0)
+            else: scores.append(max(0.0, 1.0 - min(abs(area_ratio - 0.1), abs(area_ratio - 0.3)) / 0.2))
+        elif target_size == "large": scores.append(min(1.0, area_ratio / 0.3))
+    return sum(scores) / len(scores) if scores else 0.0
+
+def template_5(rule_dict, boxes_dict, img_w, img_h): 
+    # Vị trí tuyệt đối: "position_abs sun top"
+    text = rule_dict["rule_en"].split() if "rule_en" in rule_dict else rule_dict["rule"].split()
+    if len(text) < 3: return 0.0
+    obj, location = text[1], text[2]
+    
+    if obj not in boxes_dict or len(boxes_dict[obj]) == 0: return 0.0
+    scores = []
+    for box in boxes_dict[obj]:
+        cx, cy = get_center_abs(box)
+        nx, ny = cx / img_w, cy / img_h
+        if location == "top": scores.append(max(0.0, 1.0 - ny / 0.4))
+        elif location == "bottom": scores.append(max(0.0, (ny - 0.6) / 0.4) if ny >= 0.6 else 0.0)
+        elif location == "left": scores.append(max(0.0, 1.0 - nx / 0.4))
+        elif location == "right": scores.append(max(0.0, (nx - 0.6) / 0.4) if nx >= 0.6 else 0.0)
+        elif location == "center":
+            dist = math.sqrt((nx - 0.5)**2 + (ny - 0.5)**2)
+            scores.append(max(0.0, 1.0 - dist / 0.5))
+    return sum(scores) / len(scores) if scores else 0.0
+
+def template_6(rule_dict, boxes_dict, img_w, img_h): 
+    # Vị trí tương đối: "position_rel apple left_of banana"
+    text = rule_dict["rule_en"].split() if "rule_en" in rule_dict else rule_dict["rule"].split()
+    if len(text) < 4: return 0.0
+    obj1, relation, obj2 = text[1], text[2], text[3]
+    
+    if obj1 not in boxes_dict or obj2 not in boxes_dict or not boxes_dict[obj1] or not boxes_dict[obj2]: return 0.0
+    box1, box2 = boxes_dict[obj1][0], boxes_dict[obj2][0]
+    cx1, cy1 = get_center_abs(box1)
+    cx2, cy2 = get_center_abs(box2)
+    
+    nx_diff = (cx1 - cx2) / img_w
+    ny_diff = (cy1 - cy2) / img_h
+    
+    if relation == "left_of": return 1.0 if nx_diff < 0 else max(0.0, 1.0 - nx_diff / 0.2)
+    elif relation == "right_of": return 1.0 if nx_diff > 0 else max(0.0, 1.0 + nx_diff / 0.2)
+    elif relation == "above": return 1.0 if ny_diff < 0 else max(0.0, 1.0 - ny_diff / 0.2)
+    elif relation == "below": return 1.0 if ny_diff > 0 else max(0.0, 1.0 + ny_diff / 0.2)
+    elif relation == "inside":
+        inside_x = box1[0] >= box2[0] and box1[2] <= box2[2]
+        inside_y = box1[1] >= box2[1] and box1[3] <= box2[3]
+        return 1.0 if (inside_x and inside_y) else 0.2
+    return 0.0
+
+def engine_cham_diem_template_mem(user_rules_v2, boxes_dict, img_w, img_h):
+    """
+    Engine chấm điểm tinh tế từ các luật template v2 (Soft Rules).
+    Sử dụng list `possible_rules` thu được từ parse_rulesv2.
+    Trả về tổng điểm mờ (thang 10) và chi tiết.
+    """
+    total_score = 0.0
+    total_weight = 0.0
+    detailed_scores = {}
+    
+    for rule_obj in user_rules_v2:
+        rule_text = rule_obj.get("rule_en", rule_obj.get("rule", "")).strip()
+        weight = rule_obj.get("weight", 1.0) # Mặc định trọng số là 1.0
+        
+        rule_score = 0.0
+        if rule_text.startswith("have") or rule_text.startswith("not"):
+            if "and" in rule_text or "or" in rule_text:
+                rule_score = template_1(rule_obj, boxes_dict, img_w, img_h)
+            else:
+                rule_score = template_0(rule_obj, boxes_dict, img_w, img_h)
+        elif rule_text.startswith("count"):
+            rule_score = template_2(rule_obj, boxes_dict, img_w, img_h)
+        elif rule_text.startswith("color"):
+            rule_score = template_3(rule_obj, boxes_dict, img_w, img_h)
+        elif rule_text.startswith("size"):
+            rule_score = template_4(rule_obj, boxes_dict, img_w, img_h)
+        elif rule_text.startswith("position_abs"):
+            rule_score = template_5(rule_obj, boxes_dict, img_w, img_h)
+        elif rule_text.startswith("position_rel"):
+            rule_score = template_6(rule_obj, boxes_dict, img_w, img_h)
+        else:
+            rule_score = template_0(rule_obj, boxes_dict, img_w, img_h) # Fallback
+            
+        total_score += rule_score * weight
+        total_weight += weight
+        
+        raw_text = rule_obj.get("raw_text", rule_text)
+        detailed_scores[raw_text] = round(rule_score * 10, 2)
+        
+    final_score = (total_score / total_weight) * 10.0 if total_weight > 0 else 0.0
+    return round(final_score, 2), detailed_scores
+# =========================================================================
 
 # === API LƯU CÀI ĐẶT ===
 @app.route("/save_settings", methods=["POST"])
@@ -350,7 +525,7 @@ def save_settings():
         nouns_en_list = []
         all_rules = []
         sentences_data = []
-        
+        possible_rules = []
         if user_text and user_text.strip():
             # SỬA: Tách thành nhiều câu theo dấu chấm (.)
             clauses = [c.strip() for c in user_text.split('.') if c.strip()]
@@ -358,7 +533,9 @@ def save_settings():
             
             for clause in clauses:
                 try:
+                    clause = clause.lower()
                     pos_tags = pos_tag(clause)
+                    possible_rules.append(parse_rulesv2(pos_tags,clause))
                     
                     raw_verbs_vi = [word for word, tag in pos_tags if tag.startswith('V')]
                     raw_nouns_vi = [word for word, tag in pos_tags if tag.startswith('N')]
@@ -440,8 +617,11 @@ def save_settings():
         with open(settings_file, 'w', encoding='utf-8') as f:
             json.dump(settings, f, ensure_ascii=False, indent=2)
         
+        with open ("rules.json","w", encoding = "utf-8") as f:
+            json.dump(possible_rules, f,ensure_ascii=False ,indent = 4)
         print(f"✅ Đã lưu settings cho {art_type}")
-        parse_rulesv2(pos_tags,user_text)
+
+        
         return jsonify({
             "success": True,
             "message": "Đã lưu cài đặt lên server!",
@@ -452,7 +632,7 @@ def save_settings():
             "nouns_en": nouns_en_list,
             "rules": all_rules
         })
-        
+
     except Exception as e:
         print(f"❌ Lỗi: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
@@ -1040,7 +1220,7 @@ def predict_scenery():
         for noun in base_required:
             if noun not in trong_so_phong_canh: trong_so_phong_canh[noun] = 1.0
             
-        diem_thanh_phan = sum([trong_so_phong_canh.get(obj, 1.0) for obj in detected])
+        diem_thanh_phan = sum([trong_so_phong_canh.get(obj, 1.0) for obj in detected]) 
         diem_toi_da = sum([trong_so_phong_canh.get(obj, 1.0) for obj in base_required])
         diem_thanh_phan_chuan = (diem_thanh_phan / diem_toi_da) * dynamic_weights["objects"] if diem_toi_da > 0 else 0
 
