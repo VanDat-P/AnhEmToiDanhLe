@@ -110,6 +110,70 @@ RELATION_VI = {
     "above": "ở trên", "below": "ở dưới"
 }
 MAPPING = SCENERY_OBJECT_MAPPING | PORTRAIT_OBJECT_MAPPING | RELATION_MAPPING
+
+CUSTOM_POS_MAPPING = {
+    # === Từ chỉ Quan Hệ / Vị Trí (Gắn tag "C" - Condition/Comparator) ===
+    "bên trái": "C", "phía trái": "C", "trái": "C",
+    "bên phải": "C", "phía phải": "C", "phải": "C",
+    "phía trên": "C", "ở trên": "C", "bên trên": "C", "trên": "C",
+    "phía dưới": "C", "ở dưới": "C", "bên dưới": "C", "dưới": "C",
+    "cao hơn": "C", "to hơn": "C", "lớn hơn": "C",
+    "thấp hơn": "C", "nhỏ hơn": "C", "bé hơn": "C",
+    "và": "C", "hoặc": "C", "với": "C",
+
+    # === Danh Từ Ghép (Gắn tag "N" - Noun) ===
+    "ông mặt trời": "N", "mặt trời": "N", "vầng thái dương": "N",
+    "ngôi nhà": "N", "căn nhà": "N", "mái nhà": "N",
+    "cái cây": "N", "bóng cây": "N", "ngọn cây": "N",
+    "đám mây": "N", "ngọn núi": "N", "dãy núi": "N",
+    "dòng sông": "N", "con sông": "N", "con chim": "N", "đàn chim": "N",
+    "bông hoa": "N", "khóm hoa": "N",
+    "khuôn mặt": "N", "gương mặt": "N", "lông mày": "N", "chân mày": "N",
+    "mái tóc": "N", "đôi mắt": "N", "cái mũi": "N", "cái miệng": "N",
+    "cái tai": "N", "đôi tai": "N",
+
+    # === Động Từ (Gắn tag "V" - Verb) ===
+    "phải có": "V", "bắt buộc có": "V", "yêu cầu có": "V", "bao gồm": "V"
+}
+
+def custom_pos_tag(text):
+    if not text: 
+        return []
+        
+    temp_text = text
+    placeholder_map = {}
+    counter = 0
+    
+    # Sắp xếp từ khoá theo độ dài giảm dần (để ưu tiên gom cụm "ông mặt trời" trước chữ "mặt trời")
+    sorted_keys = sorted(CUSTOM_POS_MAPPING.keys(), key=len, reverse=True)
+    
+    for key in sorted_keys:
+        # Regex an toàn cho Tiếng Việt: Bắt từ khoá có khoảng trắng/đầu câu/cuối câu bao quanh
+        pattern = rf'(?<!\S){key}(?!\S)'
+        
+        while re.search(pattern, temp_text):
+            # Mã hoá bằng một chữ không có nghĩa
+            placeholder = f"TOKENX{counter}X"
+            placeholder_map[placeholder] = {"word": key, "tag": CUSTOM_POS_MAPPING[key]}
+            
+            # Thay thế từ khoá bằng placeholder
+            temp_text = re.sub(pattern, placeholder, temp_text, count=1)
+            counter += 1
+            
+    # Gọi hàm gốc của underthesea trên câu đã mã hoá
+    raw_tags = pos_tag(temp_text)
+    
+    # Giải mã và build mảng kết quả với format [word, tag]
+    final_tags = []
+    for word, tag in raw_tags:
+        if word in placeholder_map:
+            # Ép về list [từ_gốc, tag_tự_chế] như yêu cầu
+            final_tags.append([placeholder_map[word]["word"], placeholder_map[word]["tag"]])
+        else:
+            # Các từ thông thường ép về list
+            final_tags.append([word, tag])
+            
+    return final_tags
 def filter_valid_nouns_en(nouns_list, art_type="portrait"):
     valid_nouns = []
     
@@ -285,55 +349,94 @@ def check_rule(rule, boxes_dict):
         return center1[1] > center2[1]
 
     return False
-
-templates= [["V","N"],["V","N","C","N"],["V","Ns"]]
-
+templates = [
+    ["V", "N", "C", "N"], 
+    ["V", "Ns"]
+]
 def parse_rulesv2(tokens, sentence):
     try:
-        sentence_embed = embed_model.encode(sentence)
-        possible_rules=[]
         for template in templates:
             rule = ""
             rule_en = ""
-            current_idx=0
+            current_idx = 0
+            is_match = True 
+            
             for word_type in template:
-                while(current_idx<len(tokens) and tokens[current_idx][1]!=word_type):
-                    current_idx +=1
-                if current_idx>=len(tokens): 
-                    break
-                rule+=f" {str(tokens[current_idx][0])}"
-                rule_en +=f" {MAPPING[tokens[current_idx][0]]}"
-                current_idx +=1
-            rule_embed = embed_model.encode(rule)
- 
-            print(f"{rule}, score: {util.cos_sim(sentence_embed, rule_embed).item():.2f}")
+                # ==========================================
+                # Xử lý gom nhóm Danh Từ (Ns): Vét nhiều Nouns
+                # ==========================================
+                if word_type == "Ns":
+                    found_nouns = 0
+                    while current_idx < len(tokens):
+                        word = str(tokens[current_idx][0]).lower()
+                        pos = tokens[current_idx][1]
+                        
+                        if pos.startswith('N'):
+                            found_nouns += 1
+                            rule += f" {word}"
+                            rule_en += f" {MAPPING.get(word, translator.translate(word).lower())}"
+                            
+                        elif word in [",", "và", "hoặc"] or pos == "C":
+                            pass # Gặp dấu phẩy hoặc chữ "và" thì lướt qua đi tìm N tiếp
+                            
+                        elif pos.startswith('V'):
+                            break # Gặp động từ mới thì ngắt cụm
+                            
+                        current_idx += 1
+                        
+                    if found_nouns == 0:
+                        is_match = False
+                        break
 
-            if util.cos_sim(sentence_embed, rule_embed)>0.5:
-                rule_dict = {
-                    "rule": rule,
-                    "rule_en": rule_en,
+                # ==========================================
+                # Xử lý V, N, C (Bắt chính xác 1 từ)
+                # ==========================================
+                else:
+                    while current_idx < len(tokens):
+                        word = str(tokens[current_idx][0]).lower() 
+                        pos = tokens[current_idx][1]
+                        if pos.startswith(word_type[0]):
+                            break
+                        current_idx += 1
+                        
+                    if current_idx >= len(tokens): 
+                        is_match = False
+                        break 
+                    
+                    word = str(tokens[current_idx][0]).lower()
+                    rule += f" {word}"
+                    rule_en += f" {MAPPING.get(word, translator.translate(word).lower())}"
+                    current_idx += 1
+                    
+            # Nếu đã khớp khuôn mẫu -> Trả về Dictionary luôn, không cần AI chấm điểm
+            if is_match and rule.strip():
+                print(f"✅ Match rule: {rule.strip()} | {rule_en.strip()}")
+                return {
+                    "rule": rule.strip(),
+                    "rule_en": rule_en.strip(),
                     "template": template,
                     "raw_text": str(sentence)
                 }
-                possible_rules.append(rule_dict)
-                break
-            print(f"rule: {rule} | {rule_en}")
-        return possible_rules
+                
+        return None # Không khớp template nào
+        
     except Exception as e:
-        print(f"lỗi khi parse rule: {e}")
-
+        print(f"❌ Lỗi khi parse rule v2: {e}")
+        return None
 def check_rulev2(rule, boxes_dict):
     try:
         template_idx = templates.index(rule["template"])
         match template_idx:
             case 0:
-                tempalte_0(rule, boxes_dict) # V + N
+                return template_1(rule, boxes_dict)  # ["V", "N", "C", "N"]
             case 1:
-                template_1(rule, boxes_dict) # V + N + C + N
+                return template_ns(rule, boxes_dict) # ["V", "Ns"]
+            case 2:
+                return template_0(rule, boxes_dict)  # ["V", "N"]
                 
-    except Exception as e: # Sửa Exeption thành Exception để tránh NameError
-        print(f"Có lỗi xảy ra khi check rules. Lỗi {e}")
-
+    except Exception as e:
+        print(f"Có lỗi xảy ra khi check rules. Lỗi: {e}")
+        return 0.0
 # =========================================================================
 # CÁC HÀM TÍNH ĐIỂM BỘ TEMPLATE MỚI THÊM VÀO (CHẤM ĐIỂM TINH TẾ - LUẬT MỀM)
 # =========================================================================
@@ -459,49 +562,6 @@ def template_6(rule_dict, boxes_dict, img_w, img_h):
         return 1.0 if (inside_x and inside_y) else 0.2
     return 0.0
 
-def engine_cham_diem_template_mem(user_rules_v2, boxes_dict, img_w, img_h):
-    """
-    Engine chấm điểm tinh tế từ các luật template v2 (Soft Rules).
-    Sử dụng list `possible_rules` thu được từ parse_rulesv2.
-    Trả về tổng điểm mờ (thang 10) và chi tiết.
-    """
-    total_score = 0.0
-    total_weight = 0.0
-    detailed_scores = {}
-    
-    for rule_obj in user_rules_v2:
-        rule_text = rule_obj.get("rule_en", rule_obj.get("rule", "")).strip()
-        weight = rule_obj.get("weight", 1.0) # Mặc định trọng số là 1.0
-        
-        rule_score = 0.0
-        if rule_text.startswith("have") or rule_text.startswith("not"):
-            if "and" in rule_text or "or" in rule_text:
-                rule_score = template_1(rule_obj, boxes_dict, img_w, img_h)
-            else:
-                rule_score = template_0(rule_obj, boxes_dict, img_w, img_h)
-        elif rule_text.startswith("count"):
-            rule_score = template_2(rule_obj, boxes_dict, img_w, img_h)
-        elif rule_text.startswith("color"):
-            rule_score = template_3(rule_obj, boxes_dict, img_w, img_h)
-        elif rule_text.startswith("size"):
-            rule_score = template_4(rule_obj, boxes_dict, img_w, img_h)
-        elif rule_text.startswith("position_abs"):
-            rule_score = template_5(rule_obj, boxes_dict, img_w, img_h)
-        elif rule_text.startswith("position_rel"):
-            rule_score = template_6(rule_obj, boxes_dict, img_w, img_h)
-        else:
-            rule_score = template_0(rule_obj, boxes_dict, img_w, img_h) # Fallback
-            
-        total_score += rule_score * weight
-        total_weight += weight
-        
-        raw_text = rule_obj.get("raw_text", rule_text)
-        detailed_scores[raw_text] = round(rule_score * 10, 2)
-        
-    final_score = (total_score / total_weight) * 10.0 if total_weight > 0 else 0.0
-    return round(final_score, 2), detailed_scores
-# =========================================================================
-
 # === API LƯU CÀI ĐẶT ===
 @app.route("/save_settings", methods=["POST"])
 def save_settings():
@@ -534,7 +594,7 @@ def save_settings():
             for clause in clauses:
                 try:
                     clause = clause.lower()
-                    pos_tags = pos_tag(clause)
+                    pos_tags = custom_pos_tag(clause)
                     possible_rules.append(parse_rulesv2(pos_tags,clause))
                     
                     raw_verbs_vi = [word for word, tag in pos_tags if tag.startswith('V')]

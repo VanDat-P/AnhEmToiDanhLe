@@ -16,7 +16,7 @@ def get_area(box):
 # ==========================================
 
 def template_0(rule, boxes_dict): # Sự tồn tại (V + N)
-    # Cú pháp: "have apple" hoặc "not banana"
+    
     text = rule["rule"].split()
     op = text[0]
     obj = text[1]
