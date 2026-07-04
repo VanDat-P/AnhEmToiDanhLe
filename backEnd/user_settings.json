@@ -1,26 +1,26 @@
 {
-  "text": "tranh có nhà và cây. Có mây.",
+  "text": "tranh phải có cây và mặt trời. cây phải ở bên phải nhà. tranh phải có nhiều nhà",
   "penalty": 1.55,
-  "last_updated": "2026-06-17 15:26:54.237589",
+  "last_updated": "2026-07-04 23:35:18.535542",
   "verbs_vi": [
-    "có"
+    "phải có"
   ],
   "nouns_vi": [
-    "tranh",
+    "mặt trời",
     "cây",
     "nhà",
-    "mây"
+    "tranh"
   ],
   "verbs_en": [
-    "have"
+    "must have"
   ],
   "nouns_en": [
-    "cloud",
+    "tree",
     "house",
-    "tree"
+    "sun"
   ],
   "art_type": "scenery",
-  "scenery_text": "tranh có nhà và cây. Có mây.",
+  "scenery_text": "tranh phải có cây và mặt trời. cây phải ở bên phải nhà. tranh phải có nhiều nhà",
   "scenery_sentences_data": [
     {
       "raw_tokens": [
@@ -29,11 +29,11 @@
           "N"
         ],
         [
-          "có",
+          "phải có",
           "V"
         ],
         [
-          "nhà",
+          "cây",
           "N"
         ],
         [
@@ -41,40 +41,40 @@
           "C"
         ],
         [
-          "cây",
+          "mặt trời",
           "N"
         ]
       ],
-      "sentence": "tranh có nhà và cây",
+      "sentence": "tranh phải có cây và mặt trời",
       "raw_verbs_vi": [
-        "có"
+        "phải có"
       ],
       "raw_nouns_vi": [
-        "tranh",
+        "mặt trời",
         "cây",
-        "nhà"
+        "tranh"
       ],
       "verbs_en": [
-        "have"
+        "must have"
       ],
       "nouns_en": [
-        "house",
-        "tree"
+        "tree",
+        "sun"
       ],
       "mandatory_nouns_en": [
-        "house",
-        "tree"
+        "tree",
+        "sun"
       ],
       "optional_nouns_en": [],
       "has_co_verb": true,
       "comparison_rules": [
         {
-          "object1": "tree",
-          "relation": "have",
-          "object2": "house",
-          "object1_vi": "cây",
-          "object2_vi": "nhà",
-          "relation_vi": "có"
+          "object1": "sun",
+          "relation": "right_of",
+          "object2": "tree",
+          "object1_vi": "mặt trời",
+          "object2_vi": "cây",
+          "relation_vi": "phải"
         }
       ],
       "pos_tags": [
@@ -83,11 +83,11 @@
           "N"
         ],
         [
-          "có",
+          "phải có",
           "V"
         ],
         [
-          "nhà",
+          "cây",
           "N"
         ],
         [
@@ -95,7 +95,7 @@
           "C"
         ],
         [
-          "cây",
+          "mặt trời",
           "N"
         ]
       ]
@@ -103,54 +103,152 @@
     {
       "raw_tokens": [
         [
-          "có",
-          "V"
+          "cây",
+          "Nc"
         ],
         [
-          "mây",
+          "phải",
+          "C"
+        ],
+        [
+          "ở",
+          "E"
+        ],
+        [
+          "bên phải",
+          "C"
+        ],
+        [
+          "nhà",
           "N"
         ]
       ],
-      "sentence": "có mây",
+      "sentence": "cây phải ở bên phải nhà",
+      "raw_verbs_vi": [],
+      "raw_nouns_vi": [
+        "cây",
+        "nhà"
+      ],
+      "verbs_en": [],
+      "nouns_en": [
+        "tree",
+        "house"
+      ],
+      "mandatory_nouns_en": [],
+      "optional_nouns_en": [
+        "tree",
+        "house"
+      ],
+      "has_co_verb": false,
+      "comparison_rules": [
+        {
+          "object1": "tree",
+          "relation": "right_of",
+          "object2": "house",
+          "object1_vi": "cây",
+          "object2_vi": "nhà",
+          "relation_vi": "phải"
+        }
+      ],
+      "pos_tags": [
+        [
+          "cây",
+          "Nc"
+        ],
+        [
+          "phải",
+          "C"
+        ],
+        [
+          "ở",
+          "E"
+        ],
+        [
+          "bên phải",
+          "C"
+        ],
+        [
+          "nhà",
+          "N"
+        ]
+      ]
+    },
+    {
+      "raw_tokens": [
+        [
+          "tranh",
+          "N"
+        ],
+        [
+          "phải có",
+          "V"
+        ],
+        [
+          "nhiều",
+          "A"
+        ],
+        [
+          "nhà",
+          "N"
+        ]
+      ],
+      "sentence": "tranh phải có nhiều nhà",
       "raw_verbs_vi": [
-        "có"
+        "phải có"
       ],
       "raw_nouns_vi": [
-        "mây"
+        "nhà",
+        "tranh"
       ],
       "verbs_en": [
-        "have"
+        "must have"
       ],
       "nouns_en": [
-        "cloud"
+        "house"
       ],
       "mandatory_nouns_en": [
-        "cloud"
+        "house"
       ],
       "optional_nouns_en": [],
       "has_co_verb": true,
       "comparison_rules": [],
       "pos_tags": [
         [
-          "có",
+          "tranh",
+          "N"
+        ],
+        [
+          "phải có",
           "V"
         ],
         [
-          "mây",
+          "nhiều",
+          "A"
+        ],
+        [
+          "nhà",
           "N"
         ]
       ]
     }
   ],
-  "scenery_last_updated": "2026-06-17 15:26:54.237551",
+  "scenery_last_updated": "2026-07-04 23:35:18.535542",
   "rules": [
     {
+      "object1": "sun",
+      "relation": "right_of",
+      "object2": "tree",
+      "object1_vi": "mặt trời",
+      "object2_vi": "cây",
+      "relation_vi": "phải"
+    },
+    {
       "object1": "tree",
-      "relation": "have",
+      "relation": "right_of",
       "object2": "house",
       "object1_vi": "cây",
       "object2_vi": "nhà",
-      "relation_vi": "có"
+      "relation_vi": "phải"
     }
   ],
   "portrait_text": "có nhà và cây",

@@ -9,7 +9,7 @@ from models import clf_model, model
 translator = GoogleTranslator(source='vi', target='en')
 embed_model = SentenceTransformer("bkai-foundation-models/vietnamese-bi-encoder")
 
-from model import clf_model
+# from model import clf_model
 VALID_PORTRAIT_NOUNS = {
     "face", "eye", "eyebrow", "nose", "mouth", "ear", "hair",
     "eyes", "eyebrows", "ears", "hairs", "head"
@@ -239,77 +239,115 @@ def phan_tich_trong_so_tieu_chi(user_text):
 
 templates = [
     ["V", "N", "C", "N"], 
+    ["N", "C", "N"],
     ["V", "Ns"]
 ]
+
 def parse_rulesv2(tokens, sentence):
     try:
+        if not tokens or not sentence:
+            return None
+            
+        if len(tokens) == 0:
+            return None
+            
+        # Lọc token hợp lệ
+        valid_tokens = []
+        for token in tokens:
+            if isinstance(token, list) and len(token) >= 2:
+                word = str(token[0]).strip()
+                tag = str(token[1]).strip()
+                if word and tag:
+                    valid_tokens.append([word, tag])
+            elif isinstance(token, tuple) and len(token) >= 2:
+                word = str(token[0]).strip()
+                tag = str(token[1]).strip()
+                if word and tag:
+                    valid_tokens.append([word, tag])
+        
+        if not valid_tokens:
+            return None
         for template in templates:
-            rule = ""
+            rule_vi = ""
             rule_en = ""
             current_idx = 0
-            is_match = True 
+            is_match = True
             
             for word_type in template:
-                # ==========================================
-                # Xử lý gom nhóm Danh Từ (Ns): Vét nhiều Nouns
-                # ==========================================
+                # Xử lý Ns (gom nhiều danh từ)
                 if word_type == "Ns":
                     found_nouns = 0
-                    while current_idx < len(tokens):
-                        word = str(tokens[current_idx][0]).lower()
-                        pos = tokens[current_idx][1]
+                    while current_idx < len(valid_tokens):
+                        word = str(valid_tokens[current_idx][0]).lower()
+                        pos = valid_tokens[current_idx][1]
                         
                         if pos.startswith('N'):
                             found_nouns += 1
-                            rule += f" {word}"
-                            rule_en += f" {MAPPING.get(word, translator.translate(word).lower())}"
+                            rule_vi += f" {word}"
+                            # Ánh xạ sang tiếng Anh
+                            en_word = MAPPING.get(word, translator.translate(word).lower())
+                            rule_en += f" {en_word}"
                             
                         elif word in [",", "và", "hoặc"] or pos == "C":
-                            pass # Gặp dấu phẩy hoặc chữ "và" thì lướt qua đi tìm N tiếp
+                            # Lướt qua dấu phẩy và từ nối
+                            rule_vi += f" {word}"
+                            rule_en += f" {word}"
                             
                         elif pos.startswith('V'):
-                            break # Gặp động từ mới thì ngắt cụm
+                            # Gặp động từ khác thì dừng
+                            break
                             
                         current_idx += 1
                         
                     if found_nouns == 0:
                         is_match = False
                         break
-
+                
                 # ==========================================
-                # Xử lý V, N, C (Bắt chính xác 1 từ)
+                # Xử lý V, N, C (bắt chính xác 1 từ)
                 # ==========================================
                 else:
-                    while current_idx < len(tokens):
-                        word = str(tokens[current_idx][0]).lower() 
-                        pos = tokens[current_idx][1]
+                    # Tìm từ tiếp theo khớp với loại từ cần
+                    found = False
+                    while current_idx < len(valid_tokens):
+                        word = str(valid_tokens[current_idx][0]).lower()
+                        pos = valid_tokens[current_idx][1]
+                        
+                        # Kiểm tra khớp loại từ
                         if pos.startswith(word_type[0]):
+                            found = True
                             break
                         current_idx += 1
-                        
-                    if current_idx >= len(tokens): 
+                    
+                    if not found or current_idx >= len(valid_tokens):
                         is_match = False
-                        break 
+                        break
                     
-                    word = str(tokens[current_idx][0]).lower()
-                    rule += f" {word}"
-                    rule_en += f" {MAPPING.get(word, translator.translate(word).lower())}"
+                    word = str(valid_tokens[current_idx][0]).lower()
+                    rule_vi += f" {word}"
+                    
+                    # Ánh xạ sang tiếng Anh
+                    en_word = MAPPING.get(word, translator.translate(word).lower())
+                    rule_en += f" {en_word}"
+                    
                     current_idx += 1
-                    
-            # Nếu đã khớp khuôn mẫu -> Trả về Dictionary luôn, không cần AI chấm điểm
-            if is_match and rule.strip():
-                print(f"✅ Match rule: {rule.strip()} | {rule_en.strip()}")
+            
+            # Nếu khớp template
+            if is_match and rule_vi.strip():
+                print(f"✅ Match template {template}: {rule_vi.strip()} | {rule_en.strip()}")
                 return {
-                    "rule": rule.strip(),
+                    "rule": rule_vi.strip(),
                     "rule_en": rule_en.strip(),
                     "template": template,
-                    "raw_text": str(sentence)
+                    "raw_text": str(sentence),
+                    "tokens": valid_tokens  # Thêm tokens để debug
                 }
-                
-        return None # Không khớp template nào
+        return None
         
     except Exception as e:
-        print(f"❌ Lỗi khi parse rule v2: {e}")
+        print(f"❌ Lỗi parse_rulesv2: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 def check_rulev2(rule, boxes_dict):

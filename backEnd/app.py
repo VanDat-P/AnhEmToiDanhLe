@@ -3,11 +3,11 @@ from flask_cors import CORS
 import os
 import uuid
 import json
-import datetime
+from datetime import datetime
 from nlp_utils import *
 
 from models import *
-from nlp.utils import *
+from nlp_utils import *
 from vision_utils import *
 
 app = Flask(__name__)
