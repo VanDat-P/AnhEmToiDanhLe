@@ -11,5 +11,6 @@ slider.addEventListener("change", () => {
             penalty: slider.value
         })
     });
+    console.log('Person A here.')
 
 });
