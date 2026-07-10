@@ -1,0 +1,102 @@
+{
+  "art_type": "scenery",
+  "total_sentences": 2,
+  "sentences": [
+    {
+      "sentence": "bức tranh có cây, nhà, mặt trời",
+      "raw_verbs_vi": [
+        "có"
+      ],
+      "raw_nouns_vi": [
+        "tranh",
+        "cây",
+        "nhà",
+        "bức",
+        "mặt trời"
+      ],
+      "verbs_en": [
+        "have"
+      ],
+      "nouns_en": [
+        "tree",
+        "sun"
+      ],
+      "mandatory_nouns_en": [
+        "tree",
+        "sun"
+      ],
+      "optional_nouns_en": [],
+      "has_co_verb": true,
+      "comparison_rules": [],
+      "pos_tags": [
+        [
+          "bức",
+          "Nc"
+        ],
+        [
+          "tranh",
+          "N"
+        ],
+        [
+          "có",
+          "V"
+        ],
+        [
+          "cây",
+          "N"
+        ],
+        [
+          ",",
+          "CH"
+        ],
+        [
+          "nhà",
+          "N"
+        ],
+        [
+          ",",
+          "CH"
+        ],
+        [
+          "mặt trời",
+          "N"
+        ]
+      ]
+    },
+    {
+      "sentence": "mặt trời thấp hơn cây",
+      "raw_verbs_vi": [],
+      "raw_nouns_vi": [
+        "mặt trời"
+      ],
+      "verbs_en": [],
+      "nouns_en": [
+        "sun"
+      ],
+      "mandatory_nouns_en": [],
+      "optional_nouns_en": [
+        "sun"
+      ],
+      "has_co_verb": false,
+      "comparison_rules": [],
+      "pos_tags": [
+        [
+          "mặt trời",
+          "N"
+        ],
+        [
+          "thấp",
+          "A"
+        ],
+        [
+          "hơn",
+          "A"
+        ],
+        [
+          "cây",
+          "M"
+        ]
+      ]
+    }
+  ]
+}

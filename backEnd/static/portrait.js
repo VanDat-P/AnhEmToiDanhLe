@@ -119,6 +119,23 @@ document.getElementById("submit").onclick = async () => {
             missingHTML = `<p id="missing" style="color: red;">❌ <b>Thiếu mất rồi:</b> ${missing.join(", ")}</p>`;
         }
 
+        // === THÊM HIỂN THỊ NOUNS VÀ VERBS TỪ SETTINGS ===
+        let nounsSettingsHTML = "";
+        let verbsSettingsHTML = "";
+        let bonusHTML = "";
+        
+        if (data.nouns_from_settings && data.nouns_from_settings.length > 0) {
+            nounsSettingsHTML = `<p>📚 <b>Từ khóa vật thể (từ mô tả):</b> ${data.nouns_from_settings.join(", ")}</p>`;
+        }
+        
+        if (data.verbs_from_settings && data.verbs_from_settings.length > 0) {
+            verbsSettingsHTML = `<p>🎨 <b>Từ khóa kỹ thuật (từ mô tả):</b> ${data.verbs_from_settings.join(", ")}</p>`;
+        }
+        
+        if (data.bonus_from_nouns > 0 || data.bonus_from_verbs > 0) {
+            bonusHTML = `<p style="color: #10b981;">✨ <b>Điểm thưởng từ mô tả:</b> +${(data.bonus_from_nouns || 0) + (data.bonus_from_verbs || 0)} điểm</p>`;
+        }
+
         // Xử lý hiển thị
         let loaiTranhText = classifyData.type === "ChanDung" ? "🧑 Chân dung" : "🌄 Phong cảnh";
         let boxedImageHTML = "";
@@ -169,6 +186,7 @@ document.getElementById("submit").onclick = async () => {
             <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px;">
                 <p style="margin-top:0;"><b>🏷️ AI nhận diện:</b> <span style="font-weight:bold; color:#0056b3;">${loaiTranhText}</span></p>
                 <h3 style="margin-bottom:0; color: #333;">🎯 Điểm số: <span style="font-size: 1.5em; color: #ff5722;">${data.score}/10</span></h3>
+                ${bonusHTML}
             </div>
             
             ${boxedImageHTML}
@@ -177,6 +195,12 @@ document.getElementById("submit").onclick = async () => {
                 <div id="detectInfo" style="display:none;">
                     ${detectedHTML}
                     ${missingHTML}
+                    ${nounsSettingsHTML}
+                    ${verbsSettingsHTML}
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+                    <p><b>📊 Tổng số vật cần có:</b> ${data.total_required || 0}</p>
+                    <p><b>✅ Đã có:</b> ${detected.length}</p>
+                    <p><b>❌ Thiếu:</b> ${missing.length}</p>
                 </div>
                 <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
                 ${luatMemHTML}
