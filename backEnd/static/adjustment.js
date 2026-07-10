@@ -13,4 +13,5 @@ slider.addEventListener("change", () => {
     });
     console.log('Person A here.')
 
+    console.log('Person 2, tao o day')
 });
