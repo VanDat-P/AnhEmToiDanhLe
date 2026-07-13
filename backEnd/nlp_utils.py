@@ -3,13 +3,16 @@ from sentence_transformers import SentenceTransformer, util
 from deep_translator import GoogleTranslator
 from underthesea import pos_tag
 import re
-from templates import *
-from models import clf_model, model
 
+# ==========================================
+# 1. KHỞI TẠO CÁC CÔNG CỤ NLP
+# ==========================================
 translator = GoogleTranslator(source='vi', target='en')
 embed_model = SentenceTransformer("bkai-foundation-models/vietnamese-bi-encoder")
 
-# from model import clf_model
+# ==========================================
+# 2. KHAI BÁO TỪ ĐIỂN VÀ MAPPING (ĐẶT LÊN ĐẦU ĐỂ KHÔNG LỖI)
+# ==========================================
 VALID_PORTRAIT_NOUNS = {
     "face", "eye", "eyebrow", "nose", "mouth", "ear", "hair",
     "eyes", "eyebrows", "ears", "hairs", "head"
@@ -28,7 +31,6 @@ VALID_VERBS = {
     "illustrate", "feature", "present", "add", "added"
 }
 
-# === OBJECT MAPPING ===
 SCENERY_OBJECT_MAPPING = {
     "ông mặt trời": "sun", "mặt trời": "sun", "vầng thái dương": "sun",
     "ngôi nhà": "house", "căn nhà": "house", "mái nhà": "house", "nhà": "house",
@@ -39,8 +41,6 @@ SCENERY_OBJECT_MAPPING = {
     "con chim": "bird", "đàn chim": "bird", "chim": "bird",
     "bông hoa": "flower", "khóm hoa": "flower", "hoa": "flower"
 }
-
-
 
 PORTRAIT_OBJECT_MAPPING = {
     "khuôn mặt": "face", "gương mặt": "face", "mặt": "face",
@@ -78,10 +78,10 @@ RELATION_VI = {
     "left_of": "bên trái", "right_of": "bên phải",
     "above": "ở trên", "below": "ở dưới"
 }
+
 MAPPING = SCENERY_OBJECT_MAPPING | PORTRAIT_OBJECT_MAPPING | RELATION_MAPPING
 
 CUSTOM_POS_MAPPING = {
-    # === Từ chỉ Quan Hệ / Vị Trí (Gắn tag "C" - Condition/Comparator) ===
     "bên trái": "C", "phía trái": "C", "trái": "C",
     "bên phải": "C", "phía phải": "C", "phải": "C",
     "phía trên": "C", "ở trên": "C", "bên trên": "C", "trên": "C",
@@ -89,8 +89,6 @@ CUSTOM_POS_MAPPING = {
     "cao hơn": "C", "to hơn": "C", "lớn hơn": "C",
     "thấp hơn": "C", "nhỏ hơn": "C", "bé hơn": "C",
     "và": "C", "hoặc": "C", "với": "C",
-
-    # === Danh Từ Ghép (Gắn tag "N" - Noun) ===
     "ông mặt trời": "N", "mặt trời": "N", "vầng thái dương": "N",
     "ngôi nhà": "N", "căn nhà": "N", "mái nhà": "N",
     "cái cây": "N", "bóng cây": "N", "ngọn cây": "N",
@@ -100,63 +98,48 @@ CUSTOM_POS_MAPPING = {
     "khuôn mặt": "N", "gương mặt": "N", "lông mày": "N", "chân mày": "N",
     "mái tóc": "N", "đôi mắt": "N", "cái mũi": "N", "cái miệng": "N",
     "cái tai": "N", "đôi tai": "N",
-
-    # === Động Từ (Gắn tag "V" - Verb) ===
     "phải có": "V", "bắt buộc có": "V", "yêu cầu có": "V", "bao gồm": "V"
 }
 
+templates = [
+    ["V", "N", "C", "N"], 
+    ["N", "C", "N"],
+    ["V", "Ns"]
+]
 
+# ==========================================
+# 3. CÁC HÀM XỬ LÝ (NẰM DƯỚI CÙNG ĐỂ ĐỌC ĐƯỢC BIẾN)
+# ==========================================
 
 def custom_pos_tag(text):
-    if not text: 
-        return []
-        
+    if not text: return []
     temp_text = text
     placeholder_map = {}
     counter = 0
-    
-    # Sắp xếp từ khoá theo độ dài giảm dần (để ưu tiên gom cụm "ông mặt trời" trước chữ "mặt trời")
     sorted_keys = sorted(CUSTOM_POS_MAPPING.keys(), key=len, reverse=True)
     
     for key in sorted_keys:
-        # Regex an toàn cho Tiếng Việt: Bắt từ khoá có khoảng trắng/đầu câu/cuối câu bao quanh
         pattern = rf'(?<!\S){key}(?!\S)'
-        
         while re.search(pattern, temp_text):
-            # Mã hoá bằng một chữ không có nghĩa
             placeholder = f"TOKENX{counter}X"
             placeholder_map[placeholder] = {"word": key, "tag": CUSTOM_POS_MAPPING[key]}
-            
-            # Thay thế từ khoá bằng placeholder
             temp_text = re.sub(pattern, placeholder, temp_text, count=1)
             counter += 1
             
-    # Gọi hàm gốc của underthesea trên câu đã mã hoá
     raw_tags = pos_tag(temp_text)
-    
-    # Giải mã và build mảng kết quả với format [word, tag]
     final_tags = []
     for word, tag in raw_tags:
         if word in placeholder_map:
-            # Ép về list [từ_gốc, tag_tự_chế] như yêu cầu
             final_tags.append([placeholder_map[word]["word"], placeholder_map[word]["tag"]])
         else:
-            # Các từ thông thường ép về list
             final_tags.append([word, tag])
-            
     return final_tags
 
 def filter_valid_nouns_en(nouns_list, art_type="portrait"):
     valid_nouns = []
-    
-    if art_type == "portrait":
-        allowed_nouns = VALID_PORTRAIT_NOUNS
-    else:
-        allowed_nouns = VALID_SCENERY_NOUNS
-    
+    allowed_nouns = VALID_PORTRAIT_NOUNS if art_type == "portrait" else VALID_SCENERY_NOUNS
     for noun in nouns_list:
         noun_lower = noun.lower().strip()
-        
         if noun_lower in allowed_nouns:
             valid_nouns.append(noun_lower)
         elif noun_lower.endswith('s') and noun_lower[:-1] in allowed_nouns:
@@ -165,9 +148,7 @@ def filter_valid_nouns_en(nouns_list, art_type="portrait"):
             valid_nouns.append(noun_lower[:-2])
         elif noun_lower.endswith('ies') and noun_lower[:-3] + 'y' in allowed_nouns:
             valid_nouns.append(noun_lower[:-3] + 'y')
-    
     return valid_nouns
-
 
 def filter_valid_verbs_en(verbs_list):
     valid_verbs = []
@@ -178,103 +159,41 @@ def filter_valid_verbs_en(verbs_list):
     return valid_verbs
 
 def phan_tich_trong_so_tieu_chi(user_text):
-    # Thang điểm mặc định
     weights = {"objects": 5.0, "layout": 2.0, "art_proportion": 2.0, "color": 1.0}
-    if not user_text or not user_text.strip():
-        return weights
+    if not user_text or not user_text.strip(): return weights
         
     text = user_text.lower()
-    
-    # Chỉ bắt các từ khóa mang tính NGHỆ THUẬT & PHONG CÁCH
-    if any(kw in text for kw in ["màu", "sắc", "rực rỡ", "tươi sáng", "đậm"]):
-        weights["color"] += 3.0
-        weights["objects"] -= 1.0 
-        
-    if any(kw in text for kw in ["bố cục", "căn giữa", "vị trí", "trái", "phải", "trên", "dưới"]):
-        weights["layout"] += 2.0
-        weights["objects"] -= 1.0
-        
-    if any(kw in text for kw in ["tỷ lệ", "xa gần", "nghệ thuật", "hài hòa", "cân đối"]):
-        weights["art_proportion"] += 2.0
-        weights["objects"] -= 1.0
-        
-    # Chuẩn hóa về thang 10
-    total = sum(weights.values())
-    for key in weights:
-        weights[key] = (weights[key] / total) * 10.0
-        
-    return weights
-        
-    text = user_text.lower()
-    
-    # 0. MỚI THÊM: Giáo viên cực kỳ gắt gao về việc PHẢI CÓ vật thể
     if any(kw in text for kw in ["phải có", "bắt buộc", "thiếu", "không có", "trừ điểm"]):
-        weights["objects"] += 4.0   # Tăng vọt điểm vật thể lên
-        weights["layout"] -= 1.0    # Cắt bớt điểm các phần khác
-        weights["art_proportion"] -= 1.0
-        weights["color"] -= 0.5
-    
-    # 1. Giáo viên khó tính về MÀU SẮC
+        weights["objects"] += 4.0; weights["layout"] -= 1.0; weights["art_proportion"] -= 1.0; weights["color"] -= 0.5
     if any(kw in text for kw in ["màu", "màu sắc", "tô màu", "rực rỡ", "tươi sáng", "đậm"]):
-        weights["color"] += 3.0
-        weights["objects"] -= 1.0 
-        
-    # 2. Giáo viên khó tính về BỐ CỤC / VỊ TRÍ
+        weights["color"] += 3.0; weights["objects"] -= 1.0 
     if any(kw in text for kw in ["bố cục", "căn giữa", "vị trí", "bên trái", "bên phải", "ở trên", "ở dưới", "to hơn", "nhỏ hơn"]):
-        weights["layout"] += 2.0
-        weights["objects"] -= 1.0
-        
-    # 3. Giáo viên khó tính về NGHỆ THUẬT / QUY LUẬT
+        weights["layout"] += 2.0; weights["objects"] -= 1.0
     if any(kw in text for kw in ["tỷ lệ", "xa gần", "nghệ thuật", "hài hòa", "cân đối", "sáng tạo"]):
-        weights["art_proportion"] += 2.0
-        weights["objects"] -= 1.0
+        weights["art_proportion"] += 2.0; weights["objects"] -= 1.0
         
-    # CHUẨN HÓA: Ép tổng điểm luôn luôn bằng đúng 10.0
+    for k in weights: weights[k] = max(0.1, weights[k])
     total = sum(weights.values())
-    for key in weights:
-        weights[key] = (weights[key] / total) * 10.0
-        
+    for key in weights: weights[key] = round((weights[key] / total) * 10.0, 2)
     return weights
-
-
-templates = [
-    ["V", "N", "C", "N"], 
-    ["N", "C", "N"],
-    ["V", "Ns"]
-]
 
 def parse_rulesv2(tokens, sentence):
     try:
-        if not tokens or not sentence:
-            return None
-            
-        if len(tokens) == 0:
-            return None
-            
-        # Lọc token hợp lệ
+        if not tokens or not sentence or len(tokens) == 0: return None
+        
         valid_tokens = []
         for token in tokens:
-            if isinstance(token, list) and len(token) >= 2:
-                word = str(token[0]).strip()
-                tag = str(token[1]).strip()
-                if word and tag:
-                    valid_tokens.append([word, tag])
-            elif isinstance(token, tuple) and len(token) >= 2:
-                word = str(token[0]).strip()
-                tag = str(token[1]).strip()
-                if word and tag:
-                    valid_tokens.append([word, tag])
+            if isinstance(token, (list, tuple)) and len(token) >= 2:
+                word, tag = str(token[0]).strip(), str(token[1]).strip()
+                if word and tag: valid_tokens.append([word, tag])
         
-        if not valid_tokens:
-            return None
+        if not valid_tokens: return None
+        
         for template in templates:
-            rule_vi = ""
-            rule_en = ""
-            current_idx = 0
-            is_match = True
+            rule_vi, rule_en = "", ""
+            current_idx, is_match = 0, True
             
             for word_type in template:
-                # Xử lý Ns (gom nhiều danh từ)
                 if word_type == "Ns":
                     found_nouns = 0
                     while current_idx < len(valid_tokens):
@@ -284,36 +203,22 @@ def parse_rulesv2(tokens, sentence):
                         if pos.startswith('N'):
                             found_nouns += 1
                             rule_vi += f" {word}"
-                            # Ánh xạ sang tiếng Anh
                             en_word = MAPPING.get(word, translator.translate(word).lower())
                             rule_en += f" {en_word}"
-                            
                         elif word in [",", "và", "hoặc"] or pos == "C":
-                            # Lướt qua dấu phẩy và từ nối
                             rule_vi += f" {word}"
                             rule_en += f" {word}"
-                            
                         elif pos.startswith('V'):
-                            # Gặp động từ khác thì dừng
                             break
-                            
                         current_idx += 1
-                        
                     if found_nouns == 0:
                         is_match = False
                         break
-                
-                # ==========================================
-                # Xử lý V, N, C (bắt chính xác 1 từ)
-                # ==========================================
                 else:
-                    # Tìm từ tiếp theo khớp với loại từ cần
                     found = False
                     while current_idx < len(valid_tokens):
                         word = str(valid_tokens[current_idx][0]).lower()
                         pos = valid_tokens[current_idx][1]
-                        
-                        # Kiểm tra khớp loại từ
                         if pos.startswith(word_type[0]):
                             found = True
                             break
@@ -325,75 +230,41 @@ def parse_rulesv2(tokens, sentence):
                     
                     word = str(valid_tokens[current_idx][0]).lower()
                     rule_vi += f" {word}"
-                    
-                    # Ánh xạ sang tiếng Anh
                     en_word = MAPPING.get(word, translator.translate(word).lower())
                     rule_en += f" {en_word}"
-                    
                     current_idx += 1
             
-            # Nếu khớp template
             if is_match and rule_vi.strip():
-                print(f"✅ Match template {template}: {rule_vi.strip()} | {rule_en.strip()}")
                 return {
-                    "rule": rule_vi.strip(),
-                    "rule_en": rule_en.strip(),
-                    "template": template,
-                    "raw_text": str(sentence),
-                    "tokens": valid_tokens  # Thêm tokens để debug
+                    "rule": rule_vi.strip(), "rule_en": rule_en.strip(),
+                    "template": template, "raw_text": str(sentence), "tokens": valid_tokens
                 }
         return None
-        
     except Exception as e:
         print(f"❌ Lỗi parse_rulesv2: {e}")
-        import traceback
-        traceback.print_exc()
         return None
-
-def check_rulev2(rule, boxes_dict):
-    try:
-        template_idx = templates.index(rule["template"])
-        match template_idx:
-            case 0:
-                return template_1(rule, boxes_dict)  # ["V", "N", "C", "N"]
-            # case 1:
-            #     return template_ns(rule, boxes_dict) # ["V", "Ns"]
-            case 2:
-                return template_0(rule, boxes_dict)  # ["V", "N"]
-                
-    except Exception as e:
-        print(f"Có lỗi xảy ra khi check rules. Lỗi: {e}")
-        return 0.0
 
 def parse_rules(user_text, art_type="scenery"):
     rules = []
-    if not user_text or not user_text.strip():
-        return rules
+    if not user_text or not user_text.strip(): return rules
     
-    # SỬA: Tách theo dấu chấm (.)
     clauses = [c.strip() for c in user_text.lower().split('.') if c.strip()]
-    
     obj_dict = PORTRAIT_OBJECT_MAPPING if art_type == "portrait" else SCENERY_OBJECT_MAPPING
     vi_dict = PORTRAIT_OBJECT_VI if art_type == "portrait" else SCENERY_OBJECT_VI
     
     for clause in clauses:
-        if not clause or len(clause.strip()) < 3:
-            continue
-            
-        found_objects = []
-        found_relations = []
+        if len(clause) < 3: continue
+        found_objects, found_relations = [], []
         
         clause_temp = clause
         for vi_word, en_key in obj_dict.items():
-            pattern = rf"(?:\b|\s|^){vi_word}(?:\b|\s|$)"
-            for match in re.finditer(pattern, clause_temp):
+            for match in re.finditer(rf"(?:\b|\s|^){vi_word}(?:\b|\s|$)", clause_temp):
                 found_objects.append({"vi": vi_word, "en": en_key, "pos": match.start()})
                 clause_temp = clause_temp[:match.start()] + " " * len(match.group()) + clause_temp[match.end():]
                 
         clause_temp_rel = clause
         for vi_word, en_key in RELATION_MAPPING.items():
-            pattern = rf"(?:\b|\s|^){vi_word}(?:\b|\s|$)"
-            for match in re.finditer(pattern, clause_temp_rel):
+            for match in re.finditer(rf"(?:\b|\s|^){vi_word}(?:\b|\s|$)", clause_temp_rel):
                 found_relations.append({"vi": vi_word, "en": en_key, "pos": match.start()})
                 clause_temp_rel = clause_temp_rel[:match.start()] + " " * len(match.group()) + clause_temp_rel[match.end():]
 
@@ -402,52 +273,24 @@ def parse_rules(user_text, art_type="scenery"):
 
         if len(found_objects) >= 2 and len(found_relations) >= 1:
             obj_A, obj_B, rel = found_objects[0], found_objects[1], found_relations[0]
+            if rel['pos'] < obj_A['pos']: obj_A, obj_B = obj_B, obj_A
+                
+            en_rel = rel['en']
+            rule_data = {
+                "weight": 1.0,
+                "object1": obj_A['en'], "object2": obj_B['en'], "relation": rel['en'],
+                "object1_vi": vi_dict.get(obj_A['en'], obj_A['vi']), 
+                "object2_vi": vi_dict.get(obj_B['en'], obj_B['vi']), 
+                "relation_vi": rel['vi']
+            }
             
-            if obj_A['pos'] < rel['pos'] < obj_B['pos']:
-                rules.append({
-                    "object1": obj_A['en'], "relation": rel['en'], "object2": obj_B['en'],
-                    "object1_vi": vi_dict.get(obj_A['en'], obj_A['vi']), 
-                    "object2_vi": vi_dict.get(obj_B['en'], obj_B['vi']), "relation_vi": rel['vi']
-                })
-            elif rel['pos'] < obj_A['pos'] < obj_B['pos']:
-                rules.append({
-                    "object1": obj_B['en'], "relation": rel['en'], "object2": obj_A['en'],
-                    "object1_vi": vi_dict.get(obj_B['en'], obj_B['vi']), 
-                    "object2_vi": vi_dict.get(obj_A['en'], obj_A['vi']), "relation_vi": rel['vi']
-                })
+            if en_rel in ["higher_than", "lower_than"]:
+                rule_data["type"] = "size_comp"
+                op = ">" if en_rel == "higher_than" else "<"
+                rule_data["rule"] = f"size_compare {obj_A['en']} {op} {obj_B['en']}"
+            else:
+                rule_data["type"] = "pos_rel"
+                rule_data["rule"] = f"position_rel {obj_A['en']} {en_rel} {obj_B['en']}"
+                
+            rules.append(rule_data)
     return rules
-
-def check_rule(rule, boxes_dict):
-    obj1 = rule["object1"]
-    obj2 = rule["object2"]
-    relation = rule["relation"]
-
-    if obj1 not in boxes_dict or obj2 not in boxes_dict:
-        return False
-    if len(boxes_dict[obj1]) == 0:
-        return False
-    if len(boxes_dict[obj2]) == 0:
-        return False
-
-    box1 = boxes_dict[obj1][0]
-    box2 = boxes_dict[obj2][0]
-
-    center1 = ((box1[0] + box1[2]) / 2, (box1[1] + box1[3]) / 2)
-    center2 = ((box2[0] + box2[2]) / 2, (box2[1] + box2[3]) / 2)
-    height1 = box1[3] - box1[1]
-    height2 = box2[3] - box2[1]
-
-    if relation == "higher_than":
-        return height1 > height2
-    elif relation == "lower_than":
-        return height1 < height2
-    elif relation == "left_of":
-        return center1[0] < center2[0]
-    elif relation == "right_of":
-        return center1[0] > center2[0]
-    elif relation == "above":
-        return center1[1] < center2[1]
-    elif relation == "below":
-        return center1[1] > center2[1]
-
-    return False

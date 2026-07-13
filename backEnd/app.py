@@ -4,14 +4,28 @@ import os
 import uuid
 import json
 from datetime import datetime
-from nlp_utils import *
+import cv2
+import re
 
-from models import *
 from nlp_utils import *
+from models import *
 from vision_utils import *
+
+# IMPORT MASTER ENGINE
+from templates import evaluate_drawing
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:5500", "http://127.0.0.1:5500", "http://localhost:5000", "http://127.0.0.1:5000"])
+
+REQUIRED = ["eye", "eyebrow", "nose", "mouth", "face", "ear", "hair"]
+SCENERY_REQUIRED = ["tree", "sun"]
+
+RESULT_FOLDER = "static/results"
+os.makedirs(RESULT_FOLDER, exist_ok=True)
+UPLOAD_FOLDER = "static/uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+print("\n✅ SERVER ĐÃ SẴN SÀNG!\n")
 
 @app.route('/')
 def home():
@@ -53,7 +67,6 @@ def save_settings():
         sentences_data = []
         possible_rules = []
         if user_text and user_text.strip():
-            # SỬA: Tách thành nhiều câu theo dấu chấm (.)
             clauses = [c.strip() for c in user_text.split('.') if c.strip()]
             obj_dict = PORTRAIT_OBJECT_MAPPING if art_type == "portrait" else SCENERY_OBJECT_MAPPING
             
@@ -61,12 +74,13 @@ def save_settings():
                 try:
                     clause = clause.lower()
                     pos_tags = custom_pos_tag(clause)
-                    possible_rules.append(parse_rulesv2(pos_tags,clause))
+                    
+                    if 'parse_rulesv2' in globals():
+                        possible_rules.append(parse_rulesv2(pos_tags, clause))
                     
                     raw_verbs_vi = [word for word, tag in pos_tags if tag.startswith('V')]
                     raw_nouns_vi = [word for word, tag in pos_tags if tag.startswith('N')]
                     
-                    # Bắt thêm danh từ ghép thủ công tránh underthesea tách lỗi
                     for vi_word in obj_dict.keys():
                         if re.search(rf"(?:\b|\s|^){vi_word}(?:\b|\s|$)", clause.lower()) and vi_word not in raw_nouns_vi:
                             raw_nouns_vi.append(vi_word)
@@ -91,7 +105,6 @@ def save_settings():
                                 
                     clause_nouns_en = filter_valid_nouns_en(clause_nouns_en, art_type)
                     
-                    # Kiểm tra tính bắt buộc
                     has_co = any(v.lower() in ["có", "phải", "cần", "vẽ", "bắt buộc"] for v in raw_verbs_vi) or "có" in clause.lower()
                     clause_rules = parse_rules(clause, art_type)
                     
@@ -132,7 +145,6 @@ def save_settings():
         settings['nouns_en'] = nouns_en_list
         settings['rules'] = all_rules
         
-        # SỬA: Lưu JSON theo cấu trúc mới
         if art_type:
             settings[f"{art_type}_text"] = user_text
             settings[f"{art_type}_sentences_data"] = sentences_data
@@ -144,10 +156,10 @@ def save_settings():
             json.dump(settings, f, ensure_ascii=False, indent=2)
         
         with open ("rules.json","w", encoding = "utf-8") as f:
-            json.dump(possible_rules, f,ensure_ascii=False ,indent = 4)
+            json.dump(possible_rules, f, ensure_ascii=False, indent=4)
+            
         print(f"✅ Đã lưu settings cho {art_type}")
 
-        
         return jsonify({
             "success": True,
             "message": "Đã lưu cài đặt lên server!",
@@ -162,7 +174,6 @@ def save_settings():
     except Exception as e:
         print(f"❌ Lỗi: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
-
 
 @app.route("/get_settings", methods=["GET"])
 def get_settings():
@@ -196,19 +207,6 @@ def get_settings():
             })
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500    
-    
-
-REQUIRED = ["eye", "eyebrow", "nose", "mouth", "face", "ear", "hair"]
-SCENERY_REQUIRED = ["tree", "sun"]
-
-
-RESULT_FOLDER = "static/results"
-os.makedirs(RESULT_FOLDER, exist_ok=True)
-UPLOAD_FOLDER = "static/uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-print("\n✅ SERVER ĐÃ SẴN SÀNG!\n")
-
 
 @app.route("/classify", methods=["POST"])
 def classify():
@@ -276,7 +274,6 @@ def classify():
             os.remove(img_path)
         return jsonify({"type": "Unknown", "message": "Có lỗi xảy ra khi xử lý ảnh!"}), 200
 
-
 @app.route("/predict", methods=["POST"])
 def predict():
     if "image" not in request.files:
@@ -305,7 +302,7 @@ def predict():
         results = model(img_path, verbose=False)[0]
         boxed_name = f"boxed_{filename}"
         cv2.imwrite(os.path.join(RESULT_FOLDER, boxed_name), results.plot())
-
+        
         if not results.boxes:
             if img_path and os.path.exists(img_path):
                 os.remove(img_path)
@@ -324,8 +321,15 @@ def predict():
             raw_name = str(results.names[cid]).strip().lower()
             for req in REQUIRED:
                 if req == raw_name:
-                    boxes_dict[req].append(box)
-
+                    # TRÍCH XUẤT MÀU SẮC TỪ ẢNH CẮT (ROI)
+                    x1, y1, x2, y2 = map(int, box)
+                    roi = img_cv[max(0, y1):min(img_h, y2), max(0, x1):min(img_w, x2)]
+                    color_name = get_dominant_color(roi)
+                    
+                    boxes_dict[req].append({
+                        "box": box,
+                        "color": color_name
+                    })
 
         detected = [k for k, v in boxes_dict.items() if len(v) > 0]
         missing = [k for k in REQUIRED if k not in detected]
@@ -333,18 +337,36 @@ def predict():
         rule_errors = []
         rule_success = []
         
+        # SỬ DỤNG MASTER ENGINE 
+        _, rule_details = evaluate_drawing(rules, boxes_dict)
+        
         for rule in rules:
-            ok = check_rule(rule, boxes_dict)
-            obj1_vi = rule.get('object1_vi', PORTRAIT_OBJECT_VI.get(rule['object1'], rule['object1']))
-            obj2_vi = rule.get('object2_vi', PORTRAIT_OBJECT_VI.get(rule['object2'], rule['object2']))
-            relation_vi = rule.get('relation_vi', RELATION_VI.get(rule['relation'], rule['relation']))
+            rule_str = rule.get("rule", "")
+            diem_luat = rule_details.get(rule_str, 0)
+            
+            ok = False
+            if isinstance(diem_luat, (int, float)) and diem_luat >= 50.0:
+                ok = True
+            elif isinstance(diem_luat, str) and "Đạt" in diem_luat:
+                ok = True
+
+            obj1_vi = rule.get('object1_vi', PORTRAIT_OBJECT_VI.get(rule.get('object1', ''), rule.get('object1', '')))
+            obj2_vi = rule.get('object2_vi', PORTRAIT_OBJECT_VI.get(rule.get('object2', ''), rule.get('object2', '')))
+            relation_vi = rule.get('relation_vi', RELATION_VI.get(rule.get('relation', ''), rule.get('relation', '')))
+            chuoi_hien_thi = f"{obj1_vi} {relation_vi} {obj2_vi}".strip()
+            
+            if not chuoi_hien_thi:
+                chuoi_hien_thi = rule_str
             
             if ok:
-                rule_success.append(f"{obj1_vi} {relation_vi} {obj2_vi}")
+                rule_success.append(chuoi_hien_thi)
             else:
-                rule_errors.append(f"{obj1_vi} không {relation_vi} {obj2_vi}")
+                rule_errors.append(f"{obj1_vi} không {relation_vi} {obj2_vi}" if relation_vi else f"Vi phạm: {chuoi_hien_thi}")
+
+        # Chỉ cần dùng hộp thoại thô để check bố cục
+        boxes_xyxy_raw = [item["box"] for obj_list in boxes_dict.values() for item in obj_list]
         
-        loi_bo_cuc = kiem_tra_bo_cuc_tong_the(boxes_xyxy, img_w, img_h)
+        loi_bo_cuc = kiem_tra_bo_cuc_tong_the(boxes_xyxy_raw, img_w, img_h)
         loi_ty_le = luat_ty_le_chan_dung(boxes_dict)
         
         loi_khuyen = []
@@ -353,10 +375,8 @@ def predict():
         if missing:
             loi_khuyen.append(f"Em nhớ bổ sung các bộ phận còn thiếu nhé: {', '.join(missing)}.")
         
-        # --- CƠ CHẾ ĐIỂM ĐỘNG CHÂN DUNG ---
         user_text = settings.get("text", "")
         dynamic_weights = phan_tich_trong_so_tieu_chi(user_text)
-
         trong_so_chan_dung = {"face": 1.5, "eye": 1.5, "nose": 1.0, "mouth": 1.0, "hair": 1.0, "eyebrow": 0.5, "ear": 0.5}
         diem_toi_da = sum(trong_so_chan_dung.values())
         
@@ -369,7 +389,6 @@ def predict():
         so_loi_ty_le = len(loi_ty_le)
         diem_ty_le = max(0, dynamic_weights["art_proportion"] - (so_loi_ty_le * (dynamic_weights["art_proportion"] / 3))) 
 
-        # Vì ảnh chân dung chưa phân tích màu sắc, hệ thống tự động tặng full điểm màu theo trọng số
         diem_mau_sac = dynamic_weights["color"]
 
         bonus_rules = min(len(rule_success) * 0.5, 1.5)
@@ -379,12 +398,9 @@ def predict():
         so_vat_thieu = len(missing)
         muc_phat_do_kho = (so_loi_bo_cuc + so_loi_ty_le + so_vat_thieu * 0.5) * (penalty - 1)
 
-        # --- CƠ CHẾ ĐIỂM ĐỘNG VÀ ĐIỂM TUYỆT ĐỐI (ĐÃ SỬA LỖI TĂNG ĐIỂM) CHO CHÂN DUNG ---
-        user_text = settings.get("text", "")
+        # CƠ CHẾ ĐIỂM ĐỘNG VÀ ĐIỂM TUYỆT ĐỐI BẰNG REGEX
         tru_diem_tuyet_doi = 0.0
         cong_diem_tuyet_doi = 0.0
-        
-        # Đếm số vật thiếu để tính điểm phạt độ khó tự nhiên
         so_vat_thieu_tu_nhien = len(missing)
 
         if user_text:
@@ -392,17 +408,14 @@ def predict():
             tat_ca_vat_the = detected + missing  
             vat_bi_phat = []
             
-            # SỬA: TÁCH VĂN BẢN THEO DẤU CHẤM
             danh_sach_cau = [c.strip() for c in text_lower.split('.') if c.strip()]
             
             for cau in danh_sach_cau:
-                
                 # 1. QUÉT LỆNH THƯỞNG
                 for match in re.finditer(r'(?:cộng|thưởng|thêm)\s*(\d+(?:\.\d+)?)\s*điểm', cau):
                     diem_cong = float(match.group(1))
                     da_xu_ly_luat = False
                     
-                    # 1.1 Ưu tiên kiểm tra Luật Không Gian/Tỷ Lệ (Relations)
                     for rs in rule_success:
                         if rs.lower() in cau:
                             cong_diem_tuyet_doi += diem_cong
@@ -411,7 +424,6 @@ def predict():
                             break
                     if da_xu_ly_luat: continue
                     
-                    # 1.2 Kiểm tra Vật Thể (Objects)
                     for obj in tat_ca_vat_the:
                         cac_cach_goi = [vi for vi, en in PORTRAIT_OBJECT_MAPPING.items() if en == obj]
                         if not cac_cach_goi: cac_cach_goi = [PORTRAIT_OBJECT_VI.get(obj, obj)]
@@ -433,7 +445,6 @@ def predict():
                     diem_tru = float(match.group(1))
                     da_xu_ly_luat = False
                     
-                    # 2.1 Ưu tiên kiểm tra Luật Không Gian/Tỷ Lệ bị vi phạm
                     for re_err in rule_errors:
                         if re_err.lower() in cau:
                             tru_diem_tuyet_doi += diem_tru
@@ -442,7 +453,6 @@ def predict():
                             break
                     if da_xu_ly_luat: continue
 
-                    # 2.2 Kiểm tra Vật Thể bị sai sót
                     for obj in tat_ca_vat_the:
                         cac_cach_goi = [vi for vi, en in PORTRAIT_OBJECT_MAPPING.items() if en == obj]
                         if not cac_cach_goi: cac_cach_goi = [PORTRAIT_OBJECT_VI.get(obj, obj)]
@@ -463,31 +473,17 @@ def predict():
                                 loi_khuyen.append(f"⚠️ Cảnh báo: Trừ thẳng {diem_tru} điểm vì VẼ THỪA '{matched_name}' sai yêu cầu!")
                                 break
 
-        # 2. TÍNH ĐIỂM THÀNH PHẦN (Dựa trên danh sách detected thật 100%)
         dynamic_weights = phan_tich_trong_so_tieu_chi(user_text)
 
-        trong_so_chan_dung = {"face": 1.5, "eye": 1.5, "nose": 1.0, "mouth": 1.0, "hair": 1.0, "eyebrow": 0.5, "ear": 0.5}
         diem_toi_da = sum(trong_so_chan_dung.values())
-        
         diem_thanh_phan = sum([trong_so_chan_dung.get(obj, 0) for obj in detected])
         diem_thanh_phan_chuan = (diem_thanh_phan / diem_toi_da) * dynamic_weights["objects"] if diem_toi_da > 0 else 0
 
-        # 3. TÍNH ĐIỂM CÁC TIÊU CHÍ KHÁC
-        so_loi_bo_cuc = sum(1 for l in loi_bo_cuc if "Lỗi" in l)
         diem_bo_cuc = max(0, dynamic_weights["layout"] - (so_loi_bo_cuc * (dynamic_weights["layout"] / 2))) 
-
-        so_loi_ty_le = len(loi_ty_le)
         diem_ty_le = max(0, dynamic_weights["art_proportion"] - (so_loi_ty_le * (dynamic_weights["art_proportion"] / 3))) 
-
         diem_mau_sac = dynamic_weights["color"]
 
-        bonus_rules = min(len(rule_success) * 0.5, 1.5)
-        penalt_rules = len(rule_errors) * 0.5
-
-        # 4. TỔNG KẾT ĐIỂM
         score_base = diem_thanh_phan_chuan + diem_bo_cuc + diem_ty_le + diem_mau_sac + bonus_rules - penalt_rules
-        
-        # TÍNH PHẠT ĐỘ KHÓ: Sử dụng biến đã được trừ đi những vật bị phạt lệnh
         muc_phat_do_kho = (so_loi_bo_cuc + so_loi_ty_le + so_vat_thieu_tu_nhien * 0.5) * (penalty - 1)
 
         score_tinh_toan = score_base - muc_phat_do_kho - tru_diem_tuyet_doi + cong_diem_tuyet_doi
@@ -518,6 +514,7 @@ def predict():
             "nhan_xet_bo_cuc": ["Có lỗi xảy ra khi xử lý ảnh."], "nhan_xet_ty_le": [],
             "loi_khuyen_giao_vien": ["Xin lỗi, đã có lỗi xảy ra. Em vui lòng thử lại với ảnh khác nhé!"]
         }), 200
+
 
 @app.route("/predict_scenery", methods=["POST"])
 def predict_scenery():
@@ -578,7 +575,15 @@ def predict_scenery():
             raw_name = str(results.names[cid]).strip().lower()
             for req in base_required:
                 if req == raw_name: 
-                    boxes_dict[req].append(box)
+                    # TRÍCH XUẤT MÀU SẮC TỪ ẢNH CẮT (ROI)
+                    x1, y1, x2, y2 = map(int, box)
+                    roi = img_cv[max(0, y1):min(img_h, y2), max(0, x1):min(img_w, x2)]
+                    color_name = get_dominant_color(roi)
+                    
+                    boxes_dict[req].append({
+                        "box": box,
+                        "color": color_name
+                    })
 
         detected = [k for k, v in boxes_dict.items() if len(v) > 0]
         missing = [v for v in base_required if v not in detected]
@@ -586,17 +591,32 @@ def predict_scenery():
         rule_errors = []
         rule_success = []
 
+        # SỬ DỤNG MASTER ENGINE
+        _, rule_details = evaluate_drawing(rules, boxes_dict)
+
         for rule in rules:
-            ok = check_rule(rule, boxes_dict)
-            obj1_vi = rule.get('object1_vi', SCENERY_OBJECT_VI.get(rule['object1'], rule['object1']))
-            obj2_vi = rule.get('object2_vi', SCENERY_OBJECT_VI.get(rule['object2'], rule['object2']))
-            relation_vi = rule.get('relation_vi', RELATION_VI.get(rule['relation'], rule['relation']))
+            rule_str = rule.get("rule", "")
+            diem_luat = rule_details.get(rule_str, 0)
+            
+            ok = False
+            if isinstance(diem_luat, (int, float)) and diem_luat >= 50.0:
+                ok = True
+            elif isinstance(diem_luat, str) and "Đạt" in diem_luat:
+                ok = True
+                
+            obj1_vi = rule.get('object1_vi', SCENERY_OBJECT_VI.get(rule.get('object1', ''), rule.get('object1', '')))
+            obj2_vi = rule.get('object2_vi', SCENERY_OBJECT_VI.get(rule.get('object2', ''), rule.get('object2', '')))
+            relation_vi = rule.get('relation_vi', RELATION_VI.get(rule.get('relation', ''), rule.get('relation', '')))
+            chuoi_hien_thi = f"{obj1_vi} {relation_vi} {obj2_vi}".strip()
+            
+            if not chuoi_hien_thi:
+                chuoi_hien_thi = rule_str
             
             if ok:
-                rule_success.append(f"{obj1_vi} {relation_vi} {obj2_vi}")
+                rule_success.append(chuoi_hien_thi)
             else:
-                rule_errors.append(f"{obj1_vi} không {relation_vi} {obj2_vi}")
-        
+                rule_errors.append(f"{obj1_vi} không {relation_vi} {obj2_vi}" if relation_vi else f"Vi phạm: {chuoi_hien_thi}")
+
         loi_khuyen = []
         if "tree" not in detected:
             loi_khuyen.append("Thêm một vài bóng cây xanh sẽ giúp bức tranh có sức sống hơn rất nhiều.")
@@ -610,11 +630,14 @@ def predict_scenery():
         if len(detected) == len(base_required):
             loi_khuyen.append("Tranh của em rất đầy đủ chi tiết! Nếu muốn xuất sắc hơn, có thể điểm thêm bãi cỏ hoặc đàn chim trôi nhé.")
 
-        loi_bo_cuc = kiem_tra_bo_cuc_tong_the(boxes_xyxy, img_w, img_h)
+        # Chỉ cần dùng hộp thoại thô để check bố cục
+        boxes_xyxy_raw = [item["box"] for obj_list in boxes_dict.values() for item in obj_list]
+        
+        loi_bo_cuc = kiem_tra_bo_cuc_tong_the(boxes_xyxy_raw, img_w, img_h)
         nhan_xet_nghe_thuat_list = phan_tich_nghe_thuat_phong_canh(boxes_dict, img_w, img_h)
         nhan_xet_mau_sac_str = phan_tich_mau_sac(img_cv)
 
-        # --- CƠ CHẾ ĐIỂM ĐỘNG PHONG CẢNH ---
+        # TÍNH ĐIỂM
         user_text = settings.get("text", "")
         dynamic_weights = phan_tich_trong_so_tieu_chi(user_text)
 
@@ -648,15 +671,10 @@ def predict_scenery():
         penalt_rules = len(rule_errors) * 0.5
 
         score_base = diem_thanh_phan_chuan + diem_bo_cuc + diem_nghe_thuat + diem_mau_sac + bonus_rules - penalt_rules
-        so_vat_thieu = len(missing)
-        muc_phat_do_kho = (so_loi_bo_cuc * 0.5 + so_vat_thieu * 0.8) * (penalty - 1)
-
-        # --- CƠ CHẾ ĐIỂM ĐỘNG VÀ ĐIỂM TUYỆT ĐỐI (ĐÃ SỬA LỖI TĂNG ĐIỂM) ---
-        user_text = settings.get("text", "")
+        
+        # CƠ CHẾ ĐIỂM ĐỘNG VÀ ĐIỂM TUYỆT ĐỐI BẰNG REGEX
         tru_diem_tuyet_doi = 0.0
         cong_diem_tuyet_doi = 0.0
-        
-        # Đếm số vật thiếu để tính điểm phạt độ khó tự nhiên
         so_vat_thieu_tu_nhien = len(missing)
 
         if user_text:
@@ -664,17 +682,14 @@ def predict_scenery():
             tat_ca_vat_the = detected + missing  
             vat_bi_phat = []
             
-            # SỬA: TÁCH VĂN BẢN THEO DẤU CHẤM
             danh_sach_cau = [c.strip() for c in text_lower.split('.') if c.strip()]
             
             for cau in danh_sach_cau:
-                
                 # 1. QUÉT LỆNH THƯỞNG
                 for match in re.finditer(r'(?:cộng|thưởng|thêm)\s*(\d+(?:\.\d+)?)\s*điểm', cau):
                     diem_cong = float(match.group(1))
                     da_xu_ly_luat = False
                     
-                    # 1.1 Ưu tiên kiểm tra Luật Không Gian (Relations)
                     for rs in rule_success:
                         if rs.lower() in cau:
                             cong_diem_tuyet_doi += diem_cong
@@ -683,7 +698,6 @@ def predict_scenery():
                             break
                     if da_xu_ly_luat: continue
                     
-                    # 1.2 Kiểm tra Vật Thể (Objects)
                     for obj in tat_ca_vat_the:
                         cac_cach_goi = [vi for vi, en in SCENERY_OBJECT_MAPPING.items() if en == obj]
                         if not cac_cach_goi: cac_cach_goi = [SCENERY_OBJECT_VI.get(obj, obj)]
@@ -705,7 +719,6 @@ def predict_scenery():
                     diem_tru = float(match.group(1))
                     da_xu_ly_luat = False
                     
-                    # 2.1 Ưu tiên kiểm tra Luật Không Gian bị vi phạm
                     for re_err in rule_errors:
                         if re_err.lower() in cau:
                             tru_diem_tuyet_doi += diem_tru
@@ -714,7 +727,6 @@ def predict_scenery():
                             break
                     if da_xu_ly_luat: continue
 
-                    # 2.2 Kiểm tra Vật Thể bị sai sót
                     for obj in tat_ca_vat_the:
                         cac_cach_goi = [vi for vi, en in SCENERY_OBJECT_MAPPING.items() if en == obj]
                         if not cac_cach_goi: cac_cach_goi = [SCENERY_OBJECT_VI.get(obj, obj)]
@@ -735,43 +747,12 @@ def predict_scenery():
                                 loi_khuyen.append(f"⚠️ Cảnh báo: Trừ thẳng {diem_tru} điểm vì VẼ THỪA '{matched_name}' sai yêu cầu!")
                                 break
 
-        # 2. TÍNH ĐIỂM THÀNH PHẦN 
         dynamic_weights = phan_tich_trong_so_tieu_chi(user_text)
 
-        trong_so_phong_canh = {"house": 2.5, "tree": 2.0, "sun": 1.5}
-        for noun in base_required:
-            if noun not in trong_so_phong_canh: trong_so_phong_canh[noun] = 1.0
-            
-        diem_thanh_phan = sum([trong_so_phong_canh.get(obj, 1.0) for obj in detected]) 
-        diem_toi_da = sum([trong_so_phong_canh.get(obj, 1.0) for obj in base_required])
         diem_thanh_phan_chuan = (diem_thanh_phan / diem_toi_da) * dynamic_weights["objects"] if diem_toi_da > 0 else 0
-
-        # 3. TÍNH ĐIỂM CÁC TIÊU CHÍ KHÁC
-        so_loi_bo_cuc = sum(1 for l in loi_bo_cuc if "Lỗi" in l)
         diem_bo_cuc = max(0, dynamic_weights["layout"] - (so_loi_bo_cuc * (dynamic_weights["layout"] / 3)))
 
-        diem_nghe_thuat = dynamic_weights["art_proportion"] * 0.5
-        for nx in nhan_xet_nghe_thuat_list:
-            if "tốt" in nx or "nghệ thuật" in nx or "amazing" in nx:
-                diem_nghe_thuat += (dynamic_weights["art_proportion"] * 0.25)
-            elif "to hơn" in nx or "lưu ý" in nx.lower():
-                diem_nghe_thuat -= (dynamic_weights["art_proportion"] * 0.25)
-        diem_nghe_thuat = max(0, min(dynamic_weights["art_proportion"], diem_nghe_thuat))
-
-        diem_mau_sac = dynamic_weights["color"] * 0.6 
-        if "nhạt nhòa" in nhan_xet_mau_sac_str or "hơi tối" in nhan_xet_mau_sac_str:
-            diem_mau_sac -= (dynamic_weights["color"] * 0.3)
-        elif "rất tốt" in nhan_xet_mau_sac_str or "rực rỡ" in nhan_xet_mau_sac_str:
-            diem_mau_sac += (dynamic_weights["color"] * 0.4)
-        diem_mau_sac = max(0, min(dynamic_weights["color"], diem_mau_sac))
-
-        bonus_rules = min(len(rule_success) * 0.5, 1.5)
-        penalt_rules = len(rule_errors) * 0.5
-
-        # 4. TỔNG KẾT ĐIỂM
         score_base = diem_thanh_phan_chuan + diem_bo_cuc + diem_nghe_thuat + diem_mau_sac + bonus_rules - penalt_rules
-        
-        # TÍNH PHẠT ĐỘ KHÓ: Sử dụng biến đã được trừ đi những vật bị phạt lệnh
         muc_phat_do_kho = (so_loi_bo_cuc * 0.5 + so_vat_thieu_tu_nhien * 0.8) * (penalty - 1)
 
         score_tinh_toan = score_base - muc_phat_do_kho - tru_diem_tuyet_doi + cong_diem_tuyet_doi
@@ -816,7 +797,6 @@ def predict_scenery():
             "loi_khuyen_giao_vien": ["Có lỗi xảy ra khi xử lý ảnh!"],
             "boxed_image": ""
         })
-
 
 if __name__ == "__main__":
     app.run(debug=True)
