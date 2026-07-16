@@ -15,7 +15,7 @@ print("✅ Đã tải model chân dung")
 scenery_model = YOLO("landscape.pt")
 print("✅ Đã tải model phong cảnh")
 
-clf_model = load_model("phanLoaiAnh.h5")
+clf_model = load_model("/Users/datphan/AnhEmToiDanhLe/backEnd/phanLoaiAnh.h5")
 print("✅ Đã tải model phân loại ảnh")
 CLASSES = ["ChanDung", "PhongCanh"]
 

@@ -1,92 +1,19 @@
 [
     {
-        "rule": "phải có cây và mặt trời",
-        "rule_en": "must have tree and sun",
-        "template": [
-            "V",
-            "N",
-            "C",
-            "N"
-        ],
-        "raw_text": "tranh phải có cây và mặt trời",
-        "tokens": [
-            [
-                "tranh",
-                "N"
-            ],
-            [
-                "phải có",
-                "V"
-            ],
-            [
-                "cây",
-                "N"
-            ],
-            [
-                "và",
-                "C"
-            ],
-            [
-                "mặt trời",
-                "N"
-            ]
-        ]
-    },
-    {
-        "rule": "cây phải nhà",
-        "rule_en": "tree right_of house",
-        "template": [
-            "N",
-            "C",
-            "N"
-        ],
-        "raw_text": "cây phải ở bên phải nhà",
-        "tokens": [
-            [
-                "cây",
-                "Nc"
-            ],
-            [
-                "phải",
-                "C"
-            ],
-            [
-                "ở",
-                "E"
-            ],
-            [
-                "bên phải",
-                "C"
-            ],
-            [
-                "nhà",
-                "N"
-            ]
-        ]
-    },
-    {
-        "rule": "phải có nhà",
-        "rule_en": "must have house",
+        "rule": "có cây",
+        "rule_en": "have tree",
         "template": [
             "V",
             "Ns"
         ],
-        "raw_text": "tranh phải có nhiều nhà",
+        "raw_text": "có cây",
         "tokens": [
             [
-                "tranh",
-                "N"
-            ],
-            [
-                "phải có",
+                "có",
                 "V"
             ],
             [
-                "nhiều",
-                "A"
-            ],
-            [
-                "nhà",
+                "cây",
                 "N"
             ]
         ]

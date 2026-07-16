@@ -10,7 +10,9 @@ def get_area_abs(box):
     """Tính diện tích bounding box"""
     return (box[2] - box[0]) * (box[3] - box[1])
 
-
+# ==========================================
+# CÁC HÀM CŨ CỦA BẠN ĐÃ ĐƯỢC CẬP NHẬT TRUY XUẤT ['box']
+# ==========================================
 def phan_tich_mau_sac(img_cv):
     hsv = cv2.cvtColor(img_cv, cv2.COLOR_BGR2HSV)
     h, s, v = cv2.split(hsv)
@@ -59,9 +61,10 @@ def luat_ty_le_chan_dung(boxes_dict):
     nhan_xet = []
     eyes = boxes_dict.get("eye", [])
     if len(eyes) == 2:
-        eyes.sort(key=lambda b: b[0])
-        w_avg = ((eyes[0][2]-eyes[0][0]) + (eyes[1][2]-eyes[1][0])) / 2
-        khoang_cach = eyes[1][0] - eyes[0][2]
+        # Cập nhật: b['box'][0] thay vì b[0]
+        eyes.sort(key=lambda b: b['box'][0])
+        w_avg = ((eyes[0]['box'][2]-eyes[0]['box'][0]) + (eyes[1]['box'][2]-eyes[1]['box'][0])) / 2
+        khoang_cach = eyes[1]['box'][0] - eyes[0]['box'][2]
         if khoang_cach > w_avg * 1.6:
             nhan_xet.append("Hai mắt đang bị vẽ cách xa nhau quá.")
         elif khoang_cach < w_avg * 0.5:
@@ -69,19 +72,19 @@ def luat_ty_le_chan_dung(boxes_dict):
             
     noses, mouths = boxes_dict.get("nose", []), boxes_dict.get("mouth", [])
     if noses and mouths:
-        if abs(((noses[0][0] + noses[0][2]) / 2) - ((mouths[0][0] + mouths[0][2]) / 2)) > (mouths[0][2] - mouths[0][0]) * 0.2:
+        if abs(((noses[0]['box'][0] + noses[0]['box'][2]) / 2) - ((mouths[0]['box'][0] + mouths[0]['box'][2]) / 2)) > (mouths[0]['box'][2] - mouths[0]['box'][0]) * 0.2:
             nhan_xet.append("Mũi và miệng chưa thẳng hàng dọc em nha!")
             
     eb, ey = boxes_dict.get("eyebrow", []), boxes_dict.get("eye", [])
     if eb and ey:
-        if (((ey[0][1] + ey[0][3]) / 2) - ((eb[0][1] + eb[0][3]) / 2)) > (ey[0][3] - ey[0][1]) * 2.5:
+        if (((ey[0]['box'][1] + ey[0]['box'][3]) / 2) - ((eb[0]['box'][1] + eb[0]['box'][3]) / 2)) > (ey[0]['box'][3] - ey[0]['box'][1]) * 2.5:
             nhan_xet.append("Lông mày em vẽ cao quá, nhìn nhân vật như đang giật mình vậy.")
             
     ears = boxes_dict.get("ear", [])
     if ears and ey:
-        ear_y = (ears[0][1] + ears[0][3]) / 2
-        eye_y = (ey[0][1] + ey[0][3]) / 2
-        if abs(ear_y - eye_y) > (ey[0][3] - ey[0][1]) * 1.5:
+        ear_y = (ears[0]['box'][1] + ears[0]['box'][3]) / 2
+        eye_y = (ey[0]['box'][1] + ey[0]['box'][3]) / 2
+        if abs(ear_y - eye_y) > (ey[0]['box'][3] - ey[0]['box'][1]) * 1.5:
             nhan_xet.append("Vị trí tai đang bị vẽ lệch lên quá cao hoặc thấp hơn so với mắt khá nhiều.")
     
     return nhan_xet if nhan_xet else ["Tỷ lệ tốt!"]
@@ -91,21 +94,21 @@ def phan_tich_nghe_thuat_phong_canh(boxes_dict, img_w, img_h):
     h, t, s = boxes_dict.get("house", []), boxes_dict.get("tree", []), boxes_dict.get("sun", [])
     
     if h and t:
-        if h[0][3] < t[0][3]:
+        if h[0]['box'][3] < t[0]['box'][3]:
             nhan_xet.append("Lưu ý luật xa gần: Nhà ở gần nên vẽ thấp hơn cây ở xa em nha!")
         else:
             nhan_xet.append("Em đã áp dụng rất tốt quy luật xa gần, amazing good job!")
         
     if h:
-        hx = (h[0][0] + h[0][2]) / 2
+        hx = (h[0]['box'][0] + h[0]['box'][2]) / 2
         if (img_w * 0.25) < hx < (img_w * 0.75):
             nhan_xet.append("Nhà đặt ở trung tâm làm điểm nhấn rất tốt!")
         else:
             nhan_xet.append("Ngôi nhà đặt lệch tạo quy tắc 1/3 rất nghệ thuật, đáng khen đó bảo bối.")
         
     if h and s:
-        sun_area = (s[0][2] - s[0][0]) * (s[0][3] - s[0][1])
-        house_area = (h[0][2] - h[0][0]) * (h[0][3] - h[0][1])
+        sun_area = (s[0]['box'][2] - s[0]['box'][0]) * (s[0]['box'][3] - s[0]['box'][1])
+        house_area = (h[0]['box'][2] - h[0]['box'][0]) * (h[0]['box'][3] - h[0]['box'][1])
         if sun_area > house_area:
             nhan_xet.append("Ông mặt trời em vẽ to hơn cả ngôi nhà kìa, thử vẽ nhỏ lại chút xíu cho cảnh vật thật hơn nhé!")
     

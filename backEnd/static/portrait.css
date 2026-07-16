@@ -606,3 +606,97 @@ input[type=range] {
 .type {
     display: none;
 }
+.breakdown-btn{
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:12px 20px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:16px;
+    margin-bottom:15px;
+}
+
+.breakdown-btn:hover{
+    background:#1d4ed8;
+}
+
+#breakdownBox{
+    background:white;
+    border-radius:12px;
+    padding:25px;
+    box-shadow:0 5px 15px rgba(0,0,0,.15);
+    margin-top:15px;
+}
+
+.score-section{
+    margin-bottom:30px;
+}
+
+.score-table,
+.formula-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.score-table th,
+.score-table td,
+.formula-table td{
+    border:1px solid #ddd;
+    padding:12px;
+}
+
+.score-table th{
+    background:#2563eb;
+    color:white;
+}
+
+.final-score{
+    margin-top:20px;
+    text-align:center;
+    background:#eef6ff;
+    padding:20px;
+    border-radius:10px;
+}
+
+.score-number{
+    font-size:40px;
+    color:#ff5722;
+    font-weight:bold;
+}
+
+.criteria-card{
+
+background:white;
+padding:18px;
+margin-bottom:18px;
+border-radius:12px;
+box-shadow:0 2px 8px rgba(0,0,0,.08);
+
+}
+
+.criteria-header{
+
+display:flex;
+justify-content:space-between;
+align-items:center;
+
+}
+
+.criteria-score{
+
+background:#0d6efd;
+color:white;
+padding:5px 12px;
+border-radius:20px;
+font-weight:bold;
+
+}
+
+.criteria-desc{
+
+color:#666;
+font-style:italic;
+margin:8px 0;
+
+}

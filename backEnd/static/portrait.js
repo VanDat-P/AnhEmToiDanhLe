@@ -57,9 +57,9 @@ document.getElementById("submit").onclick = async () => {
                         hoặc vẽ nhà, cây, ông mặt trời để đạt điểm cao hơn nhé!
                     </p>
                     <div style="margin-top: 20px;">
-                        <span style="font-size: 2em;">🖍️</span>
-                        <span style="font-size: 2em;">✨</span>
-                        <span style="font-size: 2em;">🎯</span>
+                        <span style="font-size: 2em;"></span>
+                        <span style="font-size: 2em;"></span>
+                        <span style="font-size: 2em;"></span>
                     </div>
                     <p style="color: #ffa726; font-style: italic; margin-top: 20px;">Bức tranh của em rất sáng tạo! Cố gắng thêm chút nữa nhé! 💪</p>
                 </div>
@@ -79,6 +79,7 @@ document.getElementById("submit").onclick = async () => {
         }
 
         const data = await scoreRes.json();
+        const breakdown = data.score_breakdown;
 
         // Hiển thị kết quả
         let commentText = "";
@@ -137,9 +138,205 @@ document.getElementById("submit").onclick = async () => {
         }
 
         // Xử lý hiển thị
-        let loaiTranhText = classifyData.type === "ChanDung" ? "🧑 Chân dung" : "🌄 Phong cảnh";
+        let loaiTranhText = classifyData.type === "ChanDung" ? " Chân dung" : " Phong cảnh";
         let boxedImageHTML = "";
+        let breakdownHTML = "";
+        if (breakdown) {
+                let detailHTML = "";
 
+                breakdown.details.forEach(item => {
+
+                    detailHTML += `
+                        <div class="criteria-card">
+
+                            <div class="criteria-header">
+                                <h3>${item.title}</h3>
+                                <span class="criteria-score">
+                                    ${item.score}/${item.max}
+                                </span>
+                            </div>
+
+                            <p class="criteria-desc">
+                                ${item.description || ""}
+                            </p>
+
+                            <p>
+                                <b>Phương pháp đánh giá:</b>
+                                ${item.formula || "-"}
+                            </p>
+
+                            ${
+                                item.detected ?
+                                `<p><b>Đã phát hiện:</b> ${item.detected.join(", ")}</p>`
+                                :""
+                            }
+
+                            ${
+                                item.missing ?
+                                `<p style="color:red">
+                                    <b>Thiếu:</b>
+                                    ${item.missing.join(", ")}
+                                </p>`
+                                :""
+                            }
+
+                            ${
+                                item.result ?
+                                `<ul>
+                                    ${item.result.map(r=>`<li>${r}</li>`).join("")}
+                                </ul>`
+                                :""
+                            }
+
+                        </div>
+                        `;
+
+                });
+               
+                    breakdownHTML = `
+                    <div class="score-breakdown">
+
+                        <button id="showBreakdown" class="breakdown-btn">
+                            📊 Xem chi tiết cách chấm điểm
+                        </button>
+
+                        <div id="breakdownBox" style="display:none;">
+
+                            <h2>📋 Báo cáo chấm điểm</h2>
+                            <h3>📑 Chi tiết từng tiêu chí</h3>
+
+                            ${detailHTML}
+                            <div class="score-section">
+
+                                <h3> Điểm từng tiêu chí</h3>
+
+                                <table class="score-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tiêu chí</th>
+                                            <th>Điểm</th>
+                                            <th>Nhận xét</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+
+                                        ${breakdown.details.map(item=>{
+
+                                            let note="";
+
+                                            if(item.score >= item.max*0.9)
+                                                note="Rất tốt";
+                                            else if(item.score >= item.max*0.7)
+                                                note="Tốt";
+                                            else if(item.score >= item.max*0.5)
+                                                note="Đạt";
+                                            else
+                                                note="Cần cải thiện";
+
+                                            return `
+                                            <tr>
+                                                <td>${item.title}</td>
+                                                <td>${item.score}/${item.max}</td>
+                                                <td>${note}</td>
+                                            </tr>
+                                            `;
+
+                                        }).join("")}
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                            <div class="score-section">
+
+                                <h3> Điểm cộng</h3>
+
+                                ${
+                                    breakdown.bonus.length>0 ?
+                                    `<ul>
+                                        ${breakdown.bonus.map(item=>`
+                                            <li><b>+${item.point}</b> : ${item.reason}</li>
+                                        `).join("")}
+                                    </ul>`
+                                    :
+                                    `<p>Không có điểm cộng.</p>`
+                                }
+
+                            </div>
+
+                            <div class="score-section">
+
+                                <h3> Điểm trừ</h3>
+
+                                ${
+                                    breakdown.penalty.length>0 ?
+                                    `<ul>
+                                        ${breakdown.penalty.map(item=>`
+                                            <li><b>-${item.point}</b> : ${item.reason}</li>
+                                        `).join("")}
+                                    </ul>`
+                                    :
+                                    `<p>Không có điểm trừ.</p>`
+                                }
+
+                            </div>
+
+                            <div class="score-section">
+
+                                <h3> Công thức tính điểm</h3>
+
+                                <table class="formula-table">
+
+                                    <tr>
+                                        <td>Điểm cơ bản</td>
+                                        <td>${breakdown.formula.base}</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Điểm cộng</td>
+                                        <td style="color:green;">
+                                            +${breakdown.formula.bonus}
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Điểm trừ</td>
+                                        <td style="color:red;">
+                                            -${breakdown.formula.penalty}
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Mức phạt độ khó</td>
+                                        <td style="color:#ff9800;">
+                                            -${breakdown.formula.difficulty}
+                                        </td>
+                                    </tr>
+
+                                </table>
+
+                                <div class="final-score">
+
+                                     Điểm cuối cùng
+
+                                    <div class="score-number">
+
+                                        ${breakdown.formula.final}/10
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+                    `;
+        }
         if (data.boxed_image) {
             boxedImageHTML = `
                 <button id="showDetected" style="
@@ -204,6 +401,7 @@ document.getElementById("submit").onclick = async () => {
                 </div>
                 <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
                 ${luatMemHTML}
+                ${breakdownHTML} 
             </div>
             
             <p style="color: #ff5722; font-size: 1.1em; text-align: center;"><b>${commentText}</b></p>
@@ -220,6 +418,31 @@ document.getElementById("submit").onclick = async () => {
 
         // Xử lý nút xem ảnh phát hiện
         const btn = document.getElementById("showDetected");
+        const btnBreak = document.getElementById("showBreakdown");
+
+        if(btnBreak){
+
+            btnBreak.onclick=()=>{
+
+                const box=document.getElementById("breakdownBox");
+
+                if(box.style.display=="none"){
+
+                    box.style.display="block";
+
+                    btnBreak.innerText="Ẩn cách chấm";
+
+                }else{
+
+                    box.style.display="none";
+
+                    btnBreak.innerText="📊 Cách chấm điểm";
+
+                }
+
+            }
+
+        }
         if (btn) {
             btn.onclick = () => {
                 const box = document.getElementById("detectedBox");
