@@ -79,6 +79,8 @@ document.getElementById("submit").onclick = async () => {
         }
 
         const data = await scoreRes.json();
+        console.log(data);
+        console.log(data.score_breakdown);
         const breakdown = data.score_breakdown;
 
         // Hiển thị kết quả

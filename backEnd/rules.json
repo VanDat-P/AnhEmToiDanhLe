@@ -1,21 +1,3 @@
 [
-    {
-        "rule": "có cây",
-        "rule_en": "have tree",
-        "template": [
-            "V",
-            "Ns"
-        ],
-        "raw_text": "có cây",
-        "tokens": [
-            [
-                "có",
-                "V"
-            ],
-            [
-                "cây",
-                "N"
-            ]
-        ]
-    }
+    null
 ]

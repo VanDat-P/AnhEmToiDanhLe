@@ -1,21 +1,26 @@
 {
-  "text": "có cây",
+  "text": "có cây, có mặt trời, có hoa ,có trâu,  mặt trời cao hơn cây",
   "penalty": 1.6,
-  "last_updated": "2026-07-15 14:38:37.747432",
+  "last_updated": "2026-07-20 18:30:54.488916",
   "verbs_vi": [
     "có"
   ],
   "nouns_vi": [
+    "mặt",
+    "hoa",
+    "trâu",
+    "TOKENX0X TOKENX1X",
+    "có mặt trời",
     "cây"
   ],
   "verbs_en": [
     "have"
   ],
   "nouns_en": [
-    "tree"
+    "face"
   ],
-  "art_type": "scenery",
-  "scenery_text": "có cây",
+  "art_type": "portrait",
+  "scenery_text": "có cây, có mặt trời, có hoa ,có trâu,  mặt trời cao hơn cây",
   "scenery_sentences_data": [
     {
       "raw_tokens": [
@@ -26,27 +31,94 @@
         [
           "cây",
           "N"
+        ],
+        [
+          ",",
+          "CH"
+        ],
+        [
+          "có mặt trời",
+          "N"
+        ],
+        [
+          ",",
+          "CH"
+        ],
+        [
+          "có",
+          "V"
+        ],
+        [
+          "hoa",
+          "N"
+        ],
+        [
+          ",",
+          "CH"
+        ],
+        [
+          "có",
+          "V"
+        ],
+        [
+          "trâu",
+          "N"
+        ],
+        [
+          ",",
+          "CH"
+        ],
+        [
+          "TOKENX0X TOKENX1X",
+          "Np"
+        ],
+        [
+          "cây",
+          "N"
         ]
       ],
-      "sentence": "có cây",
+      "sentence": "có cây, có mặt trời, có hoa ,có trâu,  mặt trời cao hơn cây",
       "raw_verbs_vi": [
         "có"
       ],
       "raw_nouns_vi": [
+        "hoa",
+        "trâu",
+        "TOKENX0X TOKENX1X",
+        "mặt trời",
+        "có mặt trời",
         "cây"
       ],
       "verbs_en": [
         "have"
       ],
       "nouns_en": [
-        "tree"
+        "flower",
+        "buffalo",
+        "tree",
+        "sun"
       ],
       "mandatory_nouns_en": [
-        "tree"
+        "flower",
+        "buffalo",
+        "tree",
+        "sun"
       ],
       "optional_nouns_en": [],
       "has_co_verb": true,
-      "comparison_rules": [],
+      "comparison_rules": [
+        {
+          "weight": 1.0,
+          "object1": "sun",
+          "object2": "tree",
+          "relation": "have",
+          "object1_vi": "mặt trời",
+          "object2_vi": "cây",
+          "relation_vi": "có",
+          "type": "pos_rel",
+          "rule": "position_rel sun have tree"
+        }
+      ],
       "pos_tags": [
         [
           "có",
@@ -55,13 +127,69 @@
         [
           "cây",
           "N"
+        ],
+        [
+          ",",
+          "CH"
+        ],
+        [
+          "có mặt trời",
+          "N"
+        ],
+        [
+          ",",
+          "CH"
+        ],
+        [
+          "có",
+          "V"
+        ],
+        [
+          "hoa",
+          "N"
+        ],
+        [
+          ",",
+          "CH"
+        ],
+        [
+          "có",
+          "V"
+        ],
+        [
+          "trâu",
+          "N"
+        ],
+        [
+          ",",
+          "CH"
+        ],
+        [
+          "TOKENX0X TOKENX1X",
+          "Np"
+        ],
+        [
+          "cây",
+          "N"
         ]
       ]
     }
   ],
-  "scenery_last_updated": "2026-07-15 14:38:37.747394",
-  "rules": [],
-  "portrait_text": "có nhà và cây",
+  "scenery_last_updated": "2026-07-20 18:27:39.269440",
+  "rules": [
+    {
+      "weight": 1.0,
+      "object1": "face",
+      "object2": "face",
+      "relation": "have",
+      "object1_vi": "khuôn mặt",
+      "object2_vi": "khuôn mặt",
+      "relation_vi": "có",
+      "type": "pos_rel",
+      "rule": "position_rel face have face"
+    }
+  ],
+  "portrait_text": "có cây, có mặt trời, có hoa ,có trâu,  mặt trời cao hơn cây",
   "portrait_sentences_data": [
     {
       "raw_tokens": [
@@ -70,46 +198,138 @@
           "V"
         ],
         [
-          "nhà",
+          "cây",
           "N"
         ],
         [
-          "và",
-          "C"
+          ",",
+          "CH"
+        ],
+        [
+          "có mặt trời",
+          "N"
+        ],
+        [
+          ",",
+          "CH"
+        ],
+        [
+          "có",
+          "V"
+        ],
+        [
+          "hoa",
+          "N"
+        ],
+        [
+          ",",
+          "CH"
+        ],
+        [
+          "có",
+          "V"
+        ],
+        [
+          "trâu",
+          "N"
+        ],
+        [
+          ",",
+          "CH"
+        ],
+        [
+          "TOKENX0X TOKENX1X",
+          "Np"
         ],
         [
           "cây",
           "N"
         ]
       ],
-      "sentence": "có nhà và cây",
+      "sentence": "có cây, có mặt trời, có hoa ,có trâu,  mặt trời cao hơn cây",
       "raw_verbs_vi": [
         "có"
       ],
       "raw_nouns_vi": [
-        "cây",
-        "nhà"
+        "mặt",
+        "hoa",
+        "trâu",
+        "TOKENX0X TOKENX1X",
+        "có mặt trời",
+        "cây"
       ],
       "verbs_en": [
         "have"
       ],
-      "nouns_en": [],
-      "mandatory_nouns_en": [],
+      "nouns_en": [
+        "face"
+      ],
+      "mandatory_nouns_en": [
+        "face"
+      ],
       "optional_nouns_en": [],
       "has_co_verb": true,
-      "comparison_rules": [],
+      "comparison_rules": [
+        {
+          "weight": 1.0,
+          "object1": "face",
+          "object2": "face",
+          "relation": "have",
+          "object1_vi": "khuôn mặt",
+          "object2_vi": "khuôn mặt",
+          "relation_vi": "có",
+          "type": "pos_rel",
+          "rule": "position_rel face have face"
+        }
+      ],
       "pos_tags": [
         [
           "có",
           "V"
         ],
         [
-          "nhà",
+          "cây",
           "N"
         ],
         [
-          "và",
-          "C"
+          ",",
+          "CH"
+        ],
+        [
+          "có mặt trời",
+          "N"
+        ],
+        [
+          ",",
+          "CH"
+        ],
+        [
+          "có",
+          "V"
+        ],
+        [
+          "hoa",
+          "N"
+        ],
+        [
+          ",",
+          "CH"
+        ],
+        [
+          "có",
+          "V"
+        ],
+        [
+          "trâu",
+          "N"
+        ],
+        [
+          ",",
+          "CH"
+        ],
+        [
+          "TOKENX0X TOKENX1X",
+          "Np"
         ],
         [
           "cây",
@@ -118,5 +338,5 @@
       ]
     }
   ],
-  "portrait_last_updated": "2026-06-12 00:23:49.596780"
+  "portrait_last_updated": "2026-07-20 18:30:54.488878"
 }
