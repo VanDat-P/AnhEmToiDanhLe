@@ -1,93 +1,52 @@
 [
     {
-        "rule": "phải có con chim",
-        "rule_en": "must have bird",
+        "rule": "có nhà và cây",
+        "rule_en": "have house and tree",
         "template": [
             "V",
-            "Ns"
+            "N",
+            "C",
+            "N"
         ],
-        "raw_text": "bức tranh phải có đúng 3 con chim",
+        "raw_text": "tranh có nhà và cây",
         "tokens": [
-            [
-                "bức",
-                "Nc"
-            ],
             [
                 "tranh",
                 "N"
             ],
             [
-                "phải có",
+                "có",
                 "V"
             ],
             [
-                "đúng",
-                "A"
+                "nhà",
+                "N"
             ],
             [
-                "3",
-                "M"
+                "và",
+                "C"
             ],
             [
-                "con chim",
+                "cây",
                 "N"
             ]
         ]
     },
     {
-        "rule": "có người",
-        "rule_en": "have people",
+        "rule": "có mây",
+        "rule_en": "have cloud",
         "template": [
             "V",
             "Ns"
         ],
-        "raw_text": "có ít nhất 2 người",
+        "raw_text": "có mây",
         "tokens": [
             [
                 "có",
                 "V"
             ],
             [
-                "ít nhất",
-                "X"
-            ],
-            [
-                "2",
-                "M"
-            ],
-            [
-                "người",
-                "N"
-            ]
-        ]
-    },
-    {
-        "rule": "có mặt trời",
-        "rule_en": "have sun",
-        "template": [
-            "V",
-            "Ns"
-        ],
-        "raw_text": "có không quá 1 mặt trời",
-        "tokens": [
-            [
-                "có",
-                "V"
-            ],
-            [
-                "không",
-                "R"
-            ],
-            [
-                "quá",
-                "R"
-            ],
-            [
-                "1",
-                "M"
-            ],
-            [
-                "mặt trời",
+                "mây",
                 "N"
             ]
         ]

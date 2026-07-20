@@ -476,70 +476,70 @@ def predict():
         score = max(0, min(10, round(score_tinh_toan, 1)))
         score_breakdown = {
             
-    "details":[
-{
-    "title":"Chi tiết đối tượng",
-    "score":round(diem_thanh_phan_chuan,2),
-    "max":dynamic_weights.get("objects",5),
-    "description":"Đánh giá số lượng bộ phận AI phát hiện được.",
-    "formula":f"{len(detected)}/{len(REQUIRED)} đối tượng",
-    "detected":detected,
-    "missing":missing
-},
-{
-    "title":"Bố cục",
-    "score":round(diem_bo_cuc,2),
-    "max":dynamic_weights.get("layout",2),
-    "description":"Đánh giá vị trí các bộ phận trên khuôn mặt.",
-    "formula":"Kiểm tra khoảng cách và vị trí bằng luật hình học",
-    "result":loi_bo_cuc
-},
-{
-    "title":"Tỷ lệ khuôn mặt",
-    "score":round(diem_ty_le,2),
-    "max":dynamic_weights.get("art_proportion",2),
-    "description":"Đánh giá tỷ lệ giữa mắt, mũi, miệng.",
-    "formula":"Rule-based",
-    "result": loi_ty_le
-},
-{
-    "title":"Màu sắc",
-    "score":round(diem_mau_sac,2),
-    "max":dynamic_weights.get("color",1),
-    "description":"Đánh giá mức độ hài hòa màu sắc.",
-    "formula":"OpenCV Color Analysis"
-}
-],
-    
+                            "details":[
+                        {
+                            "title":"Chi tiết đối tượng",
+                            "score":round(diem_thanh_phan_chuan,2),
+                            "max":dynamic_weights.get("objects",5),
+                            "description":"Đánh giá số lượng bộ phận AI phát hiện được.",
+                            "formula":f"{len(detected)}/{len(REQUIRED)} đối tượng",
+                            "detected":detected,
+                            "missing":missing
+                        },
+                        {
+                            "title":"Bố cục",
+                            "score":round(diem_bo_cuc,2),
+                            "max":dynamic_weights.get("layout",2),
+                            "description":"Đánh giá vị trí các bộ phận trên khuôn mặt.",
+                            "formula":"Kiểm tra khoảng cách và vị trí bằng luật hình học",
+                            "result":loi_bo_cuc
+                        },
+                        {
+                            "title":"Tỷ lệ khuôn mặt",
+                            "score":round(diem_ty_le,2),
+                            "max":dynamic_weights.get("art_proportion",2),
+                            "description":"Đánh giá tỷ lệ giữa mắt, mũi, miệng.",
+                            "formula":"Rule-based",
+                            "result": loi_ty_le
+                        },
+                        {
+                            "title":"Màu sắc",
+                            "score":round(diem_mau_sac,2),
+                            "max":dynamic_weights.get("color",1),
+                            "description":"Đánh giá mức độ hài hòa màu sắc.",
+                            "formula":"OpenCV Color Analysis"
+                        }
+                        ],
+                            
 
-    "bonus": [
-        {
-            "reason": rule.get("success_message", r),
-            "point":0.5
-        }
-        for r in rule_success
-    ],
+                            "bonus": [
+                                {
+                                    "reason": rule.get("success_message", r),
+                                    "point":0.5
+                                }
+                                for r in rule_success
+                            ],
 
-    "penalty": [
-        {
-            "reason": r,
-            "point": 0.5
-        }
-        for r in rule_errors
-    ],
+                            "penalty": [
+                                {
+                                    "reason": r,
+                                    "point": 0.5
+                                }
+                                for r in rule_errors
+                            ],
 
-    "template_rules": {
-        "success": rule_success,
-        "error": rule_errors
-    },
-    "formula": {
-        "base": round(score_base,2),
-        "bonus": round(bonus_rules + cong_diem_tuyet_doi,2),
-        "penalty": round(penalt_rules + tru_diem_tuyet_doi,2),
-        "difficulty": round(muc_phat_do_kho,2),
-        "final": score
-    }
-}
+                            "template_rules": {
+                                "success": rule_success,
+                                "error": rule_errors
+                            },
+                            "formula": {
+                                "base": round(score_base,2),
+                                "bonus": round(bonus_rules + cong_diem_tuyet_doi,2),
+                                "penalty": round(penalt_rules + tru_diem_tuyet_doi,2),
+                                "difficulty": round(muc_phat_do_kho,2),
+                                "final": score
+                            }
+                        }
         if img_path and os.path.exists(img_path):
             os.remove(img_path)
             
