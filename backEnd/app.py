@@ -219,7 +219,9 @@ def classify():
         request.files["image"].save(img_path)
         
         loai_anh = classify_image(img_path)
-        
+        print("====== CLASSIFY ======")
+        print(loai_anh)
+        print("======================")
         if loai_anh == "Unknown":
             return jsonify({
                 "type": "Unknown",
@@ -257,11 +259,11 @@ def classify():
             
             detected = [k for k, v in boxes_dict.items() if len(v) > 0]
             
-            if len(detected) < 2:
-                return jsonify({
-                    "type": "Unknown",
-                    "message": "Ảnh có vẻ là phong cảnh nhưng các chi tiết chưa rõ. Em hãy vẽ thêm nhà, cây hoặc ông mặt trời nhé!"
-                }), 200
+            # if len(detected) < 2:
+            #     return jsonify({
+            #         "type": "Unknown",
+            #         "message": "Ảnh có vẻ là phong cảnh nhưng các chi tiết chưa rõ. Em hãy vẽ thêm nhà, cây hoặc ông mặt trời nhé!"
+            #     }), 200
         
         if img_path and os.path.exists(img_path):
             os.remove(img_path)

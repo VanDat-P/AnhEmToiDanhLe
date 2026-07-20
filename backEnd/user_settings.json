@@ -1,25 +1,28 @@
 {
   "text": "có cây, có mặt trời, có hoa ,có trâu,  mặt trời cao hơn cây",
   "penalty": 1.6,
-  "last_updated": "2026-07-20 18:30:54.488916",
+  "last_updated": "2026-07-20 19:31:55.840190",
   "verbs_vi": [
     "có"
   ],
   "nouns_vi": [
-    "mặt",
-    "hoa",
     "trâu",
+    "mặt trời",
     "TOKENX0X TOKENX1X",
     "có mặt trời",
+    "hoa",
     "cây"
   ],
   "verbs_en": [
     "have"
   ],
   "nouns_en": [
-    "face"
+    "sun",
+    "flower",
+    "buffalo",
+    "tree"
   ],
-  "art_type": "portrait",
+  "art_type": "scenery",
   "scenery_text": "có cây, có mặt trời, có hoa ,có trâu,  mặt trời cao hơn cây",
   "scenery_sentences_data": [
     {
@@ -82,27 +85,27 @@
         "có"
       ],
       "raw_nouns_vi": [
-        "hoa",
         "trâu",
-        "TOKENX0X TOKENX1X",
         "mặt trời",
+        "TOKENX0X TOKENX1X",
         "có mặt trời",
+        "hoa",
         "cây"
       ],
       "verbs_en": [
         "have"
       ],
       "nouns_en": [
+        "sun",
         "flower",
         "buffalo",
-        "tree",
-        "sun"
+        "tree"
       ],
       "mandatory_nouns_en": [
+        "sun",
         "flower",
         "buffalo",
-        "tree",
-        "sun"
+        "tree"
       ],
       "optional_nouns_en": [],
       "has_co_verb": true,
@@ -175,18 +178,18 @@
       ]
     }
   ],
-  "scenery_last_updated": "2026-07-20 18:27:39.269440",
+  "scenery_last_updated": "2026-07-20 19:31:55.840158",
   "rules": [
     {
       "weight": 1.0,
-      "object1": "face",
-      "object2": "face",
+      "object1": "sun",
+      "object2": "tree",
       "relation": "have",
-      "object1_vi": "khuôn mặt",
-      "object2_vi": "khuôn mặt",
+      "object1_vi": "mặt trời",
+      "object2_vi": "cây",
       "relation_vi": "có",
       "type": "pos_rel",
-      "rule": "position_rel face have face"
+      "rule": "position_rel sun have tree"
     }
   ],
   "portrait_text": "có cây, có mặt trời, có hoa ,có trâu,  mặt trời cao hơn cây",

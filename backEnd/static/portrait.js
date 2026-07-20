@@ -33,6 +33,8 @@ document.getElementById("submit").onclick = async () => {
         }
 
         const classifyData = await classifyRes.json();
+        console.log(classifyData);
+        console.log(classifyData.type);
         
         // Tạo FormData MỚI cho chấm điểm
         const scoreFormData = new FormData();
@@ -66,8 +68,10 @@ document.getElementById("submit").onclick = async () => {
             `;
             return;
         }
+        console.log("[" + classifyData.type + "]");
         
         // Gọi API chấm điểm
+        console.log("URL =", url);
         const scoreRes = await fetch(url, {
             method: "POST",
             body: scoreFormData
