@@ -18,7 +18,7 @@ app = Flask(__name__)
 CORS(app, origins=["http://localhost:5500", "http://127.0.0.1:5500", "http://localhost:5000", "http://127.0.0.1:5000"])
 
 REQUIRED = ["eye", "eyebrow", "nose", "mouth", "face", "ear", "hair"]
-SCENERY_REQUIRED = ["tree", "sun"]
+SCENERY_REQUIRED = ["tree", "sun","person","buffalo","house","bird"]
 
 RESULT_FOLDER = "static/results"
 os.makedirs(RESULT_FOLDER, exist_ok=True)
@@ -143,7 +143,8 @@ def save_settings():
         settings['nouns_vi'] = nouns_list
         settings['verbs_en'] = verbs_en_list
         settings['nouns_en'] = nouns_en_list
-        settings['rules'] = all_rules
+        settings[f"{art_type}_rules"] = all_rules
+        settings["rules"] = all_rules   # nếu vẫn muốn giữ
         
         if art_type:
             settings[f"{art_type}_text"] = user_text
@@ -259,11 +260,11 @@ def classify():
             
             detected = [k for k, v in boxes_dict.items() if len(v) > 0]
             
-            # if len(detected) < 2:
-            #     return jsonify({
-            #         "type": "Unknown",
-            #         "message": "Ảnh có vẻ là phong cảnh nhưng các chi tiết chưa rõ. Em hãy vẽ thêm nhà, cây hoặc ông mặt trời nhé!"
-            #     }), 200
+            if len(detected) < 2:
+                return jsonify({
+                    "type": "Unknown",
+                    "message": "Ảnh có vẻ là phong cảnh nhưng các chi tiết chưa rõ. Em hãy vẽ thêm nhà, cây hoặc ông mặt trời nhé!"
+                }), 200
         
         if img_path and os.path.exists(img_path):
             os.remove(img_path)
@@ -298,7 +299,7 @@ def predict():
         if os.path.exists(settings_file):
             with open(settings_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                rules = settings.get("rules", [])
+                rules = settings.get("portrait_rules", [])
         
         img_cv = cv2.imread(img_path)
         img_h, img_w, _ = img_cv.shape
@@ -337,6 +338,10 @@ def predict():
         # BỌC DỮ LIỆU ĐỂ TÍCH HỢP MASTER ENGINE 
         boxes_dict_template = {k: [{"box": b} for b in v] for k, v in boxes_dict.items()}
         _, rule_details = evaluate_drawing(rules, boxes_dict_template)
+        print("RULES =", rules)
+        print("RULE DETAILS =", rule_details)
+        print("SUCCESS =", rule_success)
+        print("ERROR =", rule_errors)
         
         for rule in rules:
             rule_str = rule.get("rule", "")
@@ -369,7 +374,7 @@ def predict():
             loi_khuyen.append(f"Em nhớ bổ sung các bộ phận còn thiếu nhé: {', '.join(missing)}.")
         
         # --- CƠ CHẾ ĐIỂM ĐỘNG CHÂN DUNG ---
-        user_text = settings.get("text", "")
+        user_text = settings.get("portrait_text", "")
         dynamic_weights = phan_tich_trong_so_tieu_chi(user_text)
         trong_so_chan_dung = {"face": 1.5, "eye": 1.5, "nose": 1.0, "mouth": 1.0, "hair": 1.0, "eyebrow": 0.5, "ear": 0.5}
         diem_toi_da = sum(trong_so_chan_dung.values())
@@ -505,11 +510,12 @@ def predict():
     "formula":"OpenCV Color Analysis"
 }
 ],
+    
 
     "bonus": [
         {
-            "reason": r,
-            "point": 0.5
+            "reason": rule.get("success_message", r),
+            "point":0.5
         }
         for r in rule_success
     ],
@@ -522,6 +528,10 @@ def predict():
         for r in rule_errors
     ],
 
+    "template_rules": {
+        "success": rule_success,
+        "error": rule_errors
+    },
     "formula": {
         "base": round(score_base,2),
         "bonus": round(bonus_rules + cong_diem_tuyet_doi,2),
@@ -581,7 +591,7 @@ def predict_scenery():
             with open(settings_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 nouns_from_settings = settings.get("nouns_en", [])
-                rules = settings.get("rules", [])
+                rules = settings.get("scenery_rules", [])
         
         base_required = SCENERY_REQUIRED.copy()
         
@@ -676,7 +686,7 @@ def predict_scenery():
         nhan_xet_mau_sac_str = phan_tich_mau_sac(img_cv)
 
         # TÍNH ĐIỂM
-        user_text = settings.get("text", "")
+        user_text = settings.get("scenery_text", "")
         dynamic_weights = phan_tich_trong_so_tieu_chi(user_text)
 
         trong_so_phong_canh = {"house": 2.5, "tree": 2.0, "sun": 1.5}
@@ -798,7 +808,7 @@ def predict_scenery():
                 "score":round(diem_thanh_phan_chuan,2),
                 "max":dynamic_weights.get("objects",5),
                 "description":"Đánh giá số lượng bộ phận AI phát hiện được.",
-                "formula":f"{len(detected)}/{len(REQUIRED)} đối tượng",
+                "formula": f"{len(detected)}/{len(base_required)} đối tượng",
                 "detected":detected,
                 "missing":missing
             },
@@ -806,17 +816,20 @@ def predict_scenery():
                 "title":"Bố cục",
                 "score":round(diem_bo_cuc,2),
                 "max":dynamic_weights.get("layout",2),
-                "description":"Đánh giá vị trí các bộ phận trên khuôn mặt.",
+                "description":"Đánh giá bố cục của tranh phong cảnh.",
                 "formula":"Kiểm tra khoảng cách và vị trí bằng luật hình học",
                 "result":loi_bo_cuc
             },
-            {
-                "title":"Tỷ lệ khuôn mặt",
-                "score":round(diem_nghe_thuat,2),
-                "max":dynamic_weights.get("art_proportion",2),
-                "description":"Đánh giá tỷ lệ giữa mắt, mũi, miệng.",
+           {
+                "title":"Nghệ thuật",
+                "score": round(diem_nghe_thuat,2),
+                "max": dynamic_weights.get("art_proportion",2),
+                "description":"Đánh giá bố cục nghệ thuật của tranh phong cảnh.",
                 "formula":"Rule-based",
-                "result":loi_bo_cuc
+                "result":
+                    nhan_xet_nghe_thuat_list
+                    + rule_success
+                    + rule_errors
             },
             {
                 "title":"Màu sắc",
@@ -842,7 +855,10 @@ def predict_scenery():
                 }
                 for r in rule_errors
             ],
-
+            "template_rules": {
+                "success": rule_success,
+                "error": rule_errors
+            },
             "formula": {
                 "base": round(score_base,2),
                 "bonus": round(bonus_rules + cong_diem_tuyet_doi,2),

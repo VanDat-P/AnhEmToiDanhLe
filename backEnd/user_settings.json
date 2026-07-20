@@ -1,30 +1,106 @@
 {
-  "text": "có cây, có mặt trời, có hoa ,có trâu,  mặt trời cao hơn cây",
-  "penalty": 1.6,
-  "last_updated": "2026-07-20 19:31:55.840190",
+  "text": "Bức tranh phải có đúng 3 con chim.\nCó ít nhất 2 người.\nCó không quá 1 mặt trời.",
+  "penalty": 1.1,
+  "last_updated": "2026-07-20 20:38:50.682433",
   "verbs_vi": [
+    "phải có",
     "có"
   ],
   "nouns_vi": [
-    "trâu",
-    "mặt trời",
-    "TOKENX0X TOKENX1X",
-    "có mặt trời",
-    "hoa",
-    "cây"
+    "bức",
+    "người",
+    "tranh",
+    "chim",
+    "con chim",
+    "mặt trời"
   ],
   "verbs_en": [
+    "must have",
     "have"
   ],
   "nouns_en": [
     "sun",
-    "flower",
-    "buffalo",
-    "tree"
+    "bird"
   ],
   "art_type": "scenery",
-  "scenery_text": "có cây, có mặt trời, có hoa ,có trâu,  mặt trời cao hơn cây",
+  "scenery_text": "Bức tranh phải có đúng 3 con chim.\nCó ít nhất 2 người.\nCó không quá 1 mặt trời.",
   "scenery_sentences_data": [
+    {
+      "raw_tokens": [
+        [
+          "bức",
+          "Nc"
+        ],
+        [
+          "tranh",
+          "N"
+        ],
+        [
+          "phải có",
+          "V"
+        ],
+        [
+          "đúng",
+          "A"
+        ],
+        [
+          "3",
+          "M"
+        ],
+        [
+          "con chim",
+          "N"
+        ]
+      ],
+      "sentence": "bức tranh phải có đúng 3 con chim",
+      "raw_verbs_vi": [
+        "phải có"
+      ],
+      "raw_nouns_vi": [
+        "bức",
+        "con chim",
+        "tranh",
+        "chim"
+      ],
+      "verbs_en": [
+        "must have"
+      ],
+      "nouns_en": [
+        "bird"
+      ],
+      "mandatory_nouns_en": [
+        "bird"
+      ],
+      "optional_nouns_en": [],
+      "has_co_verb": true,
+      "comparison_rules": [],
+      "pos_tags": [
+        [
+          "bức",
+          "Nc"
+        ],
+        [
+          "tranh",
+          "N"
+        ],
+        [
+          "phải có",
+          "V"
+        ],
+        [
+          "đúng",
+          "A"
+        ],
+        [
+          "3",
+          "M"
+        ],
+        [
+          "con chim",
+          "N"
+        ]
+      ]
+    },
     {
       "raw_tokens": [
         [
@@ -32,166 +108,120 @@
           "V"
         ],
         [
-          "cây",
-          "N"
+          "ít nhất",
+          "X"
         ],
         [
-          ",",
-          "CH"
+          "2",
+          "M"
         ],
         [
-          "có mặt trời",
-          "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
-        [
-          "có",
-          "V"
-        ],
-        [
-          "hoa",
-          "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
-        [
-          "có",
-          "V"
-        ],
-        [
-          "trâu",
-          "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
-        [
-          "TOKENX0X TOKENX1X",
-          "Np"
-        ],
-        [
-          "cây",
+          "người",
           "N"
         ]
       ],
-      "sentence": "có cây, có mặt trời, có hoa ,có trâu,  mặt trời cao hơn cây",
+      "sentence": "có ít nhất 2 người",
       "raw_verbs_vi": [
         "có"
       ],
       "raw_nouns_vi": [
-        "trâu",
-        "mặt trời",
-        "TOKENX0X TOKENX1X",
-        "có mặt trời",
-        "hoa",
-        "cây"
+        "người"
       ],
       "verbs_en": [
         "have"
       ],
-      "nouns_en": [
-        "sun",
-        "flower",
-        "buffalo",
-        "tree"
-      ],
-      "mandatory_nouns_en": [
-        "sun",
-        "flower",
-        "buffalo",
-        "tree"
-      ],
+      "nouns_en": [],
+      "mandatory_nouns_en": [],
       "optional_nouns_en": [],
       "has_co_verb": true,
-      "comparison_rules": [
-        {
-          "weight": 1.0,
-          "object1": "sun",
-          "object2": "tree",
-          "relation": "have",
-          "object1_vi": "mặt trời",
-          "object2_vi": "cây",
-          "relation_vi": "có",
-          "type": "pos_rel",
-          "rule": "position_rel sun have tree"
-        }
-      ],
+      "comparison_rules": [],
       "pos_tags": [
         [
           "có",
           "V"
         ],
         [
-          "cây",
+          "ít nhất",
+          "X"
+        ],
+        [
+          "2",
+          "M"
+        ],
+        [
+          "người",
           "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
-        [
-          "có mặt trời",
-          "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
+        ]
+      ]
+    },
+    {
+      "raw_tokens": [
         [
           "có",
           "V"
         ],
         [
-          "hoa",
-          "N"
+          "không",
+          "R"
         ],
         [
-          ",",
-          "CH"
+          "quá",
+          "R"
         ],
+        [
+          "1",
+          "M"
+        ],
+        [
+          "mặt trời",
+          "N"
+        ]
+      ],
+      "sentence": "có không quá 1 mặt trời",
+      "raw_verbs_vi": [
+        "có"
+      ],
+      "raw_nouns_vi": [
+        "mặt trời"
+      ],
+      "verbs_en": [
+        "have"
+      ],
+      "nouns_en": [
+        "sun"
+      ],
+      "mandatory_nouns_en": [
+        "sun"
+      ],
+      "optional_nouns_en": [],
+      "has_co_verb": true,
+      "comparison_rules": [],
+      "pos_tags": [
         [
           "có",
           "V"
         ],
         [
-          "trâu",
-          "N"
+          "không",
+          "R"
         ],
         [
-          ",",
-          "CH"
+          "quá",
+          "R"
         ],
         [
-          "TOKENX0X TOKENX1X",
-          "Np"
+          "1",
+          "M"
         ],
         [
-          "cây",
+          "mặt trời",
           "N"
         ]
       ]
     }
   ],
-  "scenery_last_updated": "2026-07-20 19:31:55.840158",
-  "rules": [
-    {
-      "weight": 1.0,
-      "object1": "sun",
-      "object2": "tree",
-      "relation": "have",
-      "object1_vi": "mặt trời",
-      "object2_vi": "cây",
-      "relation_vi": "có",
-      "type": "pos_rel",
-      "rule": "position_rel sun have tree"
-    }
-  ],
+  "scenery_last_updated": "2026-07-20 20:38:50.682401",
+  "rules": [],
   "portrait_text": "có cây, có mặt trời, có hoa ,có trâu,  mặt trời cao hơn cây",
   "portrait_sentences_data": [
     {
@@ -341,5 +371,6 @@
       ]
     }
   ],
-  "portrait_last_updated": "2026-07-20 18:30:54.488878"
+  "portrait_last_updated": "2026-07-20 18:30:54.488878",
+  "scenery_rules": []
 }

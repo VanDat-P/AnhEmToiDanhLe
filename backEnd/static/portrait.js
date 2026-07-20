@@ -198,7 +198,34 @@ document.getElementById("submit").onclick = async () => {
                         `;
 
                 });
-               
+                if (breakdown.template_rules) {
+
+                        detailHTML += `
+                        <div class="criteria-card">
+
+                            <div class="criteria-header">
+                                <h3>Đánh giá theo yêu cầu giáo viên</h3>
+                            </div>
+
+                            <p><b>Đạt:</b></p>
+
+                            <ul>
+                                ${breakdown.template_rules.success
+                                    .map(x => `<li>${x}</li>`)
+                                    .join("")}
+                            </ul>
+
+                            <p><b>Chưa đạt:</b></p>
+
+                            <ul>
+                                ${breakdown.template_rules.error
+                                    .map(x => `<li>${x}</li>`)
+                                    .join("")}
+                            </ul>
+
+                        </div>
+                        `;
+                    }
                     breakdownHTML = `
                     <div class="score-breakdown">
 

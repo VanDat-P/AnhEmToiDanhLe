@@ -1,3 +1,95 @@
 [
-    null
+    {
+        "rule": "phải có con chim",
+        "rule_en": "must have bird",
+        "template": [
+            "V",
+            "Ns"
+        ],
+        "raw_text": "bức tranh phải có đúng 3 con chim",
+        "tokens": [
+            [
+                "bức",
+                "Nc"
+            ],
+            [
+                "tranh",
+                "N"
+            ],
+            [
+                "phải có",
+                "V"
+            ],
+            [
+                "đúng",
+                "A"
+            ],
+            [
+                "3",
+                "M"
+            ],
+            [
+                "con chim",
+                "N"
+            ]
+        ]
+    },
+    {
+        "rule": "có người",
+        "rule_en": "have people",
+        "template": [
+            "V",
+            "Ns"
+        ],
+        "raw_text": "có ít nhất 2 người",
+        "tokens": [
+            [
+                "có",
+                "V"
+            ],
+            [
+                "ít nhất",
+                "X"
+            ],
+            [
+                "2",
+                "M"
+            ],
+            [
+                "người",
+                "N"
+            ]
+        ]
+    },
+    {
+        "rule": "có mặt trời",
+        "rule_en": "have sun",
+        "template": [
+            "V",
+            "Ns"
+        ],
+        "raw_text": "có không quá 1 mặt trời",
+        "tokens": [
+            [
+                "có",
+                "V"
+            ],
+            [
+                "không",
+                "R"
+            ],
+            [
+                "quá",
+                "R"
+            ],
+            [
+                "1",
+                "M"
+            ],
+            [
+                "mặt trời",
+                "N"
+            ]
+        ]
+    }
 ]
