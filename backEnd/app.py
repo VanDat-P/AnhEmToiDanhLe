@@ -359,8 +359,7 @@ def predict():
                 rule_errors.append(f"{obj1_vi} không {relation_vi} {obj2_vi}" if relation_vi else f"Vi phạm: {chuoi_hien_thi}")
 
         loi_bo_cuc = kiem_tra_bo_cuc_tong_the(boxes_xyxy, img_w, img_h)
-        loi_ty_le = luat_ty_le_chan_dung(boxes_dict)
-        
+        loi_ty_le = luat_ty_le_chan_dung(boxes_dict_template)        
         loi_khuyen = []
         if "hair" not in detected and "ear" not in detected:
             loi_khuyen.append("Gợi ý: Khuôn mặt sẽ hoàn hảo hơn nếu em vẽ thêm phần viền khuôn mặt, tóc vành tai.")
@@ -666,8 +665,11 @@ def predict_scenery():
             loi_khuyen.append("Tranh của em rất đầy đủ chi tiết! Nếu muốn xuất sắc hơn, có thể điểm thêm bãi cỏ hoặc đàn chim trôi nhé.")
 
         loi_bo_cuc = kiem_tra_bo_cuc_tong_the(boxes_xyxy, img_w, img_h)
-        nhan_xet_nghe_thuat_list = phan_tich_nghe_thuat_phong_canh(boxes_dict, img_w, img_h)
-        
+        nhan_xet_nghe_thuat_list = phan_tich_nghe_thuat_phong_canh(
+            boxes_dict_template,
+            img_w,
+            img_h
+        )        
         # SỬ DỤNG HÀM MÀU SẮC GỐC CỦA BẠN (TRÊN TOÀN BỘ ẢNH)
         nhan_xet_mau_sac_str = phan_tich_mau_sac(img_cv)
 
@@ -808,11 +810,11 @@ def predict_scenery():
             },
             {
                 "title":"Tỷ lệ khuôn mặt",
-                "score":round(diem_ty_le,2),
+                "score":round(diem_nghe_thuat,2),
                 "max":dynamic_weights.get("art_proportion",2),
                 "description":"Đánh giá tỷ lệ giữa mắt, mũi, miệng.",
                 "formula":"Rule-based",
-                "result":loi_ty_le
+                "result":loi_bo_cuc
             },
             {
                 "title":"Màu sắc",
