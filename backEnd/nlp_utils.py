@@ -61,7 +61,8 @@ PORTRAIT_OBJECT_VI = {
 SCENERY_OBJECT_VI = {
     "tree": "cây", "house": "nhà", "sun": "mặt trời", 
     "moon": "mặt trăng", "cloud": "mây", "mountain": "núi", 
-    "river": "sông", "bird": "chim", "flower": "hoa"
+    "river": "sông", "bird": "chim", "flower": "hoa",
+    "person":"người","people": "người"
     
 }
 
@@ -174,64 +175,199 @@ MAPPING = (
     LOGIC_MAPPING
 )
 
+# CUSTOM_POS_MAPPING = {
+#     "nhiều hơn": "COMPARE",
+#     "ít hơn": "COMPARE",
+#     "bên trái": "C", "phía trái": "C", "trái": "C",
+#     "bên phải": "C", "phía phải": "C", "phải": "C",
+#     "phía trên": "REL", "ở trên": "REL", "bên trên": "REL", "trên": "REL",
+#     "phía dưới": "C", "ở dưới": "C", "bên dưới": "C", "dưới": "C",
+#     "cao hơn": "C", "to hơn": "C", "lớn hơn": "C",
+#     "thấp hơn": "C", "nhỏ hơn": "C", "bé hơn": "C",
+#     "và": "C", "hoặc": "C", "với": "C",
+#     "ông mặt trời": "N", "mặt trời": "N", "vầng thái dương": "N",
+#     "ngôi nhà": "N", "căn nhà": "N", "mái nhà": "N",
+#     "cái cây": "N", "bóng cây": "N", "ngọn cây": "N",
+#     "đám mây": "N", "ngọn núi": "N", "dãy núi": "N","bức tranh":"N","tranh":"N",
+#     "cây":"N",
+#     "nhà":"N",
+#     "mặt trời":"N",
+#     "mây":"N",
+#     "núi":"N",
+#     "hoa":"N",
+#     "dòng sông": "N", "con sông": "N", "con chim": "N", "đàn chim": "N",
+#     "bông hoa": "N", "khóm hoa": "N",
+#     "khuôn mặt": "N", "gương mặt": "N", "lông mày": "N", "chân mày": "N",
+#     "mái tóc": "N", "đôi mắt": "N", "cái mũi": "N", "cái miệng": "N",
+#     "cái tai": "N", "đôi tai": "N",
+#     "phải có": "V", "bắt buộc có": "V", "yêu cầu có": "V", "bao gồm": "V",
+#     "đúng": "A",
+#     "không": "R",
+#     "quá": "R",
+#     "ít nhất": "X",
+#     "to": "A",
+#     "lớn": "A",
+#     "nhỏ": "A",
+#     "bé": "A",
+#     "nếu": "L",
+#     "thì": "L",
+#     "vừa": "A",
+#     # logic
+#     "và": "C",
+#     "hoặc": "C",
+
+#     # vị trí
+#     "trái": "REL",
+#     "bên trái": "REL",
+#     "phải": "REL",
+#     "bên phải": "REL",
+#     "trên": "REL",
+#     "dưới": "REL",
+
+#     # so sánh
+#     "cao hơn": "COMPARE",
+#     "thấp hơn": "COMPARE",
+#     "to hơn": "COMPARE",
+#     "lớn hơn": "COMPARE",
+#     "nhỏ hơn": "COMPARE",
+#     "bé hơn": "COMPARE",
+# }
 CUSTOM_POS_MAPPING = {
-    "nhiều hơn": "COMPARE",
-    "ít hơn": "COMPARE",
-    "bên trái": "C", "phía trái": "C", "trái": "C",
-    "bên phải": "C", "phía phải": "C", "phải": "C",
-    "phía trên": "REL", "ở trên": "REL", "bên trên": "REL", "trên": "REL",
-    "phía dưới": "C", "ở dưới": "C", "bên dưới": "C", "dưới": "C",
-    "cao hơn": "C", "to hơn": "C", "lớn hơn": "C",
-    "thấp hơn": "C", "nhỏ hơn": "C", "bé hơn": "C",
-    "và": "C", "hoặc": "C", "với": "C",
-    "ông mặt trời": "N", "mặt trời": "N", "vầng thái dương": "N",
-    "ngôi nhà": "N", "căn nhà": "N", "mái nhà": "N",
-    "cái cây": "N", "bóng cây": "N", "ngọn cây": "N",
-    "đám mây": "N", "ngọn núi": "N", "dãy núi": "N","bức tranh":"N","tranh":"N",
-    "cây":"N",
-    "nhà":"N",
-    "mặt trời":"N",
-    "mây":"N",
-    "núi":"N",
-    "hoa":"N",
-    "dòng sông": "N", "con sông": "N", "con chim": "N", "đàn chim": "N",
-    "bông hoa": "N", "khóm hoa": "N",
-    "khuôn mặt": "N", "gương mặt": "N", "lông mày": "N", "chân mày": "N",
-    "mái tóc": "N", "đôi mắt": "N", "cái mũi": "N", "cái miệng": "N",
-    "cái tai": "N", "đôi tai": "N",
-    "phải có": "V", "bắt buộc có": "V", "yêu cầu có": "V", "bao gồm": "V",
+    # ==========================================================
+    # ĐỘNG TỪ (Verb)
+    # ==========================================================
+    "phải có": "V",
+    "bắt buộc có": "V",
+    "yêu cầu có": "V",
+    "bao gồm": "V",
+
+    # ==========================================================
+    # DANH TỪ (Noun)
+    # ==========================================================
+
+    # Cảnh vật
+    "bức tranh": "N",
+    "tranh": "N",
+
+    "ông mặt trời": "N",
+    "mặt trời": "N",
+    "vầng thái dương": "N",
+
+    "ngôi nhà": "N",
+    "căn nhà": "N",
+    "mái nhà": "N",
+    "nhà": "N",
+
+    "cái cây": "N",
+    "bóng cây": "N",
+    "ngọn cây": "N",
+    "cây": "N",
+
+    "đám mây": "N",
+    "mây": "N",
+
+    "ngọn núi": "N",
+    "dãy núi": "N",
+    "núi": "N",
+
+    "bông hoa": "N",
+    "khóm hoa": "N",
+    "hoa": "N",
+
+    "dòng sông": "N",
+    "con sông": "N",
+
+    "con chim": "N",
+    "đàn chim": "N",
+
+    # Chân dung
+    "khuôn mặt": "N",
+    "gương mặt": "N",
+
+    "lông mày": "N",
+    "chân mày": "N",
+
+    "mái tóc": "N",
+
+    "đôi mắt": "N",
+
+    "cái mũi": "N",
+
+    "cái miệng": "N",
+
+    "cái tai": "N",
+    "đôi tai": "N",
+
+    # ==========================================================
+    # TÍNH TỪ (Adjective)
+    # ==========================================================
     "đúng": "A",
-    "không": "R",
-    "quá": "R",
-    "ít nhất": "X",
     "to": "A",
     "lớn": "A",
     "nhỏ": "A",
     "bé": "A",
+    "vừa": "A",
+
+    # ==========================================================
+    # TRẠNG TỪ (Adverb)
+    # ==========================================================
+    "không": "R",
+    "quá": "R",
+
+    # ==========================================================
+    # TỪ ĐỊNH LƯỢNG
+    # ==========================================================
+    "ít nhất": "X",
+
+    # ==========================================================
+    # TỪ ĐIỀU KIỆN (Logic)
+    # ==========================================================
     "nếu": "L",
     "thì": "L",
-    "vừa": "A",
-    # logic
+
+    # ==========================================================
+    # LIÊN TỪ
+    # ==========================================================
     "và": "C",
     "hoặc": "C",
+    "với": "C",
 
-    # vị trí
+    # ==========================================================
+    # QUAN HỆ VỊ TRÍ
+    # ==========================================================
     "trái": "REL",
     "bên trái": "REL",
+    "phía trái": "C",
+
     "phải": "REL",
     "bên phải": "REL",
-    "trên": "REL",
-    "dưới": "REL",
+    "phía phải": "C",
 
-    # so sánh
+    "trên": "REL",
+    "ở trên": "REL",
+    "bên trên": "REL",
+    "phía trên": "REL",
+
+    "dưới": "REL",
+    "ở dưới": "C",
+    "bên dưới": "C",
+    "phía dưới": "C",
+
+    # ==========================================================
+    # SO SÁNH
+    # ==========================================================
+    "nhiều hơn": "COMPARE",
+    "ít hơn": "COMPARE",
+
     "cao hơn": "COMPARE",
     "thấp hơn": "COMPARE",
+
     "to hơn": "COMPARE",
     "lớn hơn": "COMPARE",
+
     "nhỏ hơn": "COMPARE",
     "bé hơn": "COMPARE",
 }
-
 templates = [
     # nếu có A thì có B
     ["L","V","N","L","V","N"],

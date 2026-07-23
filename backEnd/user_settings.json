@@ -1,177 +1,97 @@
 {
-  "text": "Có ít nhất 2 chim",
+  "text": "Có nhà và cây. Có ít nhất 2 chim. Có mặt trời ở trên núi. Có cây to. Nếu có nhà thì có người. Có số lượng cây nhiều hơn mây. Cây to hơn nhà.",
   "penalty": 1.1,
-  "last_updated": "2026-07-23 19:57:15.172642",
+  "last_updated": "2026-07-23 22:28:22.594832",
   "verbs_vi": [],
   "nouns_vi": [],
   "verbs_en": [],
   "nouns_en": [],
   "art_type": "scenery",
-  "scenery_text": "Có ít nhất 2 chim",
+  "scenery_text": "Có nhà và cây. Có ít nhất 2 chim. Có mặt trời ở trên núi. Có cây to. Nếu có nhà thì có người. Có số lượng cây nhiều hơn mây. Cây to hơn nhà.",
   "scenery_sentences_data": [],
-  "scenery_last_updated": "2026-07-23 19:57:15.172620",
+  "scenery_last_updated": "2026-07-23 22:28:22.594821",
   "rules": [
     {
+      "type": "logic",
+      "weight": 1.0,
+      "rule": "have house and tree"
+    },
+    {
       "type": "qty",
       "weight": 1.0,
       "rule": "count bird >= 2"
-    }
-  ],
-  "portrait_text": "có cây, có mặt trời, có hoa ,có trâu,  mặt trời cao hơn cây",
-  "portrait_sentences_data": [
+    },
     {
-      "raw_tokens": [
-        [
-          "có",
-          "V"
-        ],
-        [
-          "cây",
-          "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
-        [
-          "có mặt trời",
-          "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
-        [
-          "có",
-          "V"
-        ],
-        [
-          "hoa",
-          "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
-        [
-          "có",
-          "V"
-        ],
-        [
-          "trâu",
-          "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
-        [
-          "TOKENX0X TOKENX1X",
-          "Np"
-        ],
-        [
-          "cây",
-          "N"
-        ]
-      ],
-      "sentence": "có cây, có mặt trời, có hoa ,có trâu,  mặt trời cao hơn cây",
-      "raw_verbs_vi": [
-        "có"
-      ],
-      "raw_nouns_vi": [
-        "mặt",
-        "hoa",
-        "trâu",
-        "TOKENX0X TOKENX1X",
-        "có mặt trời",
-        "cây"
-      ],
-      "verbs_en": [
-        "have"
-      ],
-      "nouns_en": [
-        "face"
-      ],
-      "mandatory_nouns_en": [
-        "face"
-      ],
-      "optional_nouns_en": [],
-      "has_co_verb": true,
-      "comparison_rules": [
-        {
-          "weight": 1.0,
-          "object1": "face",
-          "object2": "face",
-          "relation": "have",
-          "object1_vi": "khuôn mặt",
-          "object2_vi": "khuôn mặt",
-          "relation_vi": "có",
-          "type": "pos_rel",
-          "rule": "position_rel face have face"
-        }
-      ],
-      "pos_tags": [
-        [
-          "có",
-          "V"
-        ],
-        [
-          "cây",
-          "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
-        [
-          "có mặt trời",
-          "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
-        [
-          "có",
-          "V"
-        ],
-        [
-          "hoa",
-          "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
-        [
-          "có",
-          "V"
-        ],
-        [
-          "trâu",
-          "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
-        [
-          "TOKENX0X TOKENX1X",
-          "Np"
-        ],
-        [
-          "cây",
-          "N"
-        ]
-      ]
+      "type": "exist",
+      "weight": 1.0,
+      "rule": "have sun"
+    },
+    {
+      "type": "exist",
+      "weight": 1.0,
+      "rule": "have tree"
+    },
+    {
+      "type": "if_then",
+      "weight": 1.0,
+      "rule": "if have house then have person"
+    },
+    {
+      "type": "logic",
+      "weight": 1.0,
+      "rule": "have None tree more_than"
+    },
+    {
+      "type": "size_comp",
+      "weight": 1.0,
+      "rule": "compare tree > house"
     }
   ],
-  "portrait_last_updated": "2026-07-20 18:30:54.488878",
+  "portrait_text": "mặt trời ở trên núi",
+  "portrait_sentences_data": [],
+  "portrait_last_updated": "2026-07-23 21:20:38.002281",
   "scenery_rules": [
     {
+      "type": "logic",
+      "weight": 1.0,
+      "rule": "have house and tree"
+    },
+    {
       "type": "qty",
       "weight": 1.0,
       "rule": "count bird >= 2"
+    },
+    {
+      "type": "exist",
+      "weight": 1.0,
+      "rule": "have sun"
+    },
+    {
+      "type": "exist",
+      "weight": 1.0,
+      "rule": "have tree"
+    },
+    {
+      "type": "if_then",
+      "weight": 1.0,
+      "rule": "if have house then have person"
+    },
+    {
+      "type": "logic",
+      "weight": 1.0,
+      "rule": "have None tree more_than"
+    },
+    {
+      "type": "size_comp",
+      "weight": 1.0,
+      "rule": "compare tree > house"
+    }
+  ],
+  "portrait_rules": [
+    {
+      "type": "pos_rel",
+      "weight": 1.0,
+      "rule": "position sun above mountain"
     }
   ]
 }
