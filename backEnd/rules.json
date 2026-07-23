@@ -1,54 +1,7 @@
 [
     {
-        "rule": "có nhà và cây",
-        "rule_en": "have house and tree",
-        "template": [
-            "V",
-            "N",
-            "C",
-            "N"
-        ],
-        "raw_text": "tranh có nhà và cây",
-        "tokens": [
-            [
-                "tranh",
-                "N"
-            ],
-            [
-                "có",
-                "V"
-            ],
-            [
-                "nhà",
-                "N"
-            ],
-            [
-                "và",
-                "C"
-            ],
-            [
-                "cây",
-                "N"
-            ]
-        ]
-    },
-    {
-        "rule": "có mây",
-        "rule_en": "have cloud",
-        "template": [
-            "V",
-            "Ns"
-        ],
-        "raw_text": "có mây",
-        "tokens": [
-            [
-                "có",
-                "V"
-            ],
-            [
-                "mây",
-                "N"
-            ]
-        ]
+        "type": "qty",
+        "weight": 1.0,
+        "rule": "count bird >= 2"
     }
 ]

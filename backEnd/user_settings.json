@@ -1,162 +1,20 @@
 {
-  "text": "tranh có nhà và cây. Có mây.",
+  "text": "Có ít nhất 2 chim",
   "penalty": 1.1,
-  "last_updated": "2026-07-20 23:03:29.089524",
-  "verbs_vi": [
-    "có"
-  ],
-  "nouns_vi": [
-    "mây",
-    "nhà",
-    "cây",
-    "tranh"
-  ],
-  "verbs_en": [
-    "have"
-  ],
-  "nouns_en": [
-    "cloud",
-    "tree",
-    "house"
-  ],
+  "last_updated": "2026-07-23 19:57:15.172642",
+  "verbs_vi": [],
+  "nouns_vi": [],
+  "verbs_en": [],
+  "nouns_en": [],
   "art_type": "scenery",
-  "scenery_text": "tranh có nhà và cây. Có mây.",
-  "scenery_sentences_data": [
-    {
-      "raw_tokens": [
-        [
-          "tranh",
-          "N"
-        ],
-        [
-          "có",
-          "V"
-        ],
-        [
-          "nhà",
-          "N"
-        ],
-        [
-          "và",
-          "C"
-        ],
-        [
-          "cây",
-          "N"
-        ]
-      ],
-      "sentence": "tranh có nhà và cây",
-      "raw_verbs_vi": [
-        "có"
-      ],
-      "raw_nouns_vi": [
-        "nhà",
-        "cây",
-        "tranh"
-      ],
-      "verbs_en": [
-        "have"
-      ],
-      "nouns_en": [
-        "tree",
-        "house"
-      ],
-      "mandatory_nouns_en": [
-        "tree",
-        "house"
-      ],
-      "optional_nouns_en": [],
-      "has_co_verb": true,
-      "comparison_rules": [
-        {
-          "weight": 1.0,
-          "object1": "tree",
-          "object2": "house",
-          "relation": "have",
-          "object1_vi": "cây",
-          "object2_vi": "nhà",
-          "relation_vi": "có",
-          "type": "pos_rel",
-          "rule": "position_rel tree have house"
-        }
-      ],
-      "pos_tags": [
-        [
-          "tranh",
-          "N"
-        ],
-        [
-          "có",
-          "V"
-        ],
-        [
-          "nhà",
-          "N"
-        ],
-        [
-          "và",
-          "C"
-        ],
-        [
-          "cây",
-          "N"
-        ]
-      ]
-    },
-    {
-      "raw_tokens": [
-        [
-          "có",
-          "V"
-        ],
-        [
-          "mây",
-          "N"
-        ]
-      ],
-      "sentence": "có mây",
-      "raw_verbs_vi": [
-        "có"
-      ],
-      "raw_nouns_vi": [
-        "mây"
-      ],
-      "verbs_en": [
-        "have"
-      ],
-      "nouns_en": [
-        "cloud"
-      ],
-      "mandatory_nouns_en": [
-        "cloud"
-      ],
-      "optional_nouns_en": [],
-      "has_co_verb": true,
-      "comparison_rules": [],
-      "pos_tags": [
-        [
-          "có",
-          "V"
-        ],
-        [
-          "mây",
-          "N"
-        ]
-      ]
-    }
-  ],
-  "scenery_last_updated": "2026-07-20 23:03:29.089483",
+  "scenery_text": "Có ít nhất 2 chim",
+  "scenery_sentences_data": [],
+  "scenery_last_updated": "2026-07-23 19:57:15.172620",
   "rules": [
     {
+      "type": "qty",
       "weight": 1.0,
-      "object1": "tree",
-      "object2": "house",
-      "relation": "have",
-      "object1_vi": "cây",
-      "object2_vi": "nhà",
-      "relation_vi": "có",
-      "type": "pos_rel",
-      "rule": "position_rel tree have house"
+      "rule": "count bird >= 2"
     }
   ],
   "portrait_text": "có cây, có mặt trời, có hoa ,có trâu,  mặt trời cao hơn cây",
@@ -311,15 +169,9 @@
   "portrait_last_updated": "2026-07-20 18:30:54.488878",
   "scenery_rules": [
     {
+      "type": "qty",
       "weight": 1.0,
-      "object1": "tree",
-      "object2": "house",
-      "relation": "have",
-      "object1_vi": "cây",
-      "object2_vi": "nhà",
-      "relation_vi": "có",
-      "type": "pos_rel",
-      "rule": "position_rel tree have house"
+      "rule": "count bird >= 2"
     }
   ]
 }

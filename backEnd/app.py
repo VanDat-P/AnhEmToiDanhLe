@@ -75,8 +75,29 @@ def save_settings():
                     clause = clause.lower()
                     pos_tags = custom_pos_tag(clause)
                     
+                    # if 'parse_rulesv2' in globals():
+                    #     rule_v2 = parse_rulesv2(pos_tags, clause)
+
+                    #     if rule_v2:
+                    #         possible_rules.append(rule_v2)
+                    #         all_rules.append(rule_v2)   
+                    #     rule_relation = parse_rules(clause, art_type)
+
+                    #     possible_rules.extend(rule_relation)
                     if 'parse_rulesv2' in globals():
-                        possible_rules.append(parse_rulesv2(pos_tags, clause))
+                        rule_v2 = parse_rulesv2(pos_tags, clause)
+
+                        if rule_v2:
+                            possible_rules.append(rule_v2)
+                            all_rules.append(rule_v2)
+
+                            # Đã parse được bằng parser mới thì bỏ qua parser cũ
+                            continue
+
+                        rule_relation = parse_rules(clause, art_type)
+
+                        possible_rules.extend(rule_relation)
+                        all_rules.extend(rule_relation)
                     
                     raw_verbs_vi = [word for word, tag in pos_tags if tag.startswith('V')]
                     raw_nouns_vi = [word for word, tag in pos_tags if tag.startswith('N')]
@@ -299,7 +320,10 @@ def predict():
         if os.path.exists(settings_file):
             with open(settings_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
+                print("SETTINGS KEYS:", settings.keys())
                 rules = settings.get("portrait_rules", [])
+
+        print("RULES LOAD =", rules)
         
         img_cv = cv2.imread(img_path)
         img_h, img_w, _ = img_cv.shape
@@ -338,20 +362,17 @@ def predict():
         # BỌC DỮ LIỆU ĐỂ TÍCH HỢP MASTER ENGINE 
         boxes_dict_template = {k: [{"box": b} for b in v] for k, v in boxes_dict.items()}
         _, rule_details = evaluate_drawing(rules, boxes_dict_template)
-        print("RULES =", rules)
-        print("RULE DETAILS =", rule_details)
-        print("SUCCESS =", rule_success)
-        print("ERROR =", rule_errors)
+       
         
         for rule in rules:
             rule_str = rule.get("rule", "")
-            diem_luat = rule_details.get(rule_str, 0)
-            
-            ok = False
-            if isinstance(diem_luat, (int, float)) and diem_luat >= 50.0:
-                ok = True
-            elif isinstance(diem_luat, str) and "Đạt" in diem_luat:
-                ok = True
+            detail = rule_details.get(rule_str)
+
+            if detail is None:
+                ok = False
+            else:
+                score = detail.get("score", 0)
+                ok = score >= 50
 
             obj1_vi = rule.get('object1_vi', PORTRAIT_OBJECT_VI.get(rule.get('object1', ''), rule.get('object1', '')))
             obj2_vi = rule.get('object2_vi', PORTRAIT_OBJECT_VI.get(rule.get('object2', ''), rule.get('object2', '')))
@@ -363,8 +384,12 @@ def predict():
             if ok:
                 rule_success.append(f"{chuoi_hien_thi}")
             else:
-                rule_errors.append(f"{obj1_vi} không {relation_vi} {obj2_vi}" if relation_vi else f"Vi phạm: {chuoi_hien_thi}")
+                rule_errors.append(f"{relation_vi} {obj1_vi} ,{obj2_vi}" if relation_vi else f"Vi phạm: {chuoi_hien_thi}")
 
+        print("RULES =", rules)
+        print("RULE DETAILS =", rule_details)
+        print("SUCCESS =", rule_success)
+        print("ERROR =", rule_errors)
         loi_bo_cuc = kiem_tra_bo_cuc_tong_the(boxes_xyxy, img_w, img_h)
         loi_ty_le = luat_ty_le_chan_dung(boxes_dict_template)        
         loi_khuyen = []
@@ -514,7 +539,7 @@ def predict():
 
                             "bonus": [
                                 {
-                                    "reason": rule.get("success_message", r),
+                                    "reason": r,
                                     "point":0.5
                                 }
                                 for r in rule_success
@@ -592,6 +617,11 @@ def predict_scenery():
                 settings = json.load(f)
                 nouns_from_settings = settings.get("nouns_en", [])
                 rules = settings.get("scenery_rules", [])
+                print("===== SCENERY DEBUG =====")
+                print("ART TYPE:", settings.get("art_type"))
+                print("ALL KEYS:", settings.keys())
+                print("SCENERY RULES:", rules)
+                print("=========================")
         
         base_required = SCENERY_REQUIRED.copy()
         
@@ -640,29 +670,121 @@ def predict_scenery():
         # BỌC DỮ LIỆU CHO MASTER ENGINE
         boxes_dict_template = {k: [{"box": b} for b in v] for k, v in boxes_dict.items()}
         _, rule_details = evaluate_drawing(rules, boxes_dict_template)
-
+        print("=" * 60)
+        print("RULES =", rules)
+        print("RULE DETAILS =", rule_details)
+        print("=" * 60)
         for rule in rules:
             rule_str = rule.get("rule", "")
-            diem_luat = rule_details.get(rule_str, 0)
-            
-            ok = False
-            if isinstance(diem_luat, (int, float)) and diem_luat >= 50.0:
-                ok = True
-            elif isinstance(diem_luat, str) and "Đạt" in diem_luat:
-                ok = True
-                
+            detail = rule_details.get(rule_str)
+
+            if detail is None:
+                ok = False
+                score = 0
+            else:
+                if isinstance(detail, dict):
+                    score = detail.get("score", 0)
+                else:
+                    score = detail
+
+                ok = score >= 50
+
+            print(rule_str, score, ok)
+               
             obj1_vi = rule.get('object1_vi', SCENERY_OBJECT_VI.get(rule.get('object1', ''), rule.get('object1', '')))
             obj2_vi = rule.get('object2_vi', SCENERY_OBJECT_VI.get(rule.get('object2', ''), rule.get('object2', '')))
             relation_vi = rule.get('relation_vi', RELATION_VI.get(rule.get('relation', ''), rule.get('relation', '')))
-            chuoi_hien_thi = f"{obj1_vi} {relation_vi} {obj2_vi}".strip()
+            if relation_vi == "có":
+                chuoi_hien_thi = f"{relation_vi} {obj1_vi}  và {obj2_vi}".strip()
+            else:    
+                chuoi_hien_thi = f"{obj1_vi} {relation_vi}   {obj2_vi}".strip()
             if not chuoi_hien_thi:
                 chuoi_hien_thi = rule_str
-            
+            reason = detail.get("reason", "") if isinstance(detail, dict) else ""
+            # if ok:
+            #     rule_success.append(chuoi_hien_thi)
+            # else:
+            #     rule_errors.append(f" không {relation_vi} {obj1_vi} {obj2_vi}" if relation_vi else f"Vi phạm: {chuoi_hien_thi}")
             if ok:
-                rule_success.append(chuoi_hien_thi)
+                rule_success.append(reason if reason else chuoi_hien_thi)
             else:
-                rule_errors.append(f"{obj1_vi} không {relation_vi} {obj2_vi}" if relation_vi else f"Vi phạm: {chuoi_hien_thi}")
+                rule_errors.append(reason if reason else f"Vi phạm: {chuoi_hien_thi}")
 
+            if rule.get("type") == "size":
+                text = rule["rule"].split()
+
+                obj = SCENERY_OBJECT_VI.get(text[1], text[1])
+
+                size_vi = {
+                    "large": "to",
+                    "small": "nhỏ",
+                    "medium": "vừa"
+                }.get(text[2], text[2])
+
+                chuoi_hien_thi = f"{obj} {size_vi}"
+
+            else:
+                obj1_vi = rule.get(
+                    "object1_vi",
+                    SCENERY_OBJECT_VI.get(rule.get("object1", ""), rule.get("object1", ""))
+                )
+
+                obj2_vi = rule.get(
+                    "object2_vi",
+                    SCENERY_OBJECT_VI.get(rule.get("object2", ""), rule.get("object2", ""))
+                )
+
+                relation_vi = rule.get(
+                    "relation_vi",
+                    RELATION_VI.get(rule.get("relation", ""), rule.get("relation", ""))
+                )
+
+                if relation_vi == "có":
+                    chuoi_hien_thi = f"{relation_vi} {obj1_vi} và {obj2_vi}"
+                else:
+                    chuoi_hien_thi = f"{obj1_vi} {relation_vi} {obj2_vi}"
+            # rule_vi = rule.get("rule_vi")
+
+            # if rule_vi:
+            #     chuoi_hien_thi = rule_vi
+            # else:
+            #     obj1_vi = rule.get(
+            #         'object1_vi',
+            #         SCENERY_OBJECT_VI.get(rule.get('object1', ''), rule.get('object1', ''))
+            #     )
+
+            #     obj2_vi = rule.get(
+            #         'object2_vi',
+            #         SCENERY_OBJECT_VI.get(rule.get('object2', ''), rule.get('object2', ''))
+            #     )
+
+            #     relation_vi = rule.get(
+            #         'relation_vi',
+            #         RELATION_VI.get(rule.get('relation', ''), rule.get('relation', ''))
+            #     )
+
+            #     if relation_vi == "có":
+            #         chuoi_hien_thi = f"{relation_vi} {obj1_vi} và {obj2_vi}".strip()
+            #     else:
+            #         chuoi_hien_thi = f"{obj1_vi} {relation_vi} {obj2_vi}".strip()
+
+            #     if not chuoi_hien_thi:
+            #         chuoi_hien_thi = rule_str
+
+
+            #     if ok:
+            #         rule_success.append(chuoi_hien_thi)
+            #     else:
+            #         if rule.get("rule_vi"):
+            #             rule_errors.append(f"Không {chuoi_hien_thi}")
+            #         else:
+            #             rule_errors.append(
+            #                 f"không {relation_vi} {obj1_vi} {obj2_vi}"
+            #                 if relation_vi else
+            #                 f"Vi phạm: {chuoi_hien_thi}"
+            #             )
+        print("SUCCESS =", rule_success)
+        print("ERROR =", rule_errors)
         loi_khuyen = []
         if "tree" not in detected:
             loi_khuyen.append("Thêm một vài bóng cây xanh sẽ giúp bức tranh có sức sống hơn rất nhiều.")

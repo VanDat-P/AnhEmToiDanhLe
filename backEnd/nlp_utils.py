@@ -39,7 +39,8 @@ SCENERY_OBJECT_MAPPING = {
     "ngọn núi": "mountain", "dãy núi": "mountain", "núi": "mountain",
     "dòng sông": "river", "con sông": "river", "sông": "river",
     "con chim": "bird", "đàn chim": "bird", "chim": "bird",
-    "bông hoa": "flower", "khóm hoa": "flower", "hoa": "flower"
+    "bông hoa": "flower", "khóm hoa": "flower", "hoa": "flower","tranh":"picture","bức tranh":"picture",
+    "người":"person"
 }
 
 PORTRAIT_OBJECT_MAPPING = {
@@ -49,7 +50,7 @@ PORTRAIT_OBJECT_MAPPING = {
     "đôi mắt": "eye", "mắt": "eye",
     "cái mũi": "nose", "mũi": "nose",
     "cái miệng": "mouth", "miệng": "mouth",
-    "cái tai": "ear", "đôi tai": "ear", "tai": "ear"
+    "cái tai": "ear", "đôi tai": "ear", "tai": "ear","tranh":"picture","bức tranh":"picture"
 }
 
 PORTRAIT_OBJECT_VI = {
@@ -61,16 +62,82 @@ SCENERY_OBJECT_VI = {
     "tree": "cây", "house": "nhà", "sun": "mặt trời", 
     "moon": "mặt trăng", "cloud": "mây", "mountain": "núi", 
     "river": "sông", "bird": "chim", "flower": "hoa"
+    
 }
 
-RELATION_MAPPING = {
-    "phía trên": "above", "ở trên": "above", "bên trên": "above", "trên": "above",
-    "phía dưới": "below", "ở dưới": "below", "bên dưới": "below", "dưới": "below",
-    "bên trái": "left_of", "phía trái": "left_of", "trái": "left_of",
-    "bên phải": "right_of", "phía phải": "right_of", "phải": "right_of",
-    "cao hơn": "higher_than", "to hơn": "higher_than", "lớn hơn": "higher_than",
-    "thấp hơn": "lower_than", "nhỏ hơn": "lower_than", "bé hơn": "lower_than",
-    "có": "have","và": "and"
+# RELATION_MAPPING = {
+#     "phía trên": "above", "ở trên": "above", "bên trên": "above", "trên": "above",
+#     "phía dưới": "below", "ở dưới": "below", "bên dưới": "below", "dưới": "below",
+#     "bên trái": "left_of", "phía trái": "left_of", "trái": "left_of",
+#     "bên phải": "right_of", "phía phải": "right_of", "phải": "right_of",
+#     "cao hơn": "higher_than", "to hơn": "higher_than", "lớn hơn": "higher_than",
+#     "thấp hơn": "lower_than", "nhỏ hơn": "lower_than", "bé hơn": "lower_than",
+#     "có": "have","và": "and",
+#     "to": "large",
+#     "lớn": "large",
+#     "nhỏ": "small",
+#     "bé": "small"
+# }
+# ===============================
+# QUAN HỆ VỊ TRÍ
+# ===============================
+POSITION_MAPPING = {
+    "phía trên": "above",
+    "ở trên": "above",
+    "bên trên": "above",
+    "trên": "above",
+
+    "phía dưới": "below",
+    "ở dưới": "below",
+    "bên dưới": "below",
+    "dưới": "below",
+
+    "bên trái": "left_of",
+    "phía trái": "left_of",
+    "trái": "left_of",
+
+    "bên phải": "right_of",
+    "phía phải": "right_of",
+    "phải": "right_of"
+}
+
+
+# ===============================
+# QUAN HỆ SO SÁNH KÍCH THƯỚC
+# ===============================
+SIZE_MAPPING = {
+    "cao hơn": "higher_than",
+    "to hơn": "higher_than",
+    "lớn hơn": "higher_than",
+
+    "thấp hơn": "lower_than",
+    "nhỏ hơn": "lower_than",
+    "bé hơn": "lower_than"
+}
+
+
+# ===============================
+# KÍCH THƯỚC TUYỆT ĐỐI
+# ===============================
+SIZE_VALUE_MAPPING = {
+    "to": "large",
+    "lớn": "large",
+
+    "nhỏ": "small",
+    "bé": "small",
+    "vừa": "A",
+    "nhiều hơn": "more_than",
+    "ít hơn": "less_than",
+    "vừa": "medium" 
+}
+
+
+# ===============================
+# LOGIC
+# ===============================
+OTHER_MAPPING = {
+    "có": "have",
+    "và": "and"
 }
 
 RELATION_VI = {
@@ -78,13 +145,41 @@ RELATION_VI = {
     "left_of": "bên trái", "right_of": "bên phải",
     "above": "ở trên", "below": "ở dưới"
 }
+QUANTITY_MAPPING = {
+    "đúng": "==",
+    "ít nhất": ">=",
+    "không quá": "<="
 
-MAPPING = SCENERY_OBJECT_MAPPING | PORTRAIT_OBJECT_MAPPING | RELATION_MAPPING
+}
+LOGIC_MAPPING = {
+    "và":"AND",
+    "hoặc":"OR"
+}
+RELATION_MAPPING = (
+    POSITION_MAPPING |
+    SIZE_MAPPING |
+    SIZE_VALUE_MAPPING |
+    OTHER_MAPPING |
+    LOGIC_MAPPING
+)
+#
+MAPPING = (
+    SCENERY_OBJECT_MAPPING |
+    PORTRAIT_OBJECT_MAPPING |
+    POSITION_MAPPING |
+    SIZE_MAPPING |
+    SIZE_VALUE_MAPPING |
+    OTHER_MAPPING |
+    QUANTITY_MAPPING |
+    LOGIC_MAPPING
+)
 
 CUSTOM_POS_MAPPING = {
+    "nhiều hơn": "COMPARE",
+    "ít hơn": "COMPARE",
     "bên trái": "C", "phía trái": "C", "trái": "C",
     "bên phải": "C", "phía phải": "C", "phải": "C",
-    "phía trên": "C", "ở trên": "C", "bên trên": "C", "trên": "C",
+    "phía trên": "REL", "ở trên": "REL", "bên trên": "REL", "trên": "REL",
     "phía dưới": "C", "ở dưới": "C", "bên dưới": "C", "dưới": "C",
     "cao hơn": "C", "to hơn": "C", "lớn hơn": "C",
     "thấp hơn": "C", "nhỏ hơn": "C", "bé hơn": "C",
@@ -92,49 +187,179 @@ CUSTOM_POS_MAPPING = {
     "ông mặt trời": "N", "mặt trời": "N", "vầng thái dương": "N",
     "ngôi nhà": "N", "căn nhà": "N", "mái nhà": "N",
     "cái cây": "N", "bóng cây": "N", "ngọn cây": "N",
-    "đám mây": "N", "ngọn núi": "N", "dãy núi": "N",
+    "đám mây": "N", "ngọn núi": "N", "dãy núi": "N","bức tranh":"N","tranh":"N",
+    "cây":"N",
+    "nhà":"N",
+    "mặt trời":"N",
+    "mây":"N",
+    "núi":"N",
+    "hoa":"N",
     "dòng sông": "N", "con sông": "N", "con chim": "N", "đàn chim": "N",
     "bông hoa": "N", "khóm hoa": "N",
     "khuôn mặt": "N", "gương mặt": "N", "lông mày": "N", "chân mày": "N",
     "mái tóc": "N", "đôi mắt": "N", "cái mũi": "N", "cái miệng": "N",
     "cái tai": "N", "đôi tai": "N",
-    "phải có": "V", "bắt buộc có": "V", "yêu cầu có": "V", "bao gồm": "V"
+    "phải có": "V", "bắt buộc có": "V", "yêu cầu có": "V", "bao gồm": "V",
+    "đúng": "A",
+    "không": "R",
+    "quá": "R",
+    "ít nhất": "X",
+    "to": "A",
+    "lớn": "A",
+    "nhỏ": "A",
+    "bé": "A",
+    "nếu": "L",
+    "thì": "L",
+    "vừa": "A",
+    # logic
+    "và": "C",
+    "hoặc": "C",
+
+    # vị trí
+    "trái": "REL",
+    "bên trái": "REL",
+    "phải": "REL",
+    "bên phải": "REL",
+    "trên": "REL",
+    "dưới": "REL",
+
+    # so sánh
+    "cao hơn": "COMPARE",
+    "thấp hơn": "COMPARE",
+    "to hơn": "COMPARE",
+    "lớn hơn": "COMPARE",
+    "nhỏ hơn": "COMPARE",
+    "bé hơn": "COMPARE",
 }
 
 templates = [
-    ["V", "N", "C", "N"], 
-    ["N", "C", "N"],
-    ["V", "Ns"]
+    # nếu có A thì có B
+    ["L","V","N","L","V","N"],
+      # không quá
+        ["V","R","R","M","N"],
+     # đúng 3 chim
+    ["V","A","M","N"],
+   
+     # có A và B
+        ["V","N","C","N"],
+         # ít nhất
+            ["V","X","M","N"],
+         # có A
+    ["V","N"],
+
+   
+
+   
+
+   
+
+  
+
+    # cây bên trái nhà
+    ["N","REL","N"],
+
+    # cây to
+    ["N","A"],
+
+  
+     # A nhiều hơn B
+        ["N","COMPARE","N"],
+    # A đi cùng B
+    ["N","C","N"],
+
+   
 ]
 
 # ==========================================
 # 3. CÁC HÀM XỬ LÝ (NẰM DƯỚI CÙNG ĐỂ ĐỌC ĐƯỢC BIẾN)
 # ==========================================
+def rule_to_vietnamese(rule):
+    replace = {
+        "exist": "có",
+        "sun": "mặt trời",
+        "tree": "cây",
+        "house": "nhà",
+        "cloud": "mây",
+        "mountain": "núi",
+        "river": "sông",
+        "bird": "chim",
+        "flower": "hoa",
+        "above": "ở trên",
+        "below": "ở dưới",
+        "left_of": "bên trái",
+        "right_of": "bên phải",
+        "higher_than": "cao hơn",
+        "lower_than": "thấp hơn"
+    }
 
+    for k, v in replace.items():
+        rule = rule.replace(k, v)
+
+    return rule
 def custom_pos_tag(text):
-    if not text: return []
+    if not text:
+        return []
+
     temp_text = text
     placeholder_map = {}
     counter = 0
+
     sorted_keys = sorted(CUSTOM_POS_MAPPING.keys(), key=len, reverse=True)
-    
+
     for key in sorted_keys:
-        pattern = rf'(?<!\S){key}(?!\S)'
+        pattern = rf'(?<!\S){re.escape(key)}(?!\S)'
         while re.search(pattern, temp_text):
-            placeholder = f"TOKENX{counter}X"
-            placeholder_map[placeholder] = {"word": key, "tag": CUSTOM_POS_MAPPING[key]}
-            temp_text = re.sub(pattern, placeholder, temp_text, count=1)
+            # placeholder = f"TOKENX{counter}X"
+            placeholder = f"__P{counter}__"
+            placeholder_map[placeholder] = {
+                "word": key,
+                "tag": CUSTOM_POS_MAPPING[key]
+            }
+            # temp_text = re.sub(pattern, placeholder, temp_text, count=1)
+            temp_text = re.sub(
+                pattern,
+                f" {placeholder} ",
+                temp_text,
+                count=1
+            )
             counter += 1
-            
+
+
+    temp_text = re.sub(r"\s+", " ", temp_text).strip()
+    print("TEMP TEXT:", temp_text)
     raw_tags = pos_tag(temp_text)
+    print(raw_tags)
     final_tags = []
+
     for word, tag in raw_tags:
-        if word in placeholder_map:
-            final_tags.append([placeholder_map[word]["word"], placeholder_map[word]["tag"]])
+        word_clean = word.strip()
+
+        # Nếu là số
+        if word_clean.isdigit():
+            final_tags.append([word_clean, "M"])
+
+        # Nếu là placeholder
+        # elif word_clean in placeholder_map:
+        #     final_tags.append([
+        #         placeholder_map[word_clean]["word"],
+        #         placeholder_map[word_clean]["tag"]
+        #     ])
+        elif any(p in word_clean for p in placeholder_map):
+
+            parts = word_clean.split()
+
+            for p in parts:
+                if p in placeholder_map:
+                    final_tags.append([
+                        placeholder_map[p]["word"],
+                        placeholder_map[p]["tag"]
+                    ])
+
+        # Các từ bình thường
         else:
             final_tags.append([word, tag])
-    return final_tags
 
+    return final_tags
 def filter_valid_nouns_en(nouns_list, art_type="portrait"):
     valid_nouns = []
     allowed_nouns = VALID_PORTRAIT_NOUNS if art_type == "portrait" else VALID_SCENERY_NOUNS
@@ -178,6 +403,8 @@ def phan_tich_trong_so_tieu_chi(user_text):
     return weights
 
 def parse_rulesv2(tokens, sentence):
+    print("======== DEBUG PARSE ========")
+    print(tokens)
     try:
         if not tokens or not sentence or len(tokens) == 0: return None
         
@@ -210,7 +437,7 @@ def parse_rulesv2(tokens, sentence):
                             rule_en += f" {word}"
                         elif pos.startswith('V'):
                             break
-                        current_idx += 1
+                    current_idx += 1
                     if found_nouns == 0:
                         is_match = False
                         break
@@ -219,7 +446,11 @@ def parse_rulesv2(tokens, sentence):
                     while current_idx < len(valid_tokens):
                         word = str(valid_tokens[current_idx][0]).lower()
                         pos = valid_tokens[current_idx][1]
-                        if pos.startswith(word_type[0]):
+                        if (
+                            pos.startswith(word_type)
+                            or 
+                            (word_type=="C" and pos in ["AND","OR"])
+                        ):
                             found = True
                             break
                         current_idx += 1
@@ -228,17 +459,234 @@ def parse_rulesv2(tokens, sentence):
                         is_match = False
                         break
                     
-                    word = str(valid_tokens[current_idx][0]).lower()
-                    rule_vi += f" {word}"
-                    en_word = MAPPING.get(word, translator.translate(word).lower())
-                    rule_en += f" {en_word}"
-                    current_idx += 1
+                    if word in MAPPING:
+                        en_word = MAPPING[word]
+                    else:
+                        en_word = translator.translate(word).lower()
             
-            if is_match and rule_vi.strip():
+            if is_match:
+                print("MATCH TEMPLATE:", template)
+                print(valid_tokens)
+                if template == ["V","A","M","N"]:
+
+                    quantity = QUANTITY_MAPPING[valid_tokens[1][0].lower()]
+                    number = valid_tokens[2][0]
+                    obj = MAPPING[valid_tokens[3][0].lower()]
+                    
+                    return {
+                        "type": "qty",
+                        "weight": 1.0,
+                        "rule": f"count {obj} {quantity} {number}"
+                    }
+                if template == ["V","X","M","N"]:
+
+                    quantity = QUANTITY_MAPPING[valid_tokens[1][0].lower()]
+                    number = valid_tokens[2][0]
+                    obj = MAPPING[valid_tokens[3][0].lower()]
+
+                    return {
+                        "type": "qty",
+                        "weight": 1.0,
+                        "rule": f"count {obj} {quantity} {number}"
+                    }
+                if template == ["V","R","R","M","N"]:
+
+                    quantity = QUANTITY_MAPPING["không quá"]
+                    number = valid_tokens[3][0]
+                    obj = MAPPING[valid_tokens[4][0].lower()]
+
+                    return {
+                        "type": "qty",
+                        "weight": 1.0,
+                        "rule": f"count {obj} {quantity} {number}"
+                    }
+
+                if template == ["N","REL","N"]:
+
+                    obj1 = MAPPING[valid_tokens[0][0].lower()]
+                    relation = MAPPING[valid_tokens[1][0].lower()]
+                    obj2 = MAPPING[valid_tokens[2][0].lower()]
+
+                    return {
+                        "type": "pos_rel",
+                        "weight": 1.0,
+                        "rule": f"position {obj1} {relation} {obj2}"
+                    }
+                if template == ["N","OR","N"]:
+
+                    obj1 = MAPPING[valid_tokens[0][0].lower()]
+                    obj2 = MAPPING[valid_tokens[2][0].lower()]
+
+                    return {
+                        "type": "xor",
+                        "weight": 1.0,
+                        "rule": f"xor {obj1} {obj2}"
+                    }
+                if template == ["N","COMPARE","N"]:
+
+                    obj1 = MAPPING[valid_tokens[0][0].lower()]
+                    relation = MAPPING[valid_tokens[1][0].lower()]
+                    obj2 = MAPPING[valid_tokens[2][0].lower()]
+
+                    # So sánh kích thước
+                    if relation == "higher_than":
+                        return {
+                            "type": "size_comp",
+                            "weight": 1.0,
+                            "rule": f"compare {obj1} > {obj2}"
+                        }
+
+                    elif relation == "lower_than":
+                        return {
+                            "type": "size_comp",
+                            "weight": 1.0,
+                            "rule": f"compare {obj1} < {obj2}"
+                        }
+
+                    # So sánh số lượng
+                    elif relation == "more_than":
+                        return {
+                            "type": "count_comp",
+                            "weight": 1.0,
+                            "rule": f"count {obj1} > {obj2}"
+                        }
+
+                    elif relation == "less_than":
+                        return {
+                            "type": "count_comp",
+                            "weight": 1.0,
+                            "rule": f"count {obj1} < {obj2}"
+                        }
+                if template == ["N","V","C"]:
+
+                    obj = MAPPING[valid_tokens[0][0].lower()]
+                    position = MAPPING[valid_tokens[2][0].lower()]
+
+                    return {
+                        "type": "absolute_position",
+                        "weight": 1.0,
+                        "rule": f"position {obj} {position}"
+                    }
+                if template == ["N","A"]:
+
+                    obj = MAPPING[valid_tokens[0][0].lower()]
+                    size = MAPPING[valid_tokens[1][0].lower()]
+
+                    return {
+                        "type": "size",
+                        "weight": 1.0,
+                        "rule": f"size {obj} {size}"
+                    }   
+                if template == ["L","V","N","L","V","N"]:
+
+                    obj1 = MAPPING[valid_tokens[2][0].lower()]
+                    obj2 = MAPPING[valid_tokens[5][0].lower()]
+
+                    return {
+                        "type": "if_then",
+                        "weight": 1.0,
+                        "rule": f"if have {obj1} then have {obj2}"
+                    }
+                if template == ["N","C","N","C","N"]:
+
+                    obj1 = MAPPING[valid_tokens[0][0].lower()]
+                    relation1 = MAPPING[valid_tokens[1][0].lower()]
+                    obj2 = MAPPING[valid_tokens[2][0].lower()]
+                    relation2 = MAPPING[valid_tokens[3][0].lower()]
+                    obj3 = MAPPING[valid_tokens[4][0].lower()]
+
+                    return {
+                        "type": "relation3",
+                        "weight": 1.0,
+                        "rule": f"{obj1} {relation1} {obj2} {relation2} {obj3}"
+                    }
+     
+                if template == ["V","N"]:
+
+                    obj = MAPPING[valid_tokens[1][0].lower()]
+
+                    return {
+                        "type": "exist",
+                        "weight": 1.0,
+                        "rule": f"have {obj}"
+                    }
+
+                if template == ["V","Ns"]:
+
+                    objects = []
+
+                    for token in valid_tokens[1:]:
+                        if token[1].startswith("N"):
+                            objects.append(MAPPING[token[0].lower()])
+
+                    return {
+                        "type": "exist_multi",
+                        "weight": 1.0,
+                        "rule": [f"exist {obj}" for obj in objects]
+                    }
+
+                if template == ["V","N","C","N"]:
+
+                    obj1 = MAPPING.get(valid_tokens[1][0].lower())
+                    obj2 = MAPPING.get(valid_tokens[3][0].lower())
+
+                    logic_word = valid_tokens[2][0].lower()
+
+                    if logic_word == "và":
+                        logic = "and"
+                    elif logic_word == "hoặc":
+                        logic = "or"
+                    else:
+                        logic = MAPPING.get(logic_word, "and")
+
+                    return {
+                        "type": "logic",
+                        "weight": 1.0,
+                        "rule": f"have {obj1} {logic} {obj2}"
+                    }
+
+
+                if template == ["N","C","N"]:
+
+                    if valid_tokens[1][0].lower() == "và":
+
+                        obj1 = MAPPING[valid_tokens[0][0].lower()]
+                        obj2 = MAPPING[valid_tokens[2][0].lower()]
+
+                        return {
+                            "type": "together",
+                            "weight": 1.0,
+                            "rule": f"together {obj1} {obj2}"
+                        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                 return {
-                    "rule": rule_vi.strip(), "rule_en": rule_en.strip(),
-                    "template": template, "raw_text": str(sentence), "tokens": valid_tokens
+                    "rule": rule_to_vietnamese(rule_en.strip()),
+                    "rule_en": rule_en.strip(),
+                    "template": template,
+                    "raw_text": str(sentence),
+                    "tokens": valid_tokens
                 }
+                
+        
+        
+        
+        
+       
+        
         return None
     except Exception as e:
         print(f"❌ Lỗi parse_rulesv2: {e}")
@@ -253,6 +701,7 @@ def parse_rules(user_text, art_type="scenery"):
     vi_dict = PORTRAIT_OBJECT_VI if art_type == "portrait" else SCENERY_OBJECT_VI
     
     for clause in clauses:
+
         if len(clause) < 3: continue
         found_objects, found_relations = [], []
         
@@ -284,13 +733,28 @@ def parse_rules(user_text, art_type="scenery"):
                 "relation_vi": rel['vi']
             }
             
-            if en_rel in ["higher_than", "lower_than"]:
+            if en_rel == "have":
+
+                rule_data["type"] = "logic"
+                rule_data["rule"] = f"have {obj_A['en']} and {obj_B['en']}"
+
+            elif en_rel in ["higher_than", "lower_than"]:
+
                 rule_data["type"] = "size_comp"
+
                 op = ">" if en_rel == "higher_than" else "<"
-                rule_data["rule"] = f"size_compare {obj_A['en']} {op} {obj_B['en']}"
+
+                rule_data["rule"] = (
+                    f"size_compare {obj_A['en']} {op} {obj_B['en']}"
+                )
+
             else:
+
                 rule_data["type"] = "pos_rel"
-                rule_data["rule"] = f"position_rel {obj_A['en']} {en_rel} {obj_B['en']}"
+
+                rule_data["rule"] = (
+                    f"position_rel {obj_A['en']} {en_rel} {obj_B['en']}"
+                )
                 
             rules.append(rule_data)
     return rules

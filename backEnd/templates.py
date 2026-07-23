@@ -1,5 +1,5 @@
 import math
-
+from nlp_utils import SCENERY_OBJECT_VI
 # ==========================================
 # 1. CÁC HÀM BỔ TRỢ HÌNH HỌC (HELPER FUNCTIONS)
 # ==========================================
@@ -24,6 +24,7 @@ def get_intersection_area(box1, box2):
 # ==========================================
 # 2. TEMPLATE CƠ BẢN & LOGIC (Theo thiết kế gốc)
 # ==========================================
+
 def template_0(rule, boxes_dict):
     text = rule["rule"].split()
     op, obj = text[0], text[1]
@@ -56,34 +57,48 @@ def template_0(rule, boxes_dict):
         "score": 0.0,
         "reason": "Luật không hợp lệ."
     }
+def template_1(rule, boxes_dict): #hoàn thành rồi ní ơi
 
-def template_1(rule, boxes_dict):
     text = rule["rule"].split()
 
-    op, obj1, cond, obj2 = text[0], text[1], text[2], text[3]
+    op = text[0]
+    obj1 = text[1]
+    logic = text[2]
+    obj2 = text[3]
 
-    has_obj1 = obj1 in boxes_dict and len(boxes_dict[obj1]) > 0
-    has_obj2 = obj2 in boxes_dict and len(boxes_dict[obj2]) > 0
+    has1 = len(boxes_dict.get(obj1, [])) > 0
+    has2 = len(boxes_dict.get(obj2, [])) > 0
 
-    if op == "have" and cond == "and":
+    # Tên tiếng Việt (nếu có)
+    name1 = rule.get("object1_vi", obj1)
+    name2 = rule.get("object2_vi", obj2)
 
-        if has_obj1 and has_obj2:
-            score = 1.0
-            reason = f"Có cả {obj1} và {obj2}."
-        else:
-            score = 0.0
-            reason = f"Thiếu {obj1} hoặc {obj2}."
+    if logic == "and":
+
+        score = 1.0 if (has1 and has2) else 0.0
+
+    elif logic == "or":
+
+        score = 1.0 if (has1 or has2) else 0.0
 
     else:
-        score = 0.0
-        reason = "Luật không hợp lệ."
+        return {
+            "score": 0.0,
+            "reason": "Logic không hợp lệ."
+        }
+
+    # Tạo nội dung hiển thị cho từng đối tượng
+    result = []
+
+    result.append(f"{'✓' if has1 else '✗'} {name1}")
+    result.append(f"{'✓' if has2 else '✗'} {name2}")
 
     return {
         "score": score,
-        "reason": reason
+        "reason": ", ".join(result)
     }
+def template_2(rule, boxes_dict):#chạy được rồi
 
-def template_2(rule, boxes_dict):
     text = rule["rule"].split()
 
     obj = text[1]
@@ -93,47 +108,36 @@ def template_2(rule, boxes_dict):
     current_count = len(boxes_dict.get(obj, []))
 
     if op == "==":
-
-        if current_count == target_count:
-            score = 1.0
-        else:
-            score = max(
-                0.0,
-                1 - abs(current_count - target_count) / max(target_count, 1)
-            )
+        score = 1.0 if current_count == target_count else 0.0
 
     elif op == ">=":
-
-        if target_count == 0:
-            score = 1.0
-        else:
-            score = 1.0 if current_count >= target_count else current_count / target_count
+        score = 1.0 if current_count >= target_count else 0.0
 
     elif op == "<=":
-
-        if current_count <= target_count:
-            score = 1.0
-        else:
-            score = max(
-                0.0,
-                1 - (current_count - target_count) / max(target_count, 1)
-            )
+        score = 1.0 if current_count <= target_count else 0.0
 
     else:
         score = 0.0
 
+
     return {
         "score": score,
-        "reason": f"Có {current_count}/{target_count} {obj}."
+        "status": "Đạt" if score == 1.0 else "Không đạt",
+        "reason": f"Phát hiện {current_count}/{target_count} {obj}."
     }
 
 # ==========================================
 # 3. TEMPLATE THUỘC TÍNH ĐƠN LẺ
 # ==========================================
 
-def template_4(rule, boxes_dict):
+def template_4(rule, boxes_dict): # thành công rồi
 
     text = rule["rule"].split()
+    SIZE_VI = {
+        "large": "to",
+        "medium": "vừa",
+        "small": "nhỏ"
+    }
 
     obj = text[1]
     target_size = text[2]
@@ -163,92 +167,98 @@ def template_4(rule, boxes_dict):
             scores.append(min(1.0, area / 0.3))
 
     final_score = sum(scores) / len(scores)
+    obj_vi = SCENERY_OBJECT_VI.get(obj, obj)
+    size_vi = SIZE_VI.get(target_size, target_size)
 
     return {
         "score": final_score,
-        "reason": f"Kích thước {obj} gần mức {target_size}."
+        "reason": f"Kích thước {obj_vi} gần mức {size_vi}."
     }
-def template_11(rule, boxes_dict):
+    # return {
+    #     "score": final_score,
+    #     "reason": f"Kích thước {obj} gần mức {target_size}."    
+    # }
+# def template_11(rule, boxes_dict):
 
-    text=rule["rule"].split()
+#     text=rule["rule"].split()
 
-    obj=text[1]
-    target_attr=text[2]
+#     obj=text[1]
+#     target_attr=text[2]
 
-    if obj not in boxes_dict or len(boxes_dict[obj])==0:
-        return{
-            "score":0.0,
-            "reason":f"Không có {obj}."
-        }
+#     if obj not in boxes_dict or len(boxes_dict[obj])==0:
+#         return{
+#             "score":0.0,
+#             "reason":f"Không có {obj}."
+#         }
 
-    matched=sum(
-        1
-        for item in boxes_dict[obj]
-        if target_attr in item.get("attributes",[])
-    )
+#     matched=sum(
+#         1
+#         for item in boxes_dict[obj]
+#         if target_attr in item.get("attributes",[])
+#     )
 
-    score=matched/len(boxes_dict[obj])
+#     score=matched/len(boxes_dict[obj])
 
-    return{
-        "score":score,
-        "reason":f"Có {matched}/{len(boxes_dict[obj])} {obj} mang thuộc tính {target_attr}."
-    }
+#     return{
+#         "score":score,
+#         "reason":f"Có {matched}/{len(boxes_dict[obj])} {obj} mang thuộc tính {target_attr}."
+#     }
 
-# ==========================================
-# 4. TEMPLATE HÌNH HỌC KHÔNG GIAN
-# ==========================================
-def template_5(rule, boxes_dict):
+# # ==========================================
+# # 4. TEMPLATE HÌNH HỌC KHÔNG GIAN
+# # ==========================================
+# def template_5(rule, boxes_dict):
 
-    text = rule["rule"].split()
+#     text = rule["rule"].split()
 
-    obj = text[1]
-    location = text[2]
+#     obj = text[1]
+#     location = text[2]
 
-    if obj not in boxes_dict or len(boxes_dict[obj]) == 0:
-        return {
-            "score": 0.0,
-            "reason": f"Không có {obj}."
-        }
+#     if obj not in boxes_dict or len(boxes_dict[obj]) == 0:
+#         return {
+#             "score": 0.0,
+#             "reason": f"Không có {obj}."
+#         }
 
-    scores = []
+#     scores = []
 
-    for item in boxes_dict[obj]:
+#     for item in boxes_dict[obj]:
 
-        cx, cy = get_center(item["box"])
+#         cx, cy = get_center(item["box"])
 
-        if location == "top":
-            scores.append(max(0.0, 1.0 - cy / 0.4))
+#         if location == "top":
+#             scores.append(max(0.0, 1.0 - cy / 0.4))
 
-        elif location == "bottom":
-            scores.append(
-                max(0.0, (cy - 0.6) / 0.4)
-                if cy >= 0.6 else 0.0
-            )
+#         elif location == "bottom":
+#             scores.append(
+#                 max(0.0, (cy - 0.6) / 0.4)
+#                 if cy >= 0.6 else 0.0
+#             )
 
-        elif location == "left":
-            scores.append(max(0.0, 1.0 - cx / 0.4))
+#         elif location == "left":
+#             scores.append(max(0.0, 1.0 - cx / 0.4))
 
-        elif location == "right":
-            scores.append(
-                max(0.0, (cx - 0.6) / 0.4)
-                if cx >= 0.6 else 0.0
-            )
+#         elif location == "right":
+#             scores.append(
+#                 max(0.0, (cx - 0.6) / 0.4)
+#                 if cx >= 0.6 else 0.0
+#             )
 
-        elif location == "center":
-            scores.append(
-                max(
-                    0.0,
-                    1.0 - math.sqrt((cx-0.5)**2 + (cy-0.5)**2)/0.5
-                )
-            )
+#         elif location == "center":
+#             scores.append(
+#                 max(
+#                     0.0,
+#                     1.0 - math.sqrt((cx-0.5)**2 + (cy-0.5)**2)/0.5
+#                 )
+#             )
 
-    final_score = sum(scores) / len(scores)
+#     final_score = sum(scores) / len(scores)
 
-    return {
-        "score": final_score,
-        "reason": f"{obj} nằm ở vị trí {location}."
-    }
-def template_6(rule, boxes_dict):
+#     return {
+#         "score": final_score,
+#         "reason": f"{obj} nằm ở vị trí {location}."
+#     }
+def template_6(rule, boxes_dict): #tạm ổn trước tiên
 
     text = rule["rule"].split()
 
@@ -267,602 +277,655 @@ def template_6(rule, boxes_dict):
             "reason": "Thiếu đối tượng."
         }
 
-    box1 = boxes_dict[obj1][0]["box"]
-    box2 = boxes_dict[obj2][0]["box"]
-
-    cx1, cy1 = get_center(box1)
-    cx2, cy2 = get_center(box2)
-
-    if relation == "left_of":
-
-        score = 1.0 if cx1 < cx2 else max(0.0, 1 - (cx1 - cx2) / 0.2)
-
-    elif relation == "right_of":
-
-        score = 1.0 if cx1 > cx2 else max(0.0, 1 - (cx2 - cx1) / 0.2)
-
-    elif relation == "above":
-
-        score = 1.0 if cy1 < cy2 else max(0.0, 1 - (cy1 - cy2) / 0.2)
-
-    elif relation == "below":
-
-        score = 1.0 if cy1 > cy2 else max(0.0, 1 - (cy2 - cy1) / 0.2)
-
-    elif relation == "inside":
-
-        inter = get_intersection_area(box1, box2)
-        area = get_area(box1)
-
-        score = inter / area if area > 0 else 0.0
-
-    else:
-
-        score = 0.0
-
-    return {
-        "score": score,
-        "reason": f"{obj1} {relation} {obj2}"
-    }
-
-def template_7(rule, boxes_dict):
-
-    text = rule["rule"].split()
-
-    obj = text[1]
-    target_ratio = text[2]
-
-    if obj not in boxes_dict or len(boxes_dict[obj]) == 0:
-        return {
-            "score":0.0,
-            "reason":f"Không có {obj}."
-        }
-
-    scores=[]
-
-    for item in boxes_dict[obj]:
-
-        box=item["box"]
-
-        w=box[2]-box[0]
-        h=box[3]-box[1]
-
-        if h<=0:
-            continue
-
-        ratio=w/h
-
-        if target_ratio=="tall":
-            scores.append(
-                1.0 if ratio<0.9
-                else max(0.0,1-(ratio-0.9)/0.5)
-            )
-
-        elif target_ratio=="wide":
-            scores.append(
-                1.0 if ratio>1.1
-                else max(0.0,1-(1.1-ratio)/0.5)
-            )
-
-        elif target_ratio=="square":
-            scores.append(
-                max(0.0,1-abs(1-ratio)/0.3)
-            )
-
-    final_score=sum(scores)/len(scores) if scores else 0
-
-    return {
-        "score":final_score,
-        "reason":f"Tỉ lệ của {obj} gần với {target_ratio}."
-    }
-def template_8(rule, boxes_dict):
-
-    text=rule["rule"].split()
-
-    obj1=text[1]
-    obj2=text[2]
-    target_dist=text[3]
-
-    if (
-        obj1 not in boxes_dict
-        or obj2 not in boxes_dict
-        or len(boxes_dict[obj1])==0
-        or len(boxes_dict[obj2])==0
-    ):
-        return {
-            "score":0.0,
-            "reason":"Thiếu đối tượng."
-        }
-
-    cx1,cy1=get_center(boxes_dict[obj1][0]["box"])
-    cx2,cy2=get_center(boxes_dict[obj2][0]["box"])
-
-    dist=math.hypot(cx1-cx2,cy1-cy2)
-
-    if target_dist=="close":
-        score=max(0.0,1-dist/0.3)
-
-    elif target_dist=="far":
-        score=min(1.0,dist/0.7)
-
-    else:
-        score=0.0
-
-    return {
-        "score":score,
-        "reason":f"Khoảng cách giữa {obj1} và {obj2} là {round(dist,3)}."
-    }
-def template_9(rule, boxes_dict):
-    """
-    align:
-    Các vật phải nằm trên cùng một hàng ngang hoặc cột dọc.
-    """
-
-    objects = rule.get("objects", [])
-
-    if len(objects) < 2:
-        return {
-            "status": "Không đạt",
-            "score": 0,
-            "message": "Thiếu đối tượng."
-        }
-
-    boxes = []
-
-    for obj in objects:
-        if obj not in boxes_dict or len(boxes_dict[obj]) == 0:
-            return {
-                "status": "Không đạt",
-                "score": 0,
-                "message": f"Không tìm thấy {obj}."
-            }
-
-        boxes.append(boxes_dict[obj][0]["box"])
-
-    centers = []
-
-    for box in boxes:
-        x1, y1, x2, y2 = box
-        centers.append(((x1 + x2) / 2, (y1 + y2) / 2))
-
-    xs = [c[0] for c in centers]
-    ys = [c[1] for c in centers]
-
-    tolerance = rule.get("tolerance", 40)
-
-    horizontal = max(ys) - min(ys) <= tolerance
-    vertical = max(xs) - min(xs) <= tolerance
-
-    if horizontal or vertical:
-        return {
-            "status": "Đạt",
-            "score": 100,
-            "message": "Các đối tượng được căn thẳng hàng."
-        }
-
-    return {
-        "status": "Không đạt",
-        "score": 0,
-        "message": "Các đối tượng không thẳng hàng."
-    }
-def template_10(rule, boxes_dict):
-
-    text=rule["rule"].split()
-
-    obj=text[1]
-    op=text[2]
-    target_pct=float(text[3])/100
-
-    if obj not in boxes_dict or len(boxes_dict[obj])==0:
-        return{
-            "score":0.0,
-            "reason":f"Không có {obj}."
-        }
-
-    total_area=min(
-        1.0,
-        sum(get_area(i["box"]) for i in boxes_dict[obj])
-    )
-
-    if op=="==":
-
-        score=max(
-            0.0,
-            1-abs(total_area-target_pct)/0.2
-        )
-
-    elif op==">=":
-
-        score=1.0 if total_area>=target_pct else (
-            total_area/target_pct if target_pct>0 else 1.0
-        )
-
-    elif op=="<=":
-
-        score=1.0 if total_area<=target_pct else max(
-            0.0,
-            1-(total_area-target_pct)/0.2
-        )
-
-    else:
-        score=0.0
-
-    return{
-        "score":score,
-        "reason":f"{obj} chiếm {round(total_area*100,1)}% diện tích."
-    }
-# ==========================================
-# 5. TEMPLATE TƯƠNG TÁC V+N NÂNG CAO
-# ==========================================
-def template_18(rule, boxes_dict):
-
-    text = rule["rule"].split()
-
-    op = text[0]
-    obj1 = text[1]
-    obj2 = text[2]
-
-    if (
-        obj1 not in boxes_dict
-        or obj2 not in boxes_dict
-        or len(boxes_dict[obj1]) == 0
-        or len(boxes_dict[obj2]) == 0
-    ):
-        return {
-            "score":0.0,
-            "reason":"Thiếu đối tượng."
-        }
-
-    scores=[]
+    best_score = 0.0
 
     for item1 in boxes_dict[obj1]:
         for item2 in boxes_dict[obj2]:
 
-            inter=get_intersection_area(item1["box"],item2["box"])
+            box1 = item1["box"]
+            box2 = item2["box"]
 
-            if op=="overlap":
-                scores.append(1.0 if inter>0 else 0.0)
+            cx1, cy1 = get_center(box1)
+            cx2, cy2 = get_center(box2)
 
-            elif op=="contain":
+            # -------------------------
+            # LEFT OF
+            # -------------------------
+            if relation == "left_of":
 
-                area2=get_area(item2["box"])
+                if cx1 < cx2:
+                    score = 1.0
+                else:
+                    score = max(0.0, 1 - (cx1 - cx2) / 0.3)
 
-                if area2>0:
-                    scores.append(inter/area2)
+            # -------------------------
+            # RIGHT OF
+            # -------------------------
+            elif relation == "right_of":
 
-    score=max(scores) if scores else 0.0
+                if cx1 > cx2:
+                    score = 1.0
+                else:
+                    score = max(0.0, 1 - (cx2 - cx1) / 0.3)
 
-    return{
-        "score":score,
-        "reason":f"{obj1} {op} {obj2}."
+            # -------------------------
+            # ABOVE
+            # -------------------------
+            elif relation == "above":
+
+                if cy1 < cy2:
+                    score = 1.0
+                else:
+                    score = max(0.0, 1 - (cy1 - cy2) / 0.3)
+
+            # -------------------------
+            # BELOW
+            # -------------------------
+            elif relation == "below":
+
+                if cy1 > cy2:
+                    score = 1.0
+                else:
+                    score = max(0.0, 1 - (cy2 - cy1) / 0.3)
+
+            # -------------------------
+            # INSIDE
+            # -------------------------
+            elif relation == "inside":
+
+                inter = get_intersection_area(box1, box2)
+                area = get_area(box1)
+
+                score = inter / area if area > 0 else 0.0
+
+            else:
+                score = 0.0
+
+            best_score = max(best_score, score)
+
+    return {
+        "score": round(best_score, 3),
+        "reason": f"{obj1} {relation} {obj2}"
     }
-def template_19(rule, boxes_dict):
+# def template_7(rule, boxes_dict):
 
-    text=rule["rule"].split()
+#     text = rule["rule"].split()
 
-    obj=text[1]
-    condition=text[2]
-    op=text[3]
-    target=int(text[4])
+#     obj = text[1]
+#     target_ratio = text[2]
 
-    if obj not in boxes_dict or len(boxes_dict[obj])==0:
-        return{
-            "score":0.0,
-            "reason":f"Không có {obj}."
-        }
+#     if obj not in boxes_dict or len(boxes_dict[obj]) == 0:
+#         return {
+#             "score":0.0,
+#             "reason":f"Không có {obj}."
+#         }
 
-    valid=sum(
-        1
-        for item in boxes_dict[obj]
-        if condition==item.get("color","")
-        or condition in item.get("attributes",[])
-    )
+#     scores=[]
 
-    if op=="==":
+#     for item in boxes_dict[obj]:
 
-        score=1.0 if valid==target else max(
-            0.0,
-            1-abs(valid-target)/max(target,1)
-        )
+#         box=item["box"]
 
-    elif op==">=":
+#         w=box[2]-box[0]
+#         h=box[3]-box[1]
 
-        if target==0:
-            score=1.0
-        else:
-            score=1.0 if valid>=target else valid/target
+#         if h<=0:
+#             continue
 
-    elif op=="<=":
+#         ratio=w/h
 
-        score=1.0 if valid<=target else max(
-            0.0,
-            1-(valid-target)/max(target,1)
-        )
+#         if target_ratio=="tall":
+#             scores.append(
+#                 1.0 if ratio<0.9
+#                 else max(0.0,1-(ratio-0.9)/0.5)
+#             )
 
-    else:
-        score=0.0
+#         elif target_ratio=="wide":
+#             scores.append(
+#                 1.0 if ratio>1.1
+#                 else max(0.0,1-(1.1-ratio)/0.5)
+#             )
 
-    return{
-        "score":score,
-        "reason":f"Có {valid} {obj} thỏa điều kiện {condition}."
-    }
+#         elif target_ratio=="square":
+#             scores.append(
+#                 max(0.0,1-abs(1-ratio)/0.3)
+#             )
 
-def template_20(rule, boxes_dict):
+#     final_score=sum(scores)/len(scores) if scores else 0
 
-    text=rule["rule"].split()
+#     return {
+#         "score":final_score,
+#         "reason":f"Tỉ lệ của {obj} gần với {target_ratio}."
+#     }
+# def template_8(rule, boxes_dict):
 
-    obj1=text[1]
-    obj2=text[2]
-    op=text[3]
-    target=float(text[4])
+#     text=rule["rule"].split()
 
-    if (
-        obj1 not in boxes_dict
-        or obj2 not in boxes_dict
-        or len(boxes_dict[obj1])==0
-        or len(boxes_dict[obj2])==0
-    ):
-        return{
-            "score":0.0,
-            "reason":"Thiếu đối tượng."
-        }
+#     obj1=text[1]
+#     obj2=text[2]
+#     target_dist=text[3]
 
-    mindist=float("inf")
+#     if (
+#         obj1 not in boxes_dict
+#         or obj2 not in boxes_dict
+#         or len(boxes_dict[obj1])==0
+#         or len(boxes_dict[obj2])==0
+#     ):
+#         return {
+#             "score":0.0,
+#             "reason":"Thiếu đối tượng."
+#         }
 
-    for a in boxes_dict[obj1]:
-        for b in boxes_dict[obj2]:
+#     cx1,cy1=get_center(boxes_dict[obj1][0]["box"])
+#     cx2,cy2=get_center(boxes_dict[obj2][0]["box"])
 
-            c1=get_center(a["box"])
-            c2=get_center(b["box"])
+#     dist=math.hypot(cx1-cx2,cy1-cy2)
 
-            d=math.hypot(c1[0]-c2[0],c1[1]-c2[1])
+#     if target_dist=="close":
+#         score=max(0.0,1-dist/0.3)
 
-            mindist=min(mindist,d)
+#     elif target_dist=="far":
+#         score=min(1.0,dist/0.7)
 
-    if op=="<=":
+#     else:
+#         score=0.0
 
-        score=1.0 if mindist<=target else max(
-            0.0,
-            1-(mindist-target)/0.5
-        )
+#     return {
+#         "score":score,
+#         "reason":f"Khoảng cách giữa {obj1} và {obj2} là {round(dist,3)}."
+#     }
+# def template_9(rule, boxes_dict):
+#     """
+#     align:
+#     Các vật phải nằm trên cùng một hàng ngang hoặc cột dọc.
+#     """
 
-    elif op==">=":
+#     objects = rule.get("objects", [])
 
-        score=1.0 if mindist>=target else (
-            mindist/target if target>0 else 1.0
-        )
+#     if len(objects) < 2:
+#         return {
+#             "status": "Không đạt",
+#             "score": 0,
+#             "message": "Thiếu đối tượng."
+#         }
 
-    else:
-        score=0.0
+#     boxes = []
 
-    return{
-        "score":score,
-        "reason":f"Khoảng cách nhỏ nhất = {round(mindist,3)}."
-    }
+#     for obj in objects:
+#         if obj not in boxes_dict or len(boxes_dict[obj]) == 0:
+#             return {
+#                 "status": "Không đạt",
+#                 "score": 0,
+#                 "message": f"Không tìm thấy {obj}."
+#             }
 
-def template_21(rule, boxes_dict):
+#         boxes.append(boxes_dict[obj][0]["box"])
 
-    text=rule["rule"].split()
+#     centers = []
 
-    obj=text[1]
-    state=text[2]
+#     for box in boxes:
+#         x1, y1, x2, y2 = box
+#         centers.append(((x1 + x2) / 2, (y1 + y2) / 2))
 
-    items=boxes_dict.get(obj,[])
+#     xs = [c[0] for c in centers]
+#     ys = [c[1] for c in centers]
 
-    if len(items)<2:
-        return{
-            "score":1.0,
-            "reason":"Không đủ đối tượng để đánh giá."
-        }
+#     tolerance = rule.get("tolerance", 40)
 
-    total=0
-    pairs=0
+#     horizontal = max(ys) - min(ys) <= tolerance
+#     vertical = max(xs) - min(xs) <= tolerance
 
-    for i in range(len(items)):
-        for j in range(i+1,len(items)):
+#     if horizontal or vertical:
+#         return {
+#             "status": "Đạt",
+#             "score": 100,
+#             "message": "Các đối tượng được căn thẳng hàng."
+#         }
 
-            c1=get_center(items[i]["box"])
-            c2=get_center(items[j]["box"])
+#     return {
+#         "status": "Không đạt",
+#         "score": 0,
+#         "message": "Các đối tượng không thẳng hàng."
+#     }
+# def template_10(rule, boxes_dict):
 
-            total+=math.hypot(c1[0]-c2[0],c1[1]-c2[1])
-            pairs+=1
+#     text=rule["rule"].split()
 
-    avg=total/pairs
+#     obj=text[1]
+#     op=text[2]
+#     target_pct=float(text[3])/100
 
-    if state=="clustered":
+#     if obj not in boxes_dict or len(boxes_dict[obj])==0:
+#         return{
+#             "score":0.0,
+#             "reason":f"Không có {obj}."
+#         }
 
-        score=1.0 if avg<0.25 else max(
-            0.0,
-            1-(avg-0.25)/0.5
-        )
+#     total_area=min(
+#         1.0,
+#         sum(get_area(i["box"]) for i in boxes_dict[obj])
+#     )
 
-    elif state=="scattered":
+#     if op=="==":
 
-        score=1.0 if avg>0.5 else max(
-            0.0,
-            avg/0.5
-        )
+#         score=max(
+#             0.0,
+#             1-abs(total_area-target_pct)/0.2
+#         )
 
-    else:
-        score=0.0
+#     elif op==">=":
 
-    return{
-        "score":score,
-        "reason":f"Khoảng cách trung bình = {round(avg,3)}."
-    }
+#         score=1.0 if total_area>=target_pct else (
+#             total_area/target_pct if target_pct>0 else 1.0
+#         )
 
-def template_22(rule, boxes_dict):
+#     elif op=="<=":
 
-    text=rule["rule"].split()
+#         score=1.0 if total_area<=target_pct else max(
+#             0.0,
+#             1-(total_area-target_pct)/0.2
+#         )
 
-    obj1=text[1]
-    obj2=text[2]
-    obj3=text[3]
-    direction=text[4]
+#     else:
+#         score=0.0
 
-    if (
-        obj1 not in boxes_dict
-        or obj2 not in boxes_dict
-        or obj3 not in boxes_dict
-        or len(boxes_dict[obj1])==0
-        or len(boxes_dict[obj2])==0
-        or len(boxes_dict[obj3])==0
-    ):
-        return{
-            "score":0.0,
-            "reason":"Thiếu đối tượng."
-        }
+#     return{
+#         "score":score,
+#         "reason":f"{obj} chiếm {round(total_area*100,1)}% diện tích."
+#     }
+# ==========================================
+# 5. TEMPLATE TƯƠNG TÁC V+N NÂNG CAO
+# ==========================================
+# def template_18(rule, boxes_dict):
 
-    c1=get_center(boxes_dict[obj1][0]["box"])
-    c2=get_center(boxes_dict[obj2][0]["box"])
-    c3=get_center(boxes_dict[obj3][0]["box"])
+#     text = rule["rule"].split()
 
-    if direction=="ltr":
+#     op = text[0]
+#     obj1 = text[1]
+#     obj2 = text[2]
 
-        if c1[0]<c2[0]<c3[0]:
-            score=1.0
-        else:
-            score=max(
-                0.0,
-                1
-                -(0.5 if c1[0]>=c2[0] else 0)
-                -(0.5 if c2[0]>=c3[0] else 0)
-            )
+#     if (
+#         obj1 not in boxes_dict
+#         or obj2 not in boxes_dict
+#         or len(boxes_dict[obj1]) == 0
+#         or len(boxes_dict[obj2]) == 0
+#     ):
+#         return {
+#             "score":0.0,
+#             "reason":"Thiếu đối tượng."
+#         }
 
-    elif direction=="ttb":
+#     scores=[]
 
-        if c1[1]<c2[1]<c3[1]:
-            score=1.0
-        else:
-            score=max(
-                0.0,
-                1
-                -(0.5 if c1[1]>=c2[1] else 0)
-                -(0.5 if c2[1]>=c3[1] else 0)
-            )
+#     for item1 in boxes_dict[obj1]:
+#         for item2 in boxes_dict[obj2]:
 
-    else:
-        score=0.0
+#             inter=get_intersection_area(item1["box"],item2["box"])
 
-    return{
-        "score":score,
-        "reason":f"Thứ tự {obj1} → {obj2} → {obj3}."
-    }
+#             if op=="overlap":
+#                 scores.append(1.0 if inter>0 else 0.0)
+
+#             elif op=="contain":
+
+#                 area2=get_area(item2["box"])
+
+#                 if area2>0:
+#                     scores.append(inter/area2)
+
+#     score=max(scores) if scores else 0.0
+
+#     return{
+#         "score":score,
+#         "reason":f"{obj1} {op} {obj2}."
+#     }
+# def template_19(rule, boxes_dict):
+
+#     text=rule["rule"].split()
+
+#     obj=text[1]
+#     condition=text[2]
+#     op=text[3]
+#     target=int(text[4])
+
+#     if obj not in boxes_dict or len(boxes_dict[obj])==0:
+#         return{
+#             "score":0.0,
+#             "reason":f"Không có {obj}."
+#         }
+
+#     valid=sum(
+#         1
+#         for item in boxes_dict[obj]
+#         if condition==item.get("color","")
+#         or condition in item.get("attributes",[])
+#     )
+
+#     if op=="==":
+
+#         score=1.0 if valid==target else max(
+#             0.0,
+#             1-abs(valid-target)/max(target,1)
+#         )
+
+#     elif op==">=":
+
+#         if target==0:
+#             score=1.0
+#         else:
+#             score=1.0 if valid>=target else valid/target
+
+#     elif op=="<=":
+
+#         score=1.0 if valid<=target else max(
+#             0.0,
+#             1-(valid-target)/max(target,1)
+#         )
+
+#     else:
+#         score=0.0
+
+#     return{
+#         "score":score,
+#         "reason":f"Có {valid} {obj} thỏa điều kiện {condition}."
+#     }
+
+# def template_20(rule, boxes_dict):
+
+#     text=rule["rule"].split()
+
+#     obj1=text[1]
+#     obj2=text[2]
+#     op=text[3]
+#     target=float(text[4])
+
+#     if (
+#         obj1 not in boxes_dict
+#         or obj2 not in boxes_dict
+#         or len(boxes_dict[obj1])==0
+#         or len(boxes_dict[obj2])==0
+#     ):
+#         return{
+#             "score":0.0,
+#             "reason":"Thiếu đối tượng."
+#         }
+
+#     mindist=float("inf")
+
+#     for a in boxes_dict[obj1]:
+#         for b in boxes_dict[obj2]:
+
+#             c1=get_center(a["box"])
+#             c2=get_center(b["box"])
+
+#             d=math.hypot(c1[0]-c2[0],c1[1]-c2[1])
+
+#             mindist=min(mindist,d)
+
+#     if op=="<=":
+
+#         score=1.0 if mindist<=target else max(
+#             0.0,
+#             1-(mindist-target)/0.5
+#         )
+
+#     elif op==">=":
+
+#         score=1.0 if mindist>=target else (
+#             mindist/target if target>0 else 1.0
+#         )
+
+#     else:
+#         score=0.0
+
+#     return{
+#         "score":score,
+#         "reason":f"Khoảng cách nhỏ nhất = {round(mindist,3)}."
+#     }
+
+# def template_21(rule, boxes_dict):
+
+#     text=rule["rule"].split()
+
+#     obj=text[1]
+#     state=text[2]
+
+#     items=boxes_dict.get(obj,[])
+
+#     if len(items)<2:
+#         return{
+#             "score":1.0,
+#             "reason":"Không đủ đối tượng để đánh giá."
+#         }
+
+#     total=0
+#     pairs=0
+
+#     for i in range(len(items)):
+#         for j in range(i+1,len(items)):
+
+#             c1=get_center(items[i]["box"])
+#             c2=get_center(items[j]["box"])
+
+#             total+=math.hypot(c1[0]-c2[0],c1[1]-c2[1])
+#             pairs+=1
+
+#     avg=total/pairs
+
+#     if state=="clustered":
+
+#         score=1.0 if avg<0.25 else max(
+#             0.0,
+#             1-(avg-0.25)/0.5
+#         )
+
+#     elif state=="scattered":
+
+#         score=1.0 if avg>0.5 else max(
+#             0.0,
+#             avg/0.5
+#         )
+
+#     else:
+#         score=0.0
+
+#     return{
+#         "score":score,
+#         "reason":f"Khoảng cách trung bình = {round(avg,3)}."
+#     }
+
+# def template_22(rule, boxes_dict):
+
+#     text=rule["rule"].split()
+
+#     obj1=text[1]
+#     obj2=text[2]
+#     obj3=text[3]
+#     direction=text[4]
+
+#     if (
+#         obj1 not in boxes_dict
+#         or obj2 not in boxes_dict
+#         or obj3 not in boxes_dict
+#         or len(boxes_dict[obj1])==0
+#         or len(boxes_dict[obj2])==0
+#         or len(boxes_dict[obj3])==0
+#     ):
+#         return{
+#             "score":0.0,
+#             "reason":"Thiếu đối tượng."
+#         }
+
+#     c1=get_center(boxes_dict[obj1][0]["box"])
+#     c2=get_center(boxes_dict[obj2][0]["box"])
+#     c3=get_center(boxes_dict[obj3][0]["box"])
+
+#     if direction=="ltr":
+
+#         if c1[0]<c2[0]<c3[0]:
+#             score=1.0
+#         else:
+#             score=max(
+#                 0.0,
+#                 1
+#                 -(0.5 if c1[0]>=c2[0] else 0)
+#                 -(0.5 if c2[0]>=c3[0] else 0)
+#             )
+
+#     elif direction=="ttb":
+
+#         if c1[1]<c2[1]<c3[1]:
+#             score=1.0
+#         else:
+#             score=max(
+#                 0.0,
+#                 1
+#                 -(0.5 if c1[1]>=c2[1] else 0)
+#                 -(0.5 if c2[1]>=c3[1] else 0)
+#             )
+
+#     else:
+#         score=0.0
+
+#     return{
+#         "score":score,
+#         "reason":f"Thứ tự {obj1} → {obj2} → {obj3}."
+#     }
 # ==========================================
 # 6. TEMPLATE LOGIC SUY DIỄN (KIỂM SOÁT LUẬT)
 # ==========================================
-def template_12(rule, boxes_dict):
+def template_12(rule, boxes_dict): #tạm oke
 
     text = rule["rule"].split()
 
     obj_if = text[2]
     obj_then = text[5]
-
+    obj_if_vi = SCENERY_OBJECT_VI.get(obj_if, obj_if)
+    obj_then_vi = SCENERY_OBJECT_VI.get(obj_then, obj_then)     
     has_if = obj_if in boxes_dict and len(boxes_dict[obj_if]) > 0
     has_then = obj_then in boxes_dict and len(boxes_dict[obj_then]) > 0
 
+    # if not has_if:
+    #     return {
+    #         "score": 1.0,
+    #         "reason": f"Không có {obj_if}, luật không áp dụng."
+    #     }
+
+    # if has_then:
+    #     return {
+    #         "score": 1.0,
+    #         "reason": f"Có {obj_if} và cũng có {obj_then}."
+    #     }
+
+    # return {
+    #     "score": 0.0,
+    #     "reason": f"Có {obj_if} nhưng thiếu {obj_then}."
+    # }
     if not has_if:
         return {
             "score": 1.0,
-            "reason": f"Không có {obj_if}, luật không áp dụng."
+            "reason": f"Không có {obj_if_vi}, luật không áp dụng."
         }
 
     if has_then:
         return {
             "score": 1.0,
-            "reason": f"Có {obj_if} và cũng có {obj_then}."
+            "reason": f"Có {obj_if_vi} và cũng có {obj_then_vi}."
         }
 
     return {
         "score": 0.0,
-        "reason": f"Có {obj_if} nhưng thiếu {obj_then}."
-    }
+        "reason": f"Có {obj_if_vi} nhưng thiếu {obj_then_vi}."
+}   
 
-def template_13(rule, boxes_dict):
+# def template_13(rule, boxes_dict):
 
-    text = rule["rule"].split()
+#     text = rule["rule"].split()
 
-    modality = text[0]
-    obj = text[2]
+#     modality = text[0]
+#     obj = text[2]
 
-    has_obj = obj in boxes_dict and len(boxes_dict[obj]) > 0
+#     has_obj = obj in boxes_dict and len(boxes_dict[obj]) > 0
 
-    if modality == "must":
+#     if modality == "must":
 
-        if has_obj:
-            score = 1.0
-            reason = f"Đã phát hiện {obj}."
-        else:
-            score = 0.0
-            reason = f"Thiếu {obj}."
+#         if has_obj:
+#             score = 1.0
+#             reason = f"Đã phát hiện {obj}."
+#         else:
+#             score = 0.0
+#             reason = f"Thiếu {obj}."
 
-    elif modality == "may":
+#     elif modality == "may":
 
-        if has_obj:
-            score = 1.0
-            reason = f"Có thêm {obj} (điểm thưởng)."
-        else:
-            score = -1.0
-            reason = f"Không có {obj} nhưng không bị trừ điểm."
+#         if has_obj:
+#             score = 1.0
+#             reason = f"Có thêm {obj} (điểm thưởng)."
+#         else:
+#             score = -1.0
+#             reason = f"Không có {obj} nhưng không bị trừ điểm."
 
-    else:
-        score = 0.0
-        reason = "Luật không hợp lệ."
+#     else:
+#         score = 0.0
+#         reason = "Luật không hợp lệ."
 
-    return {
-        "score": score,
-        "reason": reason
-    }
+#     return {
+#         "score": score,
+#         "reason": reason
+#     }
 
-def template_14(rule, boxes_dict):
+# def template_14(rule, boxes_dict):
 
-    text = rule["rule"].split()
+#     text = rule["rule"].split()
 
-    obj1 = text[1]
-    obj2 = text[2]
+#     obj1 = text[1]
+#     obj2 = text[2]
 
-    has1 = obj1 in boxes_dict and len(boxes_dict[obj1]) > 0
-    has2 = obj2 in boxes_dict and len(boxes_dict[obj2]) > 0
+#     has1 = obj1 in boxes_dict and len(boxes_dict[obj1]) > 0
+#     has2 = obj2 in boxes_dict and len(boxes_dict[obj2]) > 0
 
-    if has1 and has2:
-        score = 0.0
-        reason = f"Có cả {obj1} và {obj2}."
+#     if has1 and has2:
+#         score = 0.0
+#         reason = f"Có cả {obj1} và {obj2}."
 
-    elif has1 or has2:
-        score = 1.0
-        reason = "Chỉ có một trong hai đối tượng."
+#     elif has1 or has2:
+#         score = 1.0
+#         reason = "Chỉ có một trong hai đối tượng."
 
-    else:
-        score = 0.0
-        reason = f"Không có {obj1} và {obj2}."
+#     else:
+#         score = 0.0
+#         reason = f"Không có {obj1} và {obj2}."
 
-    return {
-        "score": score,
-        "reason": reason
-    }
-def template_15(rule, boxes_dict):
+#     return {
+#         "score": score,
+#         "reason": reason
+#     }
+# def template_15(rule, boxes_dict):
 
-    text = rule["rule"].split()
+#     text = rule["rule"].split()
 
-    obj1 = text[1]
-    obj2 = text[2]
+#     obj1 = text[1]
+#     obj2 = text[2]
 
-    has1 = obj1 in boxes_dict and len(boxes_dict[obj1]) > 0
-    has2 = obj2 in boxes_dict and len(boxes_dict[obj2]) > 0
+#     has1 = obj1 in boxes_dict and len(boxes_dict[obj1]) > 0
+#     has2 = obj2 in boxes_dict and len(boxes_dict[obj2]) > 0
 
-    score = 1.0 if has1 == has2 else 0.0
+#     score = 1.0 if has1 == has2 else 0.0
 
-    if score:
-        reason = f"{obj1} và {obj2} đồng thời xuất hiện hoặc đồng thời vắng mặt."
-    else:
-        reason = f"{obj1} và {obj2} không đồng hành."
+#     if score:
+#         reason = f"{obj1} và {obj2} đồng thời xuất hiện hoặc đồng thời vắng mặt."
+#     else:
+#         reason = f"{obj1} và {obj2} không đồng hành."
 
-    return {
-        "score": score,
-        "reason": reason
-    }
-def template_16(rule, boxes_dict):
-
+#     return {
+#         "score": score,
+#         "reason": reason
+#     }
+def template_16(rule, boxes_dict): # thanh công phân nữa
+    print("================================")
+    print(boxes_dict)
+    print("tree =", boxes_dict.get("tree"))
+    print("cloud =", boxes_dict.get("cloud"))
+    print("================================")
     text = rule["rule"].split()
 
     obj1 = text[1]
@@ -886,7 +949,8 @@ def template_16(rule, boxes_dict):
 
     return {
         "score": score,
-        "reason": f"{obj1}: {count1}, {obj2}: {count2}."
+        "status": "Đạt" if score == 1.0 else "Không đạt",
+        "reason": f"Phát hiện {count1} {obj1} và {count2} {obj2}."
     }
 def template_17(rule, boxes_dict):
 
@@ -927,9 +991,15 @@ def template_17(rule, boxes_dict):
     else:
         score = 0.0
 
+    if score == 1.0:
+        reason = f"{obj1} to hơn {obj2}."
+    else:
+        reason = f"{obj1} không to hơn {obj2}."
+
     return {
         "score": score,
-        "reason": f"So sánh kích thước trung bình của {obj1} và {obj2}."
+        "status": "Đạt" if score == 1.0 else "Không đạt",
+        "reason": reason
     }
 # ==========================================
 # 7. ENGINE TỔNG HỢP (SCORING ENGINE)
@@ -941,24 +1011,24 @@ def evaluate_drawing(user_rules, boxes_dict):
         "logic": template_1,
         "qty": template_2,
         "size": template_4,
-        "pos_abs": template_5,
+        # "pos_abs": template_5,
         "pos_rel": template_6,
-        "ratio": template_7,
-        "distance": template_8,
-        "align": template_9,
-        "coverage": template_10,
-        "attribute": template_11,
+        # "ratio": template_7,
+        # "distance": template_8,
+        # "align": template_9,
+        # "coverage": template_10,
+        # "attribute": template_11,
         "if_then": template_12,
-        "priority": template_13,
-        "xor": template_14,
-        "together": template_15,
+        # "priority": template_13,
+        # "xor": template_14,
+        # "together": template_15,
         "count_comp": template_16,
         "size_comp": template_17,
-        "interaction": template_18,
-        "qty_cond": template_19,
-        "dist_exact": template_20,
-        "distribution": template_21,
-        "sequence": template_22
+    #     "interaction": template_18,
+    #     "qty_cond": template_19,
+    #     "dist_exact": template_20,
+    #     "distribution": template_21,
+    #     "sequence": template_22
     }
 
     total_score = 0.0
@@ -1030,6 +1100,7 @@ def evaluate_drawing(user_rules, boxes_dict):
 
         detailed_scores[rule_text] = {
             "score": round(rule_score * 100, 2),
+            "status": result.get("status"),
             "reason": reason
         }
 

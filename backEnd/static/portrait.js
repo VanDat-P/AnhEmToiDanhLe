@@ -86,6 +86,9 @@ document.getElementById("submit").onclick = async () => {
         console.log(data);
         console.log(data.score_breakdown);
         const breakdown = data.score_breakdown;
+        const successRules = breakdown?.template_rules?.success || [];
+        const errorRules = breakdown?.template_rules?.error || [];
+        console.log(data.score_breakdown.template_rules);
 
         // Hiển thị kết quả
         let commentText = "";
@@ -210,17 +213,19 @@ document.getElementById("submit").onclick = async () => {
                             <p><b>Đạt:</b></p>
 
                             <ul>
-                                ${breakdown.template_rules.success
-                                    .map(x => `<li>${x}</li>`)
-                                    .join("")}
+                                ${successRules.length
+                                    ? successRules.map(x => `<li>${x}</li>`).join("")
+                                    : "<li>Không có luật đạt.</li>"
+                                }
                             </ul>
 
                             <p><b>Chưa đạt:</b></p>
 
                             <ul>
-                                ${breakdown.template_rules.error
-                                    .map(x => `<li>${x}</li>`)
-                                    .join("")}
+                                ${errorRules.length
+                                    ? errorRules.map(x => `<li>${x}</li>`).join("")
+                                    : "<li>Không có luật vi phạm.</li>"
+                                }
                             </ul>
 
                         </div>
