@@ -1,50 +1,76 @@
 {
-  "text": "Có nhà và cây. Có ít nhất 2 chim. Có mặt trời ở trên núi. Có cây to. Nếu có nhà thì có người. Có số lượng cây nhiều hơn mây. Cây to hơn nhà.",
-  "penalty": 1.1,
-  "last_updated": "2026-07-23 22:28:22.594832",
+  "text": "có cây và mặt trời. cây bên trái nhà. cây to. nhả nhỏ. có chim. có hoa. ",
+  "penalty": 5.0,
+  "last_updated": "2026-07-24 09:46:23.131088",
   "verbs_vi": [],
-  "nouns_vi": [],
+  "nouns_vi": [
+    "nhả"
+  ],
   "verbs_en": [],
   "nouns_en": [],
   "art_type": "scenery",
-  "scenery_text": "Có nhà và cây. Có ít nhất 2 chim. Có mặt trời ở trên núi. Có cây to. Nếu có nhà thì có người. Có số lượng cây nhiều hơn mây. Cây to hơn nhà.",
-  "scenery_sentences_data": [],
-  "scenery_last_updated": "2026-07-23 22:28:22.594821",
+  "scenery_text": "có cây và mặt trời. cây bên trái nhà. cây to. nhả nhỏ. có chim. có hoa. ",
+  "scenery_sentences_data": [
+    {
+      "raw_tokens": [
+        [
+          "nhả",
+          "N"
+        ],
+        [
+          "nhỏ",
+          "A"
+        ]
+      ],
+      "sentence": "nhả nhỏ",
+      "raw_verbs_vi": [],
+      "raw_nouns_vi": [
+        "nhả"
+      ],
+      "verbs_en": [],
+      "nouns_en": [],
+      "mandatory_nouns_en": [],
+      "optional_nouns_en": [],
+      "has_co_verb": false,
+      "comparison_rules": [],
+      "pos_tags": [
+        [
+          "nhả",
+          "N"
+        ],
+        [
+          "nhỏ",
+          "A"
+        ]
+      ]
+    }
+  ],
+  "scenery_last_updated": "2026-07-24 09:46:23.131052",
   "rules": [
     {
       "type": "logic",
       "weight": 1.0,
-      "rule": "have house and tree"
+      "rule": "have tree and sun"
     },
     {
-      "type": "qty",
+      "type": "pos_rel",
       "weight": 1.0,
-      "rule": "count bird >= 2"
+      "rule": "position tree left_of house"
+    },
+    {
+      "type": "size",
+      "weight": 1.0,
+      "rule": "size tree large"
     },
     {
       "type": "exist",
       "weight": 1.0,
-      "rule": "have sun"
+      "rule": "have bird"
     },
     {
       "type": "exist",
       "weight": 1.0,
-      "rule": "have tree"
-    },
-    {
-      "type": "if_then",
-      "weight": 1.0,
-      "rule": "if have house then have person"
-    },
-    {
-      "type": "logic",
-      "weight": 1.0,
-      "rule": "have None tree more_than"
-    },
-    {
-      "type": "size_comp",
-      "weight": 1.0,
-      "rule": "compare tree > house"
+      "rule": "have flower"
     }
   ],
   "portrait_text": "mặt trời ở trên núi",
@@ -54,37 +80,27 @@
     {
       "type": "logic",
       "weight": 1.0,
-      "rule": "have house and tree"
+      "rule": "have tree and sun"
     },
     {
-      "type": "qty",
+      "type": "pos_rel",
       "weight": 1.0,
-      "rule": "count bird >= 2"
+      "rule": "position tree left_of house"
+    },
+    {
+      "type": "size",
+      "weight": 1.0,
+      "rule": "size tree large"
     },
     {
       "type": "exist",
       "weight": 1.0,
-      "rule": "have sun"
+      "rule": "have bird"
     },
     {
       "type": "exist",
       "weight": 1.0,
-      "rule": "have tree"
-    },
-    {
-      "type": "if_then",
-      "weight": 1.0,
-      "rule": "if have house then have person"
-    },
-    {
-      "type": "logic",
-      "weight": 1.0,
-      "rule": "have None tree more_than"
-    },
-    {
-      "type": "size_comp",
-      "weight": 1.0,
-      "rule": "compare tree > house"
+      "rule": "have flower"
     }
   ],
   "portrait_rules": [

@@ -2,36 +2,26 @@
     {
         "type": "logic",
         "weight": 1.0,
-        "rule": "have house and tree"
+        "rule": "have tree and sun"
     },
     {
-        "type": "qty",
+        "type": "pos_rel",
         "weight": 1.0,
-        "rule": "count bird >= 2"
+        "rule": "position tree left_of house"
+    },
+    {
+        "type": "size",
+        "weight": 1.0,
+        "rule": "size tree large"
     },
     {
         "type": "exist",
         "weight": 1.0,
-        "rule": "have sun"
+        "rule": "have bird"
     },
     {
         "type": "exist",
         "weight": 1.0,
-        "rule": "have tree"
-    },
-    {
-        "type": "if_then",
-        "weight": 1.0,
-        "rule": "if have house then have person"
-    },
-    {
-        "type": "logic",
-        "weight": 1.0,
-        "rule": "have None tree more_than"
-    },
-    {
-        "type": "size_comp",
-        "weight": 1.0,
-        "rule": "compare tree > house"
+        "rule": "have flower"
     }
 ]

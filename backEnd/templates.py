@@ -213,7 +213,7 @@ def template_4(rule, boxes_dict): # thành công rồi
 
     return {
         "score": final_score,
-        "reason": f"Kích thước {obj_vi} gần mức {size_vi}."
+        "reason": f"Kích thước {obj_vi} không đạt mức {size_vi}."
     }
     # return {
     #     "score": final_score,

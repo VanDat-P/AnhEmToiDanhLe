@@ -414,8 +414,8 @@ def predict():
 
         diem_mau_sac = dynamic_weights.get("color", 1.0)
 
-        bonus_rules = min(len(rule_success) * 0.5, 1.5)
-        penalt_rules = len(rule_errors) * 0.5
+        bonus_rules = min(len(rule_success) * 0.15, 0.6)
+        penalt_rules = len(rule_errors) * 1
 
         score_base = diem_thanh_phan_chuan + diem_bo_cuc + diem_ty_le + diem_mau_sac + bonus_rules - penalt_rules
         so_vat_thieu = len(missing)
@@ -834,37 +834,68 @@ def predict_scenery():
 
         trong_so_phong_canh = {"house": 2.5, "tree": 2.0, "sun": 1.5}
         for noun in base_required:
-            if noun not in trong_so_phong_canh: trong_so_phong_canh[noun] = 1.0
+            if noun not in trong_so_phong_canh: trong_so_phong_canh[noun] = 0.5
             
-        diem_thanh_phan = sum([trong_so_phong_canh.get(obj, 1.0) for obj in detected]) 
+        diem_thanh_phan = sum([trong_so_phong_canh.get(obj, 0.25) for obj in detected]) 
         diem_toi_da = sum([trong_so_phong_canh.get(obj, 1.0) for obj in base_required])
         
         # Đảm bảo điểm max không chia cho 0
-        diem_thanh_phan_chuan = (float(diem_thanh_phan) / float(diem_toi_da)) * float(dynamic_weights.get("objects", 5.0)) if diem_toi_da > 0 else 0
+        diem_thanh_phan_chuan = (float(diem_thanh_phan) / float(diem_toi_da)) * float(dynamic_weights.get("objects", 3.0)) if diem_toi_da > 0 else 0
 
         so_loi_bo_cuc = sum(1 for l in loi_bo_cuc if "Lỗi" in l)
-        diem_bo_cuc = max(0, dynamic_weights.get("layout", 2.0) - (so_loi_bo_cuc * (dynamic_weights.get("layout", 2.0) / 3)))
+        # diem_bo_cuc = max(0, dynamic_weights.get("layout", 1.0) - (so_loi_bo_cuc * (dynamic_weights.get("layout", 2.0) / 3)))
 
-        diem_nghe_thuat = dynamic_weights.get("art_proportion", 2.0) * 0.5
+        diem_bo_cuc = max(
+            0,
+            dynamic_weights["layout"] -
+            so_loi_bo_cuc * 1
+        )
+        # diem_nghe_thuat = dynamic_weights.get("art_proportion", 1.0) * 0.5
+        diem_nghe_thuat = 0
+        for nx in nhan_xet_nghe_thuat_list:
+            if "tốt" in nx.lower() or "đẹp" in nx.lower():
+                diem_nghe_thuat += 0.5
+            elif "lưu ý" in nx.lower() or "to hơn" in nx.lower():
+                diem_nghe_thuat -= 0.3
+
+        diem_nghe_thuat = max(
+            0,
+            min(dynamic_weights["art_proportion"], diem_nghe_thuat)
+        )
+        #
         for nx in nhan_xet_nghe_thuat_list:
             if "tốt" in nx or "nghệ thuật" in nx or "amazing" in nx:
-                diem_nghe_thuat += (dynamic_weights.get("art_proportion", 2.0) * 0.25)
+                diem_nghe_thuat += (dynamic_weights.get("art_proportion", 1.0) * 0.25)
             elif "to hơn" in nx or "lưu ý" in nx.lower():
-                diem_nghe_thuat -= (dynamic_weights.get("art_proportion", 2.0) * 0.25)
-        diem_nghe_thuat = max(0, min(dynamic_weights.get("art_proportion", 2.0), diem_nghe_thuat))
+                diem_nghe_thuat -= (dynamic_weights.get("art_proportion", 1.0) * 0.25)
+        diem_nghe_thuat = max(0, min(dynamic_weights.get("art_proportion", 1.0), diem_nghe_thuat))
 
-        diem_mau_sac = dynamic_weights.get("color", 1.0) * 0.6 
-        if "nhạt nhòa" in nhan_xet_mau_sac_str or "hơi tối" in nhan_xet_mau_sac_str:
-            diem_mau_sac -= (dynamic_weights.get("color", 1.0) * 0.3)
-        elif "rất tốt" in nhan_xet_mau_sac_str or "rực rỡ" in nhan_xet_mau_sac_str:
-            diem_mau_sac += (dynamic_weights.get("color", 1.0) * 0.4)
-        diem_mau_sac = max(0, min(dynamic_weights.get("color", 1.0), diem_mau_sac))
+        # diem_mau_sac = dynamic_weights.get("color", 1.0) * 0.6 
+        diem_mau_sac = 0
+        # if "nhạt nhòa" in nhan_xet_mau_sac_str or "hơi tối" in nhan_xet_mau_sac_str:
+        #     diem_mau_sac -= (dynamic_weights.get("color", 1.0) * 0.3)
+        # elif "rất tốt" in nhan_xet_mau_sac_str or "rực rỡ" in nhan_xet_mau_sac_str:
+        #     diem_mau_sac += (dynamic_weights.get("color", 1.0) * 0.4)
+        # diem_mau_sac = max(0, min(dynamic_weights.get("color", 1.0), diem_mau_sac))
+        if "rực rỡ" in nhan_xet_mau_sac_str:
+            diem_mau_sac += dynamic_weights["color"]*0.6
+
+        elif "rất tốt" in nhan_xet_mau_sac_str:
+            diem_mau_sac += dynamic_weights["color"]*0.8
+
+        elif "nhạt nhòa" in nhan_xet_mau_sac_str:
+            diem_mau_sac += dynamic_weights["color"]*0.2
 
         bonus_rules = min(len(rule_success) * 0.5, 1.5)
         penalt_rules = len(rule_errors) * 0.5
 
         score_base = diem_thanh_phan_chuan + diem_bo_cuc + diem_nghe_thuat + diem_mau_sac + bonus_rules - penalt_rules
-        
+        # Giới hạn điểm nếu thiếu nhiều vật
+        if len(missing) >= 5:
+            score_base = min(score_base, 6)
+
+        elif len(missing) >= 3:
+            score_base = min(score_base, 8)
         # CƠ CHẾ ĐIỂM ĐỘNG VÀ ĐIỂM TUYỆT ĐỐI BẰNG REGEX
         tru_diem_tuyet_doi = 0.0
         cong_diem_tuyet_doi = 0.0
