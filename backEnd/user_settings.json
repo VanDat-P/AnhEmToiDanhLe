@@ -1,177 +1,31 @@
 {
-  "text": "Có ít nhất 2 chim",
-  "penalty": 1.1,
-  "last_updated": "2026-07-23 19:57:15.172642",
+  "text": "phải có đúng 3 con chim",
+  "penalty": 1.3,
+  "last_updated": "2026-08-09 21:12:49.449703",
   "verbs_vi": [],
   "nouns_vi": [],
   "verbs_en": [],
   "nouns_en": [],
   "art_type": "scenery",
-  "scenery_text": "Có ít nhất 2 chim",
+  "scenery_text": "phải có đúng 3 con chim",
   "scenery_sentences_data": [],
-  "scenery_last_updated": "2026-07-23 19:57:15.172620",
+  "scenery_last_updated": "2026-08-09 21:12:49.449703",
   "rules": [
     {
       "type": "qty",
       "weight": 1.0,
-      "rule": "count bird >= 2"
+      "rule": "count bird == 3"
     }
   ],
-  "portrait_text": "có cây, có mặt trời, có hoa ,có trâu,  mặt trời cao hơn cây",
-  "portrait_sentences_data": [
-    {
-      "raw_tokens": [
-        [
-          "có",
-          "V"
-        ],
-        [
-          "cây",
-          "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
-        [
-          "có mặt trời",
-          "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
-        [
-          "có",
-          "V"
-        ],
-        [
-          "hoa",
-          "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
-        [
-          "có",
-          "V"
-        ],
-        [
-          "trâu",
-          "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
-        [
-          "TOKENX0X TOKENX1X",
-          "Np"
-        ],
-        [
-          "cây",
-          "N"
-        ]
-      ],
-      "sentence": "có cây, có mặt trời, có hoa ,có trâu,  mặt trời cao hơn cây",
-      "raw_verbs_vi": [
-        "có"
-      ],
-      "raw_nouns_vi": [
-        "mặt",
-        "hoa",
-        "trâu",
-        "TOKENX0X TOKENX1X",
-        "có mặt trời",
-        "cây"
-      ],
-      "verbs_en": [
-        "have"
-      ],
-      "nouns_en": [
-        "face"
-      ],
-      "mandatory_nouns_en": [
-        "face"
-      ],
-      "optional_nouns_en": [],
-      "has_co_verb": true,
-      "comparison_rules": [
-        {
-          "weight": 1.0,
-          "object1": "face",
-          "object2": "face",
-          "relation": "have",
-          "object1_vi": "khuôn mặt",
-          "object2_vi": "khuôn mặt",
-          "relation_vi": "có",
-          "type": "pos_rel",
-          "rule": "position_rel face have face"
-        }
-      ],
-      "pos_tags": [
-        [
-          "có",
-          "V"
-        ],
-        [
-          "cây",
-          "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
-        [
-          "có mặt trời",
-          "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
-        [
-          "có",
-          "V"
-        ],
-        [
-          "hoa",
-          "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
-        [
-          "có",
-          "V"
-        ],
-        [
-          "trâu",
-          "N"
-        ],
-        [
-          ",",
-          "CH"
-        ],
-        [
-          "TOKENX0X TOKENX1X",
-          "Np"
-        ],
-        [
-          "cây",
-          "N"
-        ]
-      ]
-    }
-  ],
-  "portrait_last_updated": "2026-07-20 18:30:54.488878",
+  "portrait_text": "",
+  "portrait_sentences_data": [],
+  "portrait_last_updated": "2026-08-09 21:04:15.461188",
   "scenery_rules": [
     {
       "type": "qty",
       "weight": 1.0,
-      "rule": "count bird >= 2"
+      "rule": "count bird == 3"
     }
-  ]
+  ],
+  "portrait_rules": []
 }

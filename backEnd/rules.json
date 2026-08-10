@@ -2,6 +2,6 @@
     {
         "type": "qty",
         "weight": 1.0,
-        "rule": "count bird >= 2"
+        "rule": "count bird == 3"
     }
 ]

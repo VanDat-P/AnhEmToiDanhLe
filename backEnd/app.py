@@ -17,8 +17,8 @@ from templates import evaluate_drawing
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:5500", "http://127.0.0.1:5500", "http://localhost:5000", "http://127.0.0.1:5000"])
 
-REQUIRED = ["eye", "eyebrow", "nose", "mouth", "face", "ear", "hair"]
-SCENERY_REQUIRED = ["tree", "sun","person","buffalo","house","bird"]
+REQUIRED = ["eye", "eyebrow", "nose", "mouth", "face"]
+SCENERY_REQUIRED = ["tree", "sun","house"]
 
 RESULT_FOLDER = "static/results"
 os.makedirs(RESULT_FOLDER, exist_ok=True)
@@ -75,15 +75,6 @@ def save_settings():
                     clause = clause.lower()
                     pos_tags = custom_pos_tag(clause)
                     
-                    # if 'parse_rulesv2' in globals():
-                    #     rule_v2 = parse_rulesv2(pos_tags, clause)
-
-                    #     if rule_v2:
-                    #         possible_rules.append(rule_v2)
-                    #         all_rules.append(rule_v2)   
-                    #     rule_relation = parse_rules(clause, art_type)
-
-                    #     possible_rules.extend(rule_relation)
                     if 'parse_rulesv2' in globals():
                         rule_v2 = parse_rulesv2(pos_tags, clause)
 
@@ -93,11 +84,6 @@ def save_settings():
 
                             # Đã parse được bằng parser mới thì bỏ qua parser cũ
                             continue
-
-                        rule_relation = parse_rules(clause, art_type)
-
-                        possible_rules.extend(rule_relation)
-                        all_rules.extend(rule_relation)
                     
                     raw_verbs_vi = [word for word, tag in pos_tags if tag.startswith('V')]
                     raw_nouns_vi = [word for word, tag in pos_tags if tag.startswith('N')]
@@ -127,7 +113,6 @@ def save_settings():
                     clause_nouns_en = filter_valid_nouns_en(clause_nouns_en, art_type)
                     
                     has_co = any(v.lower() in ["có", "phải", "cần", "vẽ", "bắt buộc"] for v in raw_verbs_vi) or "có" in clause.lower()
-                    clause_rules = parse_rules(clause, art_type)
                     
                     sentences_data.append({
                         "raw_tokens" : pos_tags,
@@ -139,7 +124,6 @@ def save_settings():
                         "mandatory_nouns_en": list(set(clause_nouns_en)) if has_co else [],
                         "optional_nouns_en": [] if has_co else list(set(clause_nouns_en)),
                         "has_co_verb": has_co,
-                        "comparison_rules": clause_rules,
                         "pos_tags": pos_tags
                     })
                     
@@ -147,7 +131,6 @@ def save_settings():
                     nouns_list.extend(raw_nouns_vi)
                     verbs_en_list.extend(clause_verbs_en)
                     nouns_en_list.extend(clause_nouns_en)
-                    all_rules.extend(clause_rules)
                     
                 except Exception as e:
                     print(f"Lỗi extract: {e}")
@@ -256,9 +239,7 @@ def classify():
             for box in results.boxes:
                 cls_id = int(box.cls[0])
                 raw_name = str(results.names[cls_id]).strip().lower()
-                for req in REQUIRED:
-                    if req == raw_name:
-                        detected_objects.append(req)
+                detected_objects.append(raw_name)
             
             unique_detected = list(set(detected_objects))
             total_detected = len(unique_detected)
@@ -272,16 +253,16 @@ def classify():
         else:
             results = scenery_model(img_path, verbose=False)[0]
             boxes_dict = {name: [] for name in SCENERY_REQUIRED}
+            detected_objects = []
             for box in results.boxes:
                 cls_id = int(box.cls[0])
                 raw_name = str(results.names[cls_id]).strip().lower()
-                for req in SCENERY_REQUIRED:
-                    if req == raw_name:
-                        boxes_dict[req].append(box)
+                detected_objects.append(raw_name)
+
             
-            detected = [k for k, v in boxes_dict.items() if len(v) > 0]
-            
-            if len(detected) < 2:
+            unique_detected = list(set(detected_objects))
+            total_detected = len(unique_detected)
+            if total_detected < 2:
                 return jsonify({
                     "type": "Unknown",
                     "message": "Ảnh có vẻ là phong cảnh nhưng các chi tiết chưa rõ. Em hãy vẽ thêm nhà, cây hoặc ông mặt trời nhé!"
@@ -634,6 +615,7 @@ def predict_scenery():
         img_h, img_w, _ = img_cv.shape
         
         results = scenery_model(img_path, verbose=False)[0]
+        boxes_dict = []
         boxed_name = f"boxed_{filename}"
         cv2.imwrite(os.path.join(RESULT_FOLDER, boxed_name), results.plot())
 
@@ -653,7 +635,7 @@ def predict_scenery():
         cls_ids = [int(cls) for cls in results.boxes.cls.cpu().numpy()]
         boxes_xyxy = results.boxes.xyxy.cpu().numpy().tolist()
         
-        # ĐÂY LÀ BOXES DICT GỐC
+        #ĐÂY LÀ BOXES DICT GỐC
         boxes_dict = {name: [] for name in base_required}
         for cid, box in zip(cls_ids, boxes_xyxy):
             raw_name = str(results.names[cid]).strip().lower()
@@ -701,10 +683,6 @@ def predict_scenery():
             if not chuoi_hien_thi:
                 chuoi_hien_thi = rule_str
             reason = detail.get("reason", "") if isinstance(detail, dict) else ""
-            # if ok:
-            #     rule_success.append(chuoi_hien_thi)
-            # else:
-            #     rule_errors.append(f" không {relation_vi} {obj1_vi} {obj2_vi}" if relation_vi else f"Vi phạm: {chuoi_hien_thi}")
             if ok:
                 rule_success.append(reason if reason else chuoi_hien_thi)
             else:
@@ -743,46 +721,6 @@ def predict_scenery():
                     chuoi_hien_thi = f"{relation_vi} {obj1_vi} và {obj2_vi}"
                 else:
                     chuoi_hien_thi = f"{obj1_vi} {relation_vi} {obj2_vi}"
-            # rule_vi = rule.get("rule_vi")
-
-            # if rule_vi:
-            #     chuoi_hien_thi = rule_vi
-            # else:
-            #     obj1_vi = rule.get(
-            #         'object1_vi',
-            #         SCENERY_OBJECT_VI.get(rule.get('object1', ''), rule.get('object1', ''))
-            #     )
-
-            #     obj2_vi = rule.get(
-            #         'object2_vi',
-            #         SCENERY_OBJECT_VI.get(rule.get('object2', ''), rule.get('object2', ''))
-            #     )
-
-            #     relation_vi = rule.get(
-            #         'relation_vi',
-            #         RELATION_VI.get(rule.get('relation', ''), rule.get('relation', ''))
-            #     )
-
-            #     if relation_vi == "có":
-            #         chuoi_hien_thi = f"{relation_vi} {obj1_vi} và {obj2_vi}".strip()
-            #     else:
-            #         chuoi_hien_thi = f"{obj1_vi} {relation_vi} {obj2_vi}".strip()
-
-            #     if not chuoi_hien_thi:
-            #         chuoi_hien_thi = rule_str
-
-
-            #     if ok:
-            #         rule_success.append(chuoi_hien_thi)
-            #     else:
-            #         if rule.get("rule_vi"):
-            #             rule_errors.append(f"Không {chuoi_hien_thi}")
-            #         else:
-            #             rule_errors.append(
-            #                 f"không {relation_vi} {obj1_vi} {obj2_vi}"
-            #                 if relation_vi else
-            #                 f"Vi phạm: {chuoi_hien_thi}"
-            #             )
         print("SUCCESS =", rule_success)
         print("ERROR =", rule_errors)
         loi_khuyen = []
@@ -950,8 +888,8 @@ def predict_scenery():
                 "formula":"Rule-based",
                 "result":
                     nhan_xet_nghe_thuat_list
-                    + rule_success
-                    + rule_errors
+                    # + rule_success
+                    # + rule_errors
             },
             {
                 "title":"Màu sắc",
@@ -978,6 +916,7 @@ def predict_scenery():
                 for r in rule_errors
             ],
             "template_rules": {
+                "user_text": danh_sach_cau,
                 "success": rule_success,
                 "error": rule_errors
             },

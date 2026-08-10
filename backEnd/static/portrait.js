@@ -93,13 +93,13 @@ document.getElementById("submit").onclick = async () => {
         // Hiển thị kết quả
         let commentText = "";
         if (data.score >= 9) {
-            commentText = "🌟 Rất tốt!, chúc mừng em bảo bối à!";
+            commentText = "Rất tốt!, chúc mừng em bảo bối à!";
         } else if (data.score >= 7) {
-            commentText = "👍 Tốt nhưng còn thiếu chút nha cục dàng";
+            commentText = "Tốt nhưng còn thiếu chút nha cục dàng";
         } else if (data.score >= 5) {
-            commentText = "🙂 Ổn nhưng em nên cải thiện hơn nhé nha cục dàng";
+            commentText = "Ổn nhưng em nên cải thiện hơn nhé nha cục dàng";
         } else {
-            commentText = "😅 Cần cố gắng nhiều hơn nha em huhu";
+            commentText = "Cần cố gắng nhiều hơn nha em huhu";
         }
 
         // Fix đường dẫn ảnh meme
@@ -135,15 +135,15 @@ document.getElementById("submit").onclick = async () => {
         let bonusHTML = "";
         
         if (data.nouns_from_settings && data.nouns_from_settings.length > 0) {
-            nounsSettingsHTML = `<p>📚 <b>Từ khóa vật thể (từ mô tả):</b> ${data.nouns_from_settings.join(", ")}</p>`;
+            nounsSettingsHTML = `<p><b>Từ khóa vật thể (từ mô tả):</b> ${data.nouns_from_settings.join(", ")}</p>`;
         }
         
         if (data.verbs_from_settings && data.verbs_from_settings.length > 0) {
-            verbsSettingsHTML = `<p>🎨 <b>Từ khóa kỹ thuật (từ mô tả):</b> ${data.verbs_from_settings.join(", ")}</p>`;
+            verbsSettingsHTML = `<p> <b>Từ khóa kỹ thuật (từ mô tả):</b> ${data.verbs_from_settings.join(", ")}</p>`;
         }
         
         if (data.bonus_from_nouns > 0 || data.bonus_from_verbs > 0) {
-            bonusHTML = `<p style="color: #10b981;">✨ <b>Điểm thưởng từ mô tả:</b> +${(data.bonus_from_nouns || 0) + (data.bonus_from_verbs || 0)} điểm</p>`;
+            bonusHTML = `<p style="color: #10b981;"><b>Điểm thưởng từ mô tả:</b> +${(data.bonus_from_nouns || 0) + (data.bonus_from_verbs || 0)} điểm</p>`;
         }
 
         // Xử lý hiển thị
@@ -208,6 +208,10 @@ document.getElementById("submit").onclick = async () => {
 
                             <div class="criteria-header">
                                 <h3>Đánh giá theo yêu cầu giáo viên</h3>
+                            </div>
+
+                            <div class="criteria-header">
+                                <p>${breakdown.template_rules.user_text}</p>
                             </div>
 
                             <p><b>Đạt:</b></p>
@@ -398,19 +402,19 @@ document.getElementById("submit").onclick = async () => {
         let luatMemHTML = "";
         
         if (data.nhan_xet_bo_cuc && Array.isArray(data.nhan_xet_bo_cuc)) {
-            luatMemHTML += `<p>📐 <b>Bố cục:</b> ${data.nhan_xet_bo_cuc.join(" ")}</p>`;
+            luatMemHTML += `<p><b>Bố cục:</b> ${data.nhan_xet_bo_cuc.join(" ")}</p>`;
         }
         
         if (data.nhan_xet_ty_le && Array.isArray(data.nhan_xet_ty_le) && data.nhan_xet_ty_le.length > 0) {
-            luatMemHTML += `<p>👤 <b>Tỷ lệ mặt:</b> ${data.nhan_xet_ty_le.join("<br>")}</p>`;
+            luatMemHTML += `<p><b>Tỷ lệ mặt:</b> ${data.nhan_xet_ty_le.join("<br>")}</p>`;
         }
         
         if (data.nhan_xet_mau_sac) {
-            luatMemHTML += `<p>🎨 <b>Màu sắc:</b> ${data.nhan_xet_mau_sac}</p>`;
+            luatMemHTML += `<p><b>Màu sắc:</b> ${data.nhan_xet_mau_sac}</p>`;
         }
         
         if (data.nhan_xet_nghe_thuat && Array.isArray(data.nhan_xet_nghe_thuat) && data.nhan_xet_nghe_thuat.length > 0) {
-            luatMemHTML += `<p>🖼️ <b>Nghệ thuật:</b> ${data.nhan_xet_nghe_thuat.join(" ")}</p>`;
+            luatMemHTML += `<p><b>Nghệ thuật:</b> ${data.nhan_xet_nghe_thuat.join(" ")}</p>`;
         }
         
         if (data.loi_khuyen_giao_vien && Array.isArray(data.loi_khuyen_giao_vien) && data.loi_khuyen_giao_vien.length > 0) {
@@ -419,8 +423,8 @@ document.getElementById("submit").onclick = async () => {
 
         result.innerHTML = `
             <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px;">
-                <p style="margin-top:0;"><b>🏷️ AI nhận diện:</b> <span style="font-weight:bold; color:#0056b3;">${loaiTranhText}</span></p>
-                <h3 style="margin-bottom:0; color: #333;">🎯 Điểm số: <span style="font-size: 1.5em; color: #ff5722;">${data.score}/10</span></h3>
+                <p style="margin-top:0;"><b>AI nhận diện:</b> <span style="font-weight:bold; color:#0056b3;">${loaiTranhText}</span></p>
+                <h3 style="margin-bottom:0; color: #333;">Điểm số: <span style="font-size: 1.5em; color: #ff5722;">${data.score}/10</span></h3>
                 ${bonusHTML}
             </div>
             
@@ -433,9 +437,9 @@ document.getElementById("submit").onclick = async () => {
                     ${nounsSettingsHTML}
                     ${verbsSettingsHTML}
                     <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
-                    <p><b>📊 Tổng số vật cần có:</b> ${data.total_required || 0}</p>
-                    <p><b>✅ Đã có:</b> ${detected.length}</p>
-                    <p><b>❌ Thiếu:</b> ${missing.length}</p>
+                    <p><b>Tổng số vật cần có:</b> ${data.total_required || 0}</p>
+                    <p><b>Đã có:</b> ${detected.length}</p>
+                    <p><b>Thiếu:</b> ${missing.length}</p>
                 </div>
                 <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
                 ${luatMemHTML}
@@ -474,7 +478,7 @@ document.getElementById("submit").onclick = async () => {
 
                     box.style.display="none";
 
-                    btnBreak.innerText="📊 Cách chấm điểm";
+                    btnBreak.innerText="Cách chấm điểm";
 
                 }
 
@@ -488,11 +492,11 @@ document.getElementById("submit").onclick = async () => {
                 if (box.style.display === "none") {
                     box.style.display = "block";
                     info.style.display = "block";
-                    btn.innerText = "🙈 Ẩn ảnh AI phát hiện";
+                    btn.innerText = "Ẩn ảnh AI phát hiện";
                 } else {
                     box.style.display = "none";
                     info.style.display = "none";
-                    btn.innerText = "👀 Xem ảnh AI phát hiện";
+                    btn.innerText = "Xem ảnh AI phát hiện";
                 }
             };
         }

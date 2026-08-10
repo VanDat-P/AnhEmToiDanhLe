@@ -15,7 +15,7 @@ embed_model = SentenceTransformer("bkai-foundation-models/vietnamese-bi-encoder"
 # ==========================================
 VALID_PORTRAIT_NOUNS = {
     "face", "eye", "eyebrow", "nose", "mouth", "ear", "hair",
-    "eyes", "eyebrows", "ears", "hairs", "head"
+    "eyes", "eyebrows", "ears", "hair", "head"
 }
 
 VALID_SCENERY_NOUNS = {
@@ -211,6 +211,7 @@ CUSTOM_POS_MAPPING = {
     "nếu": "L",
     "thì": "L",
     "vừa": "A",
+    "đủ": "A",
     # logic
     "và": "C",
     "hoặc": "C",
@@ -235,25 +236,21 @@ CUSTOM_POS_MAPPING = {
 templates = [
     # nếu có A thì có B
     ["L","V","N","L","V","N"],
-      # không quá
-        ["V","R","R","M","N"],
+
+    # không quá
+    ["V","R","R","M","N"],
+
      # đúng 3 chim
     ["V","A","M","N"],
-   
-     # có A và B
-        ["V","N","C","N"],
-         # ít nhất
-            ["V","X","M","N"],
-         # có A
+
+    # có A và B
+    ["V","N","C","N"],
+
+    # ít nhất
+    ["V","X","M","N"],
+
+    # có A
     ["V","N"],
-
-   
-
-   
-
-   
-
-  
 
     # cây bên trái nhà
     ["N","REL","N"],
@@ -263,11 +260,10 @@ templates = [
 
   
      # A nhiều hơn B
-        ["N","COMPARE","N"],
-    # A đi cùng B
-    ["N","C","N"],
+    ["N","COMPARE","N"],
 
-   
+    # A đi cùng B
+    ["N","C","N"],   
 ]
 
 # ==========================================
@@ -385,21 +381,6 @@ def filter_valid_verbs_en(verbs_list):
 
 def phan_tich_trong_so_tieu_chi(user_text):
     weights = {"objects": 5.0, "layout": 2.0, "art_proportion": 2.0, "color": 1.0}
-    if not user_text or not user_text.strip(): return weights
-        
-    text = user_text.lower()
-    if any(kw in text for kw in ["phải có", "bắt buộc", "thiếu", "không có", "trừ điểm"]):
-        weights["objects"] += 4.0; weights["layout"] -= 1.0; weights["art_proportion"] -= 1.0; weights["color"] -= 0.5
-    if any(kw in text for kw in ["màu", "màu sắc", "tô màu", "rực rỡ", "tươi sáng", "đậm"]):
-        weights["color"] += 3.0; weights["objects"] -= 1.0 
-    if any(kw in text for kw in ["bố cục", "căn giữa", "vị trí", "bên trái", "bên phải", "ở trên", "ở dưới", "to hơn", "nhỏ hơn"]):
-        weights["layout"] += 2.0; weights["objects"] -= 1.0
-    if any(kw in text for kw in ["tỷ lệ", "xa gần", "nghệ thuật", "hài hòa", "cân đối", "sáng tạo"]):
-        weights["art_proportion"] += 2.0; weights["objects"] -= 1.0
-        
-    for k in weights: weights[k] = max(0.1, weights[k])
-    total = sum(weights.values())
-    for key in weights: weights[key] = round((weights[key] / total) * 10.0, 2)
     return weights
 
 def parse_rulesv2(tokens, sentence):
@@ -658,21 +639,6 @@ def parse_rulesv2(tokens, sentence):
                             "weight": 1.0,
                             "rule": f"together {obj1} {obj2}"
                         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                 return {
                     "rule": rule_to_vietnamese(rule_en.strip()),
                     "rule_en": rule_en.strip(),
@@ -680,81 +646,7 @@ def parse_rulesv2(tokens, sentence):
                     "raw_text": str(sentence),
                     "tokens": valid_tokens
                 }
-                
-        
-        
-        
-        
-       
-        
         return None
     except Exception as e:
         print(f"❌ Lỗi parse_rulesv2: {e}")
         return None
-
-def parse_rules(user_text, art_type="scenery"):
-    rules = []
-    if not user_text or not user_text.strip(): return rules
-    
-    clauses = [c.strip() for c in user_text.lower().split('.') if c.strip()]
-    obj_dict = PORTRAIT_OBJECT_MAPPING if art_type == "portrait" else SCENERY_OBJECT_MAPPING
-    vi_dict = PORTRAIT_OBJECT_VI if art_type == "portrait" else SCENERY_OBJECT_VI
-    
-    for clause in clauses:
-
-        if len(clause) < 3: continue
-        found_objects, found_relations = [], []
-        
-        clause_temp = clause
-        for vi_word, en_key in obj_dict.items():
-            for match in re.finditer(rf"(?:\b|\s|^){vi_word}(?:\b|\s|$)", clause_temp):
-                found_objects.append({"vi": vi_word, "en": en_key, "pos": match.start()})
-                clause_temp = clause_temp[:match.start()] + " " * len(match.group()) + clause_temp[match.end():]
-                
-        clause_temp_rel = clause
-        for vi_word, en_key in RELATION_MAPPING.items():
-            for match in re.finditer(rf"(?:\b|\s|^){vi_word}(?:\b|\s|$)", clause_temp_rel):
-                found_relations.append({"vi": vi_word, "en": en_key, "pos": match.start()})
-                clause_temp_rel = clause_temp_rel[:match.start()] + " " * len(match.group()) + clause_temp_rel[match.end():]
-
-        found_objects = sorted(found_objects, key=lambda x: x['pos'])
-        found_relations = sorted(found_relations, key=lambda x: x['pos'])
-
-        if len(found_objects) >= 2 and len(found_relations) >= 1:
-            obj_A, obj_B, rel = found_objects[0], found_objects[1], found_relations[0]
-            if rel['pos'] < obj_A['pos']: obj_A, obj_B = obj_B, obj_A
-                
-            en_rel = rel['en']
-            rule_data = {
-                "weight": 1.0,
-                "object1": obj_A['en'], "object2": obj_B['en'], "relation": rel['en'],
-                "object1_vi": vi_dict.get(obj_A['en'], obj_A['vi']), 
-                "object2_vi": vi_dict.get(obj_B['en'], obj_B['vi']), 
-                "relation_vi": rel['vi']
-            }
-            
-            if en_rel == "have":
-
-                rule_data["type"] = "logic"
-                rule_data["rule"] = f"have {obj_A['en']} and {obj_B['en']}"
-
-            elif en_rel in ["higher_than", "lower_than"]:
-
-                rule_data["type"] = "size_comp"
-
-                op = ">" if en_rel == "higher_than" else "<"
-
-                rule_data["rule"] = (
-                    f"size_compare {obj_A['en']} {op} {obj_B['en']}"
-                )
-
-            else:
-
-                rule_data["type"] = "pos_rel"
-
-                rule_data["rule"] = (
-                    f"position_rel {obj_A['en']} {en_rel} {obj_B['en']}"
-                )
-                
-            rules.append(rule_data)
-    return rules
