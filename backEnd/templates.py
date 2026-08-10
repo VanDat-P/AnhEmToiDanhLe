@@ -29,36 +29,76 @@ def get_intersection_area(box1, box2):
 def template_0(rule, boxes_dict):
     text = rule["rule"].split()
     op, obj = text[0], text[1]
-
+    obj_vi = SCENERY_OBJECT_VI.get(obj, obj)
     has_obj = obj in boxes_dict and len(boxes_dict[obj]) > 0
 
     if op == "have":
         if has_obj:
             return {
                 "score": 1.0,
-                "reason": f"Đã phát hiện {obj}."
+                "reason": f"Đã phát hiện {obj_vi}."
             }
         return {
             "score": 0.0,
-            "reason": f"Thiếu {obj}."
+            "reason": f"Thiếu {obj_vi}."
         }
 
     elif op == "not":
         if not has_obj:
             return {
                 "score": 1.0,
-                "reason": f"Không xuất hiện {obj}."
+                "reason": f"Không xuất hiện {obj_vi}."
             }
         return {
             "score": 0.0,
-            "reason": f"Có xuất hiện {obj}."
+            "reason": f"Có xuất hiện {obj_vi}."
         }
 
     return {
         "score": 0.0,
         "reason": "Luật không hợp lệ."
     }
-def template_1(rule, boxes_dict): #hoàn thành rồi ní ơi
+# def template_1(rule, boxes_dict): #hoàn thành rồi ní ơi
+
+#     text = rule["rule"].split()
+
+#     op = text[0]
+#     obj1 = text[1]
+#     logic = text[2]
+#     obj2 = text[3]
+    
+#     has1 = len(boxes_dict.get(obj1, [])) > 0
+#     has2 = len(boxes_dict.get(obj2, [])) > 0
+
+#     # Tên tiếng Việt (nếu có)
+#     name1 = rule.get("SCENERY_OBJECT_VI", obj1)
+#     name2 = rule.get("SCENERY_OBJECT_VI", obj2)
+
+#     if logic == "and":
+
+#         score = 1.0 if (has1 and has2) else 0.0
+
+#     elif logic == "or":
+
+#         score = 1.0 if (has1 or has2) else 0.0
+
+#     else:
+#         return {
+#             "score": 0.0,
+#             "reason": f"Cả {obj1} và {obj2}: logic không hợp lệ."
+#         }
+
+#     # Tạo nội dung hiển thị cho từng đối tượng
+#     result = []
+
+#     result.append(f"{'có' if has1 else 'nhưng không có'} {name1}")
+#     result.append(f"{'có' if has2 else 'nhưng không có'} {name2}")
+
+#     return {
+#         "score": score,
+#         "reason": ", ".join(result)
+#     }
+def template_1(rule, boxes_dict):
 
     text = rule["rule"].split()
 
@@ -67,35 +107,34 @@ def template_1(rule, boxes_dict): #hoàn thành rồi ní ơi
     logic = text[2]
     obj2 = text[3]
 
+    # Đổi tên object sang tiếng Việt
+    obj1_vi = SCENERY_OBJECT_VI.get(obj1, obj1)
+    obj2_vi = SCENERY_OBJECT_VI.get(obj2, obj2)
+
     has1 = len(boxes_dict.get(obj1, [])) > 0
     has2 = len(boxes_dict.get(obj2, [])) > 0
 
-    # Tên tiếng Việt (nếu có)
-    name1 = rule.get("object1_vi", obj1)
-    name2 = rule.get("object2_vi", obj2)
-
     if logic == "and":
-
         score = 1.0 if (has1 and has2) else 0.0
 
     elif logic == "or":
-
         score = 1.0 if (has1 or has2) else 0.0
 
     else:
         return {
             "score": 0.0,
-            "reason": "Logic không hợp lệ."
+            # "reason": f"Điều kiện giữa {obj1_vi} và {obj2_vi} không hợp lệ."
+            "reason": "sai điều kiện template 1 "
         }
 
-    # Tạo nội dung hiển thị cho từng đối tượng
     result = []
 
-    result.append(f"{'✓' if has1 else '✗'} {name1}")
-    result.append(f"{'✓' if has2 else '✗'} {name2}")
+    result.append(f"{'Có' if has1 else 'Không có'} {obj1_vi}")
+    result.append(f"{'Có' if has2 else 'Không có'} {obj2_vi}")
 
     return {
         "score": score,
+        "status": "Đạt" if score == 1.0 else "Không đạt",
         "reason": ", ".join(result)
     }
 def template_2(rule, boxes_dict):#chạy được rồi
@@ -104,8 +143,10 @@ def template_2(rule, boxes_dict):#chạy được rồi
 
     obj = text[1]
     op = text[2]
+    
+    
     target_count = int(text[3])
-
+    obj_vi = SCENERY_OBJECT_VI.get(obj, obj)
     current_count = len(boxes_dict.get(obj, []))
 
     if op == "==":
@@ -124,7 +165,7 @@ def template_2(rule, boxes_dict):#chạy được rồi
     return {
         "score": score,
         "status": "Đạt" if score == 1.0 else "Không đạt",
-        "reason": f"Phát hiện {current_count}/{target_count} {obj}."
+        "reason": f"Phát hiện {current_count}/{target_count} {obj_vi}."
     }
 
 
@@ -170,7 +211,7 @@ def template_3(rule, boxes_dict): # thành công rồi
 
     return {
         "score": final_score,
-        "reason": f"Kích thước {obj_vi} gần mức {size_vi}."
+        "reason": f"Kích thước {obj_vi} không đạt mức {size_vi}."
     }
 
 def template_4(rule, boxes_dict): #tạm ổn trước tiên
@@ -180,16 +221,33 @@ def template_4(rule, boxes_dict): #tạm ổn trước tiên
     obj1 = text[1]
     relation = text[2]
     obj2 = text[3]
-
-    if (
-        obj1 not in boxes_dict
-        or obj2 not in boxes_dict
-        or len(boxes_dict[obj1]) == 0
-        or len(boxes_dict[obj2]) == 0
-    ):
+    obj1_vi = SCENERY_OBJECT_VI.get(obj1, obj1)
+    obj2_vi = SCENERY_OBJECT_VI.get(obj2, obj2)
+    print("========== DEBUG TEMPLATE 6 ==========")
+    print("Boxes:", boxes_dict.keys())
+    print("obj1 =", obj1)
+    print("obj2 =", obj2)
+    print("boxes obj1 =", boxes_dict.get(obj1))
+    print("boxes obj2 =", boxes_dict.get(obj2))
+    print("======================================")
+    RELATION_VI1 = {
+                "left_of": "nằm bên trái",
+                "right_of": "nằm bên phải",
+                "above": "nằm phía trên",
+                "below": "nằm phía dưới",
+                "inside": "nằm bên trong"
+            }
+    relation_vi1= RELATION_VI1.get(relation, relation)
+    if obj1 not in boxes_dict or len(boxes_dict.get(obj1, [])) == 0:
         return {
             "score": 0.0,
-            "reason": "Thiếu đối tượng."
+            "reason": f"Thiếu {obj1_vi} nên không đạt điều kiện {relation_vi1}."
+        }
+
+    if obj2 not in boxes_dict or len(boxes_dict.get(obj2, [])) == 0:
+        return {
+            "score": 0.0,
+            "reason": f"Thiếu {obj2_vi} nên không đạt điều kiện {relation_vi1}."
         }
 
     best_score = 0.0
@@ -257,10 +315,17 @@ def template_4(rule, boxes_dict): #tạm ổn trước tiên
                 score = 0.0
 
             best_score = max(best_score, score)
-
+    RELATION_VI = {
+            "left_of": "nằm bên trái",
+            "right_of": "nằm bên phải",
+            "above": "nằm phía trên",
+            "below": "nằm phía dưới",
+            "inside": "nằm bên trong"
+        }
+    relation_vi = RELATION_VI.get(relation, relation)
     return {
         "score": round(best_score, 3),
-        "reason": f"{obj1} {relation} {obj2}"
+        "reason": f"{obj1_vi} {relation_vi} {obj2_vi}"
     }
 
 
@@ -303,26 +368,43 @@ def template_6(rule, boxes_dict): # thanh công phân nữa
     obj1 = text[1]
     op = text[2]
     obj2 = text[3]
-
+    obj1_vi = SCENERY_OBJECT_VI.get(obj1, obj1)
+    obj2_vi = SCENERY_OBJECT_VI.get(obj2, obj2)
     count1 = len(boxes_dict.get(obj1, []))
     count2 = len(boxes_dict.get(obj2, []))
 
     if op == ">":
-        score = 1.0 if count1 > count2 else 0.0
+        if count1 > count2:
+            score = 1.0
+            reason = f"Số lượng {obj1_vi} ({count1}) nhiều hơn {obj2_vi} ({count2})."
+        else:
+            score = 0.0
+            reason = f"Số lượng {obj1_vi} ({count1}) không nhiều hơn {obj2_vi} ({count2})."
 
     elif op == "<":
-        score = 1.0 if count1 < count2 else 0.0
+        if count1 < count2:
+            score = 1.0
+            reason = f"Số lượng {obj1_vi} ({count1}) ít hơn {obj2_vi} ({count2})."
+        else:
+            score = 0.0
+            reason = f"Số lượng {obj1_vi} ({count1}) không ít hơn {obj2_vi} ({count2})."
 
     elif op == "==":
-        score = 1.0 if count1 == count2 else 0.0
+        if count1 == count2:
+            score = 1.0
+            reason = f"Số lượng {obj1_vi} ({count1}) bằng {obj2_vi} ({count2})."
+        else:
+            score = 0.0
+            reason = f"Số lượng {obj1_vi} ({count1}) không bằng {obj2_vi} ({count2})."
 
     else:
         score = 0.0
+        reason = "Phép so sánh không hợp lệ."
 
     return {
         "score": score,
         "status": "Đạt" if score == 1.0 else "Không đạt",
-        "reason": f"Phát hiện {count1} {obj1} và {count2} {obj2}."
+        "reason": reason
     }
 def template_7(rule, boxes_dict):
 
@@ -331,7 +413,8 @@ def template_7(rule, boxes_dict):
     obj1 = text[1]
     op = text[2]
     obj2 = text[3]
-
+    obj1_vi = SCENERY_OBJECT_VI.get(obj1, obj1)
+    obj2_vi = SCENERY_OBJECT_VI.get(obj2, obj2)
     if (
         obj1 not in boxes_dict
         or obj2 not in boxes_dict
@@ -364,9 +447,9 @@ def template_7(rule, boxes_dict):
         score = 0.0
 
     if score == 1.0:
-        reason = f"{obj1} to hơn {obj2}."
+        reason = f"{obj1_vi} to hơn {obj2_vi}."
     else:
-        reason = f"{obj1} không to hơn {obj2}."
+        reason = f"{obj1_vi} không to hơn {obj2_vi}."
 
     return {
         "score": score,

@@ -17,8 +17,14 @@ from templates import evaluate_drawing
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:5500", "http://127.0.0.1:5500", "http://localhost:5000", "http://127.0.0.1:5000"])
 
+<<<<<<< HEAD
 REQUIRED = ["eye", "eyebrow", "nose", "mouth", "face"]
 SCENERY_REQUIRED = ["tree", "sun","house"]
+=======
+REQUIRED = ["eye", "nose", "mouth", "face", "hair"]
+SCENERY_REQUIRED = ["tree", "sun","house"]
+detected_object_scenery =[]
+>>>>>>> aef5fa2b2435de5ce041f9a757ac6c8a24e2163e
 
 RESULT_FOLDER = "static/results"
 os.makedirs(RESULT_FOLDER, exist_ok=True)
@@ -252,16 +258,27 @@ def classify():
                 
         else:
             results = scenery_model(img_path, verbose=False)[0]
+<<<<<<< HEAD
             boxes_dict = {name: [] for name in SCENERY_REQUIRED}
+=======
+            # boxes_dict = {name: [] for name in SCENERY_REQUIRED}
+>>>>>>> aef5fa2b2435de5ce041f9a757ac6c8a24e2163e
             detected_objects = []
             for box in results.boxes:
                 cls_id = int(box.cls[0])
                 raw_name = str(results.names[cls_id]).strip().lower()
                 detected_objects.append(raw_name)
 
+<<<<<<< HEAD
             
             unique_detected = list(set(detected_objects))
             total_detected = len(unique_detected)
+=======
+            unique_detected = list(set(detected_objects))
+            detected_object_scenery = unique_detected.copy()
+            total_detected = len(unique_detected)
+            
+>>>>>>> aef5fa2b2435de5ce041f9a757ac6c8a24e2163e
             if total_detected < 2:
                 return jsonify({
                     "type": "Unknown",
@@ -278,7 +295,6 @@ def classify():
         if img_path and os.path.exists(img_path):
             os.remove(img_path)
         return jsonify({"type": "Unknown", "message": "Có lỗi xảy ra khi xử lý ảnh!"}), 200
-
 @app.route("/predict", methods=["POST"])
 
 def predict():
@@ -396,8 +412,8 @@ def predict():
 
         diem_mau_sac = dynamic_weights.get("color", 1.0)
 
-        bonus_rules = min(len(rule_success) * 0.5, 1.5)
-        penalt_rules = len(rule_errors) * 0.5
+        bonus_rules = min(len(rule_success) * 0.15, 0.6)
+        penalt_rules = len(rule_errors) * 1
 
         score_base = diem_thanh_phan_chuan + diem_bo_cuc + diem_ty_le + diem_mau_sac + bonus_rules - penalt_rules
         so_vat_thieu = len(missing)
@@ -615,7 +631,26 @@ def predict_scenery():
         img_h, img_w, _ = img_cv.shape
         
         results = scenery_model(img_path, verbose=False)[0]
+<<<<<<< HEAD
         boxes_dict = []
+=======
+        boxes_dict = {}
+        for box in results.boxes:
+
+            cls_id = int(box.cls[0])
+            obj = str(results.names[cls_id]).strip().lower()
+
+            x1, y1, x2, y2 = box.xyxy[0].tolist()
+
+            if obj not in boxes_dict:
+                boxes_dict[obj] = []
+
+            boxes_dict[obj].append({
+                "box": [x1, y1, x2, y2]
+            })
+        boxes_xyxy = results.boxes.xyxy.cpu().numpy().tolist()
+        print(boxes_dict)
+>>>>>>> aef5fa2b2435de5ce041f9a757ac6c8a24e2163e
         boxed_name = f"boxed_{filename}"
         cv2.imwrite(os.path.join(RESULT_FOLDER, boxed_name), results.plot())
 
@@ -632,9 +667,10 @@ def predict_scenery():
                 "nhan_xet_nghe_thuat": []
             })
 
-        cls_ids = [int(cls) for cls in results.boxes.cls.cpu().numpy()]
-        boxes_xyxy = results.boxes.xyxy.cpu().numpy().tolist()
+        # cls_ids = [int(cls) for cls in results.boxes.cls.cpu().numpy()]
+        # boxes_xyxy = results.boxes.xyxy.cpu().numpy().tolist()
         
+<<<<<<< HEAD
         #ĐÂY LÀ BOXES DICT GỐC
         boxes_dict = {name: [] for name in base_required}
         for cid, box in zip(cls_ids, boxes_xyxy):
@@ -642,15 +678,30 @@ def predict_scenery():
             for req in base_required:
                 if req == raw_name: 
                     boxes_dict[req].append(box)
+=======
+        # # ĐÂY LÀ BOXES DICT GỐC
+        # boxes_dict = {name: [] for name in base_required}
+        # for cid, box in zip(cls_ids, boxes_xyxy):
+        #     raw_name = str(results.names[cid]).strip().lower()
+        #     for req in base_required:
+        #         if req == raw_name: 
+        #             boxes_dict[req].append(box)
+        detected = list(boxes_dict.keys())
+>>>>>>> aef5fa2b2435de5ce041f9a757ac6c8a24e2163e
 
-        detected = [k for k, v in boxes_dict.items() if len(v) > 0]
-        missing = [v for v in base_required if v not in detected]
+        missing = [
+            obj for obj in base_required
+            if obj not in boxes_dict
+        ]
+        # detected = [k for k, v in boxes_dict.items() if len(v) > 0]
+        # missing = [v for v in base_required if v not in detected]
         
         rule_errors = []
         rule_success = []
 
         # BỌC DỮ LIỆU CHO MASTER ENGINE
-        boxes_dict_template = {k: [{"box": b} for b in v] for k, v in boxes_dict.items()}
+        # boxes_dict_template = {k: [{"box": b} for b in v] for k, v in boxes_dict.items()}
+        boxes_dict_template = boxes_dict
         _, rule_details = evaluate_drawing(rules, boxes_dict_template)
         print("=" * 60)
         print("RULES =", rules)
@@ -751,37 +802,68 @@ def predict_scenery():
 
         trong_so_phong_canh = {"house": 2.5, "tree": 2.0, "sun": 1.5}
         for noun in base_required:
-            if noun not in trong_so_phong_canh: trong_so_phong_canh[noun] = 1.0
+            if noun not in trong_so_phong_canh: trong_so_phong_canh[noun] = 0.5
             
-        diem_thanh_phan = sum([trong_so_phong_canh.get(obj, 1.0) for obj in detected]) 
+        diem_thanh_phan = sum([trong_so_phong_canh.get(obj, 0.25) for obj in detected]) 
         diem_toi_da = sum([trong_so_phong_canh.get(obj, 1.0) for obj in base_required])
         
         # Đảm bảo điểm max không chia cho 0
-        diem_thanh_phan_chuan = (float(diem_thanh_phan) / float(diem_toi_da)) * float(dynamic_weights.get("objects", 5.0)) if diem_toi_da > 0 else 0
+        diem_thanh_phan_chuan = (float(diem_thanh_phan) / float(diem_toi_da)) * float(dynamic_weights.get("objects", 3.0)) if diem_toi_da > 0 else 0
 
         so_loi_bo_cuc = sum(1 for l in loi_bo_cuc if "Lỗi" in l)
-        diem_bo_cuc = max(0, dynamic_weights.get("layout", 2.0) - (so_loi_bo_cuc * (dynamic_weights.get("layout", 2.0) / 3)))
+        # diem_bo_cuc = max(0, dynamic_weights.get("layout", 1.0) - (so_loi_bo_cuc * (dynamic_weights.get("layout", 2.0) / 3)))
 
-        diem_nghe_thuat = dynamic_weights.get("art_proportion", 2.0) * 0.5
+        diem_bo_cuc = max(
+            0,
+            dynamic_weights["layout"] -
+            so_loi_bo_cuc * 1
+        )
+        # diem_nghe_thuat = dynamic_weights.get("art_proportion", 1.0) * 0.5
+        diem_nghe_thuat = 0
+        for nx in nhan_xet_nghe_thuat_list:
+            if "tốt" in nx.lower() or "đẹp" in nx.lower():
+                diem_nghe_thuat += 0.5
+            elif "lưu ý" in nx.lower() or "to hơn" in nx.lower():
+                diem_nghe_thuat -= 0.3
+
+        diem_nghe_thuat = max(
+            0,
+            min(dynamic_weights["art_proportion"], diem_nghe_thuat)
+        )
+        #
         for nx in nhan_xet_nghe_thuat_list:
             if "tốt" in nx or "nghệ thuật" in nx or "amazing" in nx:
-                diem_nghe_thuat += (dynamic_weights.get("art_proportion", 2.0) * 0.25)
+                diem_nghe_thuat += (dynamic_weights.get("art_proportion", 1.0) * 0.25)
             elif "to hơn" in nx or "lưu ý" in nx.lower():
-                diem_nghe_thuat -= (dynamic_weights.get("art_proportion", 2.0) * 0.25)
-        diem_nghe_thuat = max(0, min(dynamic_weights.get("art_proportion", 2.0), diem_nghe_thuat))
+                diem_nghe_thuat -= (dynamic_weights.get("art_proportion", 1.0) * 0.25)
+        diem_nghe_thuat = max(0, min(dynamic_weights.get("art_proportion", 1.0), diem_nghe_thuat))
 
-        diem_mau_sac = dynamic_weights.get("color", 1.0) * 0.6 
-        if "nhạt nhòa" in nhan_xet_mau_sac_str or "hơi tối" in nhan_xet_mau_sac_str:
-            diem_mau_sac -= (dynamic_weights.get("color", 1.0) * 0.3)
-        elif "rất tốt" in nhan_xet_mau_sac_str or "rực rỡ" in nhan_xet_mau_sac_str:
-            diem_mau_sac += (dynamic_weights.get("color", 1.0) * 0.4)
-        diem_mau_sac = max(0, min(dynamic_weights.get("color", 1.0), diem_mau_sac))
+        # diem_mau_sac = dynamic_weights.get("color", 1.0) * 0.6 
+        diem_mau_sac = 0
+        # if "nhạt nhòa" in nhan_xet_mau_sac_str or "hơi tối" in nhan_xet_mau_sac_str:
+        #     diem_mau_sac -= (dynamic_weights.get("color", 1.0) * 0.3)
+        # elif "rất tốt" in nhan_xet_mau_sac_str or "rực rỡ" in nhan_xet_mau_sac_str:
+        #     diem_mau_sac += (dynamic_weights.get("color", 1.0) * 0.4)
+        # diem_mau_sac = max(0, min(dynamic_weights.get("color", 1.0), diem_mau_sac))
+        if "rực rỡ" in nhan_xet_mau_sac_str:
+            diem_mau_sac += dynamic_weights["color"]*0.6
+
+        elif "rất tốt" in nhan_xet_mau_sac_str:
+            diem_mau_sac += dynamic_weights["color"]*0.8
+
+        elif "nhạt nhòa" in nhan_xet_mau_sac_str:
+            diem_mau_sac += dynamic_weights["color"]*0.2
 
         bonus_rules = min(len(rule_success) * 0.5, 1.5)
         penalt_rules = len(rule_errors) * 0.5
 
         score_base = diem_thanh_phan_chuan + diem_bo_cuc + diem_nghe_thuat + diem_mau_sac + bonus_rules - penalt_rules
-        
+        # Giới hạn điểm nếu thiếu nhiều vật
+        if len(missing) >= 5:
+            score_base = min(score_base, 6)
+
+        elif len(missing) >= 3:
+            score_base = min(score_base, 8)
         # CƠ CHẾ ĐIỂM ĐỘNG VÀ ĐIỂM TUYỆT ĐỐI BẰNG REGEX
         tru_diem_tuyet_doi = 0.0
         cong_diem_tuyet_doi = 0.0

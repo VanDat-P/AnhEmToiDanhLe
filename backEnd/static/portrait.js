@@ -174,27 +174,29 @@ document.getElementById("submit").onclick = async () => {
                                 ${item.formula || "-"}
                             </p>
 
-                            ${
-                                item.detected ?
-                                `<p><b>Đã phát hiện:</b> ${item.detected.join(", ")}</p>`
-                                :""
+                           ${
+                                item.detected
+                                ? `<p><b>Đã phát hiện:</b> ${[...new Set(item.detected)].join(", ")}</p>`
+                                : ""
                             }
 
                             ${
-                                item.missing ?
-                                `<p style="color:red">
+                                item.missing && item.missing.length > 0
+                                ? `<p style="color:red">
                                     <b>Thiếu:</b>
-                                    ${item.missing.join(", ")}
+                                    ${[...new Set(item.missing)].join(", ")}
                                 </p>`
-                                :""
+                                : ""
                             }
 
                             ${
-                                item.result ?
-                                `<ul>
-                                    ${item.result.map(r=>`<li>${r}</li>`).join("")}
+                                item.result && item.result.length > 0
+                                ? `<ul>
+                                    ${[...new Set(item.result)]
+                                        .map(r => `<li>${r}</li>`)
+                                        .join("")}
                                 </ul>`
-                                :""
+                                : ""
                             }
 
                         </div>
@@ -217,18 +219,24 @@ document.getElementById("submit").onclick = async () => {
                             <p><b>Đạt:</b></p>
 
                             <ul>
-                                ${successRules.length
-                                    ? successRules.map(x => `<li>${x}</li>`).join("")
-                                    : "<li>Không có luật đạt.</li>"
+                                ${
+                                    [...new Set(successRules)].length
+                                        ? [...new Set(successRules)]
+                                            .map(x => `<li>${x}</li>`)
+                                            .join("")
+                                        : "<li>Không có luật đạt.</li>"
                                 }
                             </ul>
 
                             <p><b>Chưa đạt:</b></p>
 
                             <ul>
-                                ${errorRules.length
-                                    ? errorRules.map(x => `<li>${x}</li>`).join("")
-                                    : "<li>Không có luật vi phạm.</li>"
+                                ${
+                                    [...new Set(errorRules)].length
+                                        ? [...new Set(errorRules)]
+                                            .map(x => `<li>${x}</li>`)
+                                            .join("")
+                                        : "<li>Không có luật vi phạm.</li>"
                                 }
                             </ul>
 
@@ -297,14 +305,20 @@ document.getElementById("submit").onclick = async () => {
                                 <h3> Điểm cộng</h3>
 
                                 ${
-                                    breakdown.bonus.length>0 ?
-                                    `<ul>
-                                        ${breakdown.bonus.map(item=>`
-                                            <li><b>+${item.point}</b> : ${item.reason}</li>
-                                        `).join("")}
+                                    breakdown.bonus.length > 0
+                                    ? `<ul>
+                                        ${
+                                            breakdown.bonus
+                                                .filter((item, index, arr) =>
+                                                    index === arr.findIndex(x => x.reason === item.reason)
+                                                )
+                                                .map(item => `
+                                                    <li><b>+${item.point}</b> : ${item.reason}</li>
+                                                `)
+                                                .join("")
+                                        }
                                     </ul>`
-                                    :
-                                    `<p>Không có điểm cộng.</p>`
+                                    : `<p>Không có điểm cộng.</p>`
                                 }
 
                             </div>
@@ -313,15 +327,24 @@ document.getElementById("submit").onclick = async () => {
 
                                 <h3> Điểm trừ</h3>
 
-                                ${
-                                    breakdown.penalty.length>0 ?
-                                    `<ul>
-                                        ${breakdown.penalty.map(item=>`
-                                            <li><b>-${item.point}</b> : ${item.reason}</li>
-                                        `).join("")}
+                               ${
+                                    breakdown.penalty.length > 0
+                                    ? `<ul>
+                                        ${
+                                            breakdown.penalty
+                                                .filter((item, index, arr) =>
+                                                    index === arr.findIndex(x =>
+                                                        x.reason === item.reason &&
+                                                        x.point === item.point
+                                                    )
+                                                )
+                                                .map(item => `
+                                                    <li><b>-${item.point}</b> : ${item.reason}</li>
+                                                `)
+                                                .join("")
+                                        }
                                     </ul>`
-                                    :
-                                    `<p>Không có điểm trừ.</p>`
+                                    : `<p>Không có điểm trừ.</p>`
                                 }
 
                             </div>
