@@ -415,13 +415,13 @@ def predict():
         tru_diem_tuyet_doi = 0.0
         cong_diem_tuyet_doi = 0.0
         so_vat_thieu_tu_nhien = len(missing)
-
+        danh_sach_cau = []
         if user_text:
             text_lower = user_text.lower()
             tat_ca_vat_the = detected + missing  
             vat_bi_phat = []
             
-            danh_sach_cau = [c.strip() for c in text_lower.split('.') if c.strip()]
+            danh_sach_cau = [c.strip() for c in text_lower.split('.') if c.strip()] or []
             
             for cau in danh_sach_cau:
                 # 1. QUÉT LỆNH THƯỞNG
@@ -543,6 +543,7 @@ def predict():
                             ],
 
                             "template_rules": {
+                                "user_text": danh_sach_cau,
                                 "success": rule_success,
                                 "error": rule_errors
                             },
@@ -567,7 +568,7 @@ def predict():
             "nhan_xet_ty_le": loi_ty_le,
             "loi_khuyen_giao_vien": loi_khuyen if loi_khuyen else ["Tranh em vẽ rất tốt, không có gì để chê!"],
             "boxed_image": f"/static/results/{boxed_name}",
-            "score_breakdown": score_breakdown,
+            "score_breakdown": score_breakdown
         })
         
     except Exception as e:
@@ -624,9 +625,9 @@ def predict_scenery():
         
         results = scenery_model(img_path, verbose=False)[0]
 
-        boxes_dict = []
 
-        #boxes_dict = {}
+
+        boxes_dict = {}
         for box in results.boxes:
 
             cls_id = int(box.cls[0])
@@ -832,7 +833,7 @@ def predict_scenery():
         tru_diem_tuyet_doi = 0.0
         cong_diem_tuyet_doi = 0.0
         so_vat_thieu_tu_nhien = len(missing)
-
+        danh_sach_cau = []
         if user_text:
             text_lower = user_text.lower()
             tat_ca_vat_the = detected + missing  
@@ -934,8 +935,6 @@ def predict_scenery():
                 "formula":"Rule-based",
                 "result":
                     nhan_xet_nghe_thuat_list
-                    # + rule_success
-                    # + rule_errors
             },
             {
                 "title":"Màu sắc",
@@ -991,10 +990,11 @@ def predict_scenery():
             "nhan_xet_nghe_thuat": nhan_xet_nghe_thuat_list,
             "loi_khuyen_giao_vien": loi_khuyen,
             "boxed_image": f"/static/results/{boxed_name}",
-            "score_breakdown": score_breakdown
+            "score_breakdown": score_breakdown,
         })
         
     except Exception as e:
+        print("Lỗi ở đây", e)
         import traceback
         traceback.print_exc()
         if img_path and os.path.exists(img_path):
