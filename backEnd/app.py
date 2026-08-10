@@ -17,14 +17,9 @@ from templates import evaluate_drawing
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:5500", "http://127.0.0.1:5500", "http://localhost:5000", "http://127.0.0.1:5000"])
 
-<<<<<<< HEAD
-REQUIRED = ["eye", "eyebrow", "nose", "mouth", "face"]
-SCENERY_REQUIRED = ["tree", "sun","house"]
-=======
 REQUIRED = ["eye", "nose", "mouth", "face", "hair"]
 SCENERY_REQUIRED = ["tree", "sun","house"]
 detected_object_scenery =[]
->>>>>>> aef5fa2b2435de5ce041f9a757ac6c8a24e2163e
 
 RESULT_FOLDER = "static/results"
 os.makedirs(RESULT_FOLDER, exist_ok=True)
@@ -258,27 +253,24 @@ def classify():
                 
         else:
             results = scenery_model(img_path, verbose=False)[0]
-<<<<<<< HEAD
+
             boxes_dict = {name: [] for name in SCENERY_REQUIRED}
-=======
-            # boxes_dict = {name: [] for name in SCENERY_REQUIRED}
->>>>>>> aef5fa2b2435de5ce041f9a757ac6c8a24e2163e
+
+
             detected_objects = []
             for box in results.boxes:
                 cls_id = int(box.cls[0])
                 raw_name = str(results.names[cls_id]).strip().lower()
                 detected_objects.append(raw_name)
 
-<<<<<<< HEAD
-            
+
             unique_detected = list(set(detected_objects))
             total_detected = len(unique_detected)
-=======
             unique_detected = list(set(detected_objects))
             detected_object_scenery = unique_detected.copy()
             total_detected = len(unique_detected)
             
->>>>>>> aef5fa2b2435de5ce041f9a757ac6c8a24e2163e
+
             if total_detected < 2:
                 return jsonify({
                     "type": "Unknown",
@@ -631,10 +623,10 @@ def predict_scenery():
         img_h, img_w, _ = img_cv.shape
         
         results = scenery_model(img_path, verbose=False)[0]
-<<<<<<< HEAD
+
         boxes_dict = []
-=======
-        boxes_dict = {}
+
+        #boxes_dict = {}
         for box in results.boxes:
 
             cls_id = int(box.cls[0])
@@ -650,7 +642,7 @@ def predict_scenery():
             })
         boxes_xyxy = results.boxes.xyxy.cpu().numpy().tolist()
         print(boxes_dict)
->>>>>>> aef5fa2b2435de5ce041f9a757ac6c8a24e2163e
+
         boxed_name = f"boxed_{filename}"
         cv2.imwrite(os.path.join(RESULT_FOLDER, boxed_name), results.plot())
 
@@ -667,40 +659,16 @@ def predict_scenery():
                 "nhan_xet_nghe_thuat": []
             })
 
-        # cls_ids = [int(cls) for cls in results.boxes.cls.cpu().numpy()]
-        # boxes_xyxy = results.boxes.xyxy.cpu().numpy().tolist()
-        
-<<<<<<< HEAD
-        #ĐÂY LÀ BOXES DICT GỐC
-        boxes_dict = {name: [] for name in base_required}
-        for cid, box in zip(cls_ids, boxes_xyxy):
-            raw_name = str(results.names[cid]).strip().lower()
-            for req in base_required:
-                if req == raw_name: 
-                    boxes_dict[req].append(box)
-=======
-        # # ĐÂY LÀ BOXES DICT GỐC
-        # boxes_dict = {name: [] for name in base_required}
-        # for cid, box in zip(cls_ids, boxes_xyxy):
-        #     raw_name = str(results.names[cid]).strip().lower()
-        #     for req in base_required:
-        #         if req == raw_name: 
-        #             boxes_dict[req].append(box)
         detected = list(boxes_dict.keys())
->>>>>>> aef5fa2b2435de5ce041f9a757ac6c8a24e2163e
 
         missing = [
             obj for obj in base_required
             if obj not in boxes_dict
         ]
-        # detected = [k for k, v in boxes_dict.items() if len(v) > 0]
-        # missing = [v for v in base_required if v not in detected]
         
         rule_errors = []
         rule_success = []
 
-        # BỌC DỮ LIỆU CHO MASTER ENGINE
-        # boxes_dict_template = {k: [{"box": b} for b in v] for k, v in boxes_dict.items()}
         boxes_dict_template = boxes_dict
         _, rule_details = evaluate_drawing(rules, boxes_dict_template)
         print("=" * 60)
@@ -840,11 +808,7 @@ def predict_scenery():
 
         # diem_mau_sac = dynamic_weights.get("color", 1.0) * 0.6 
         diem_mau_sac = 0
-        # if "nhạt nhòa" in nhan_xet_mau_sac_str or "hơi tối" in nhan_xet_mau_sac_str:
-        #     diem_mau_sac -= (dynamic_weights.get("color", 1.0) * 0.3)
-        # elif "rất tốt" in nhan_xet_mau_sac_str or "rực rỡ" in nhan_xet_mau_sac_str:
-        #     diem_mau_sac += (dynamic_weights.get("color", 1.0) * 0.4)
-        # diem_mau_sac = max(0, min(dynamic_weights.get("color", 1.0), diem_mau_sac))
+     
         if "rực rỡ" in nhan_xet_mau_sac_str:
             diem_mau_sac += dynamic_weights["color"]*0.6
 
