@@ -17,7 +17,7 @@ from templates import evaluate_drawing
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:5500", "http://127.0.0.1:5500", "http://localhost:5000", "http://127.0.0.1:5000"])
 
-REQUIRED = ["eye", "nose", "mouth", "face", "hair"]
+REQUIRED = ["eye", "nose", "mouth"]
 SCENERY_REQUIRED = ["tree", "sun","house"]
 detected_object_scenery =[]
 
@@ -390,9 +390,12 @@ def predict():
         # --- CƠ CHẾ ĐIỂM ĐỘNG CHÂN DUNG ---
         user_text = settings.get("portrait_text", "")
         dynamic_weights = phan_tich_trong_so_tieu_chi(user_text)
-        trong_so_chan_dung = {"face": 1.5, "eye": 1.5, "nose": 1.0, "mouth": 1.0, "hair": 1.0, "eyebrow": 0.5, "ear": 0.5}
+        trong_so_chan_dung = {"eye": 1.5, "nose": 1.0, "mouth": 1.0}
         diem_toi_da = sum(trong_so_chan_dung.values())
-        
+        for obj in detected:
+            if obj not in trong_so_chan_dung.keys():
+                trong_so_chan_dung[obj] = 0.5
+                diem_toi_da += 0.5
         diem_thanh_phan = sum([trong_so_chan_dung.get(obj, 0) for obj in detected])
         diem_thanh_phan_chuan = (float(diem_thanh_phan) / float(diem_toi_da)) * float(dynamic_weights.get("objects", 5.0)) if diem_toi_da > 0 else 0
 
@@ -764,7 +767,7 @@ def predict_scenery():
         )        
         # SỬ DỤNG HÀM MÀU SẮC GỐC CỦA BẠN (TRÊN TOÀN BỘ ẢNH)
         nhan_xet_mau_sac_str = phan_tich_mau_sac(img_cv)
-
+        print('nhan xet mau sech: ', nhan_xet_mau_sac_str)
         # TÍNH ĐIỂM
         user_text = settings.get("scenery_text", "")
         dynamic_weights = phan_tich_trong_so_tieu_chi(user_text)
@@ -810,15 +813,22 @@ def predict_scenery():
         # diem_mau_sac = dynamic_weights.get("color", 1.0) * 0.6 
         diem_mau_sac = 0
      
-        if "rực rỡ" in nhan_xet_mau_sac_str:
+        if "rực rỡ" in nhan_xet_mau_sac_str: 
+            print("RỰC RỠ")
             diem_mau_sac += dynamic_weights["color"]*0.6
 
         elif "rất tốt" in nhan_xet_mau_sac_str:
             diem_mau_sac += dynamic_weights["color"]*0.8
+            print("RẤT TỐT")
 
         elif "nhạt nhòa" in nhan_xet_mau_sac_str:
             diem_mau_sac += dynamic_weights["color"]*0.2
-
+            print("NHẠT NHÒA")
+        elif "hài hòa" in nhan_xet_mau_sac_str:
+            diem_mau_sac += dynamic_weights["color"]*0.8
+            print("HÀI HÒA")
+        elif "trong trẻo" in nhan_xet_mau_sac_str:
+            diem_mau_sac += dynamic_weights["color"]*0.8
         bonus_rules = min(len(rule_success) * 0.5, 1.5)
         penalt_rules = len(rule_errors) * 0.5
 
